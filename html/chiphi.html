@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bếp Chung - Quản lý chi phí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #FF6D28;
+            --primary-light: #FF9A3C;
+            --primary-dark: #E05D20;
+            --secondary: #3A98B9;
+            --accent: #FFB830;
+            --text: #333333;
+            --text-light: #6B7280;
+            --text-lighter: #9CA3AF;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border: #E5E7EB;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --transition: all 0.2s ease;
+        }
+
+        [data-theme="dark"] {
+            --primary: #FF8C42;
+            --primary-light: #FFA566;
+            --primary-dark: #E57339;
+            --secondary: #4AB1D1;
+            --accent: #FFC154;
+            --text: #F3F4F6;
+            --text-light: #D1D5DB;
+            --text-lighter: #9CA3AF;
+            --bg: #1F2937;
+            --card-bg: #374151;
+            --border: #4B5563;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            transition: var(--transition);
+            line-height: 1.5;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: 80px 1fr;
+            min-height: 100vh;
+        }
+
+        .header {
+            grid-column: 2 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-icon {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .header-icon:hover {
+            color: var(--primary);
+        }
+
+        .badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background-color: var(--error);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 3px rgba(255, 109, 40, 0.2);
+        }
+
+        .sidebar {
+            grid-column: 1 / 2;
+            grid-row: 1 / 3;
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-logo {
+            font-size: 1.75rem;
+            color: var(--primary);
+        }
+
+        .sidebar-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-group {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 1rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 109, 40, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 109, 40, 0.1);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            font-size: 1.1rem;
+            margin-right: 0.75rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-text {
+            font-size: 0.95rem;
+        }
+
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 50px;
+            padding: 0.25rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .theme-btn {
+            width: 50%;
+            padding: 0.5rem;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .theme-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .main-content {
+            grid-column: 2 / 3;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Expenses page styles */
+        .expenses-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .expenses-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .overview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .overview-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .overview-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-3px);
+        }
+
+        .overview-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .overview-card p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .chart-container {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+        }
+
+        .search-filter {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            background-color: var(--card-bg);
+            color: var(--text);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 109, 40, 0.1);
+        }
+
+        .filter-select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            background-color: var(--card-bg);
+            color: var(--text);
+        }
+
+        .expenses-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .expenses-table th,
+        .expenses-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .expenses-table th {
+            background-color: rgba(255, 109, 40, 0.05);
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-paid {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-pending {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin-right: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .action-btn:hover {
+            color: var(--primary);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background-color: var(--card-bg);
+            color: var(--text);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .pagination-btn:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            background-color: var(--card-bg);
+            color: var(--text);
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 109, 40, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 240px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr;
+            }
+
+            .header {
+                grid-column: 1 / 2;
+                padding: 1rem;
+            }
+
+            .sidebar {
+                grid-column: 1 / 2;
+                grid-row: 2 / 3;
+                height: auto;
+                position: static;
+                display: none;
+            }
+
+            .sidebar.active {
+                display: flex;
+            }
+
+            .main-content {
+                grid-column: 1 / 2;
+                grid-row: 3 / 4;
+                padding: 1.5rem;
+            }
+
+            .expenses-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .search-filter {
+                flex-direction: column;
+            }
+
+            .expenses-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .overview-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-title {
+                font-size: 1.25rem;
+            }
+
+            .header-actions {
+                gap: 1rem;
+            }
+
+            .expenses-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </div>
+            <h1 class="header-title">Chi phí</h1>
+            <div class="header-actions">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </div>
+                <div class="header-icon theme-icon">
+                    <i class="fas fa-moon"></i>
+                </div>
+                <div class="user-avatar">NM</div>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div>
+                    <div class="sidebar-title">Bếp Chung</div>
+                    <div class="sidebar-group">Nhóm: Nhà Mình A2</div>
+                </div>
+            </div>
+
+            <div class="sidebar-nav">
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="nav-text">Trang chủ</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="nav-text">Thành viên</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="nav-text">Thực đơn</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="nav-text">Đi chợ</div>
+                </a>
+                <a href="#" class="nav-item active">
+                    <div class="nav-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="nav-text">Chi phí</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="nav-text">Lịch nấu ăn</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="nav-text">Thống kê</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="nav-text">Trò chuyện</div>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="theme-toggle">
+                    <div class="theme-btn active" data-theme="light">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="theme-btn" data-theme="dark">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="main-content">
+            <div class="expenses-header">
+                <h1 class="expenses-title">Quản lý chi phí</h1>
+                <button class="btn btn-primary" id="addExpenseBtn">
+                    <i class="fas fa-plus"></i> Thêm chi phí
+                </button>
+            </div>
+
+            <!-- Overview -->
+            <div class="overview-container">
+                <div class="overview-card">
+                    <h3>Tổng chi phí</h3>
+                    <p id="totalExpense">0đ</p>
+                </div>
+                <div class="overview-card">
+                    <h3>Chi phí trung bình</h3>
+                    <p id="avgExpense">0đ</p>
+                </div>
+                <div class="overview-card">
+                    <h3>Cần cân bằng</h3>
+                    <p id="balance">0đ</p>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="chart-container">
+                <h3>Chi phí theo thành viên</h3>
+                <canvas id="expenseChart"></canvas>
+            </div>
+
+            <div class="search-filter">
+                <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm mô tả chi phí...">
+                <select class="filter-select" id="statusFilter">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Paid">Đã thanh toán</option>
+                    <option value="Pending">Chưa thanh toán</option>
+                </select>
+            </div>
+
+            <table class="expenses-table">
+                <thead>
+                    <tr>
+                        <th>Ngày</th>
+                        <th>Mô tả</th>
+                        <th>Số tiền</th>
+                        <th>Người chi</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="expensesTableBody">
+                    <!-- Sample data -->
+                    <tr>
+                        <td>15/04/2025</td>
+                        <td>Mua nguyên liệu chợ</td>
+                        <td>500,000đ</td>
+                        <td>Nguyễn Minh</td>
+                        <td><span class="status status-paid">Đã thanh toán</span></td>
+                        <td>
+                            <button class="action-btn edit-btn" data-id="1"><i class="fas fa-edit"></i></button>
+                            <button class="action-btn delete-btn" data-id="1"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>16/04/2025</td>
+                        <td>Mua gia vị</td>
+                        <td>100,000đ</td>
+                        <td>Trần Hương</td>
+                        <td><span class="status status-pending">Chưa thanh toán</span></td>
+                        <td>
+                            <button class="action-btn edit-btn" data-id="2"><i class="action-btn edit-btn" data-id="2"><i class="fas fa-edit"></i></button>
+                            <button class="action-btn delete-btn" data-id="2"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="pagination">
+                <button class="pagination-btn" id="prevPage" disabled>Trước</button>
+                <button class="pagination-btn active">1</button>
+                <button class="pagination-btn">2</button>
+                <button class="pagination-btn">3</button>
+                <button class="pagination-btn" id="nextPage">Sau</button>
+            </div>
+
+            <!-- Modal for adding/editing expense -->
+            <div class="modal" id="expenseModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Thêm chi phí</h2>
+                        <button class="modal-close" id="closeModal"><i class="fas fa-times"></i></button>
+                    </div>
+                    <form id="expenseForm">
+                        <div class="form-group">
+                            <label class="form-label" for="date">Ngày</label>
+                            <input type="date" class="form-input" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="description">Mô tả</label>
+                            <input type="text" class="form-input" id="description" required placeholder="Nhập mô tả chi phí">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="amount">Số tiền</label>
+                            <input type="number" class="form-input" id="amount" required placeholder="Nhập số tiền (VND)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="payer">Người chi</label>
+                            <input type="text" class="form-input" id="payer" required placeholder="Nhập tên người chi">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="status">Trạng thái</label>
+                            <select class="form-select" id="status" required>
+                                <option value="Paid">Đã thanh toán</option>
+                                <option value="Pending">Chưa thanh toán</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn" id="cancelBtn">Hủy</button>
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const sidebar = document.querySelector('.sidebar');
+            
+            mobileMenuBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                mobileMenuBtn.innerHTML = sidebar.classList.contains('active') 
+                    ? '<i class="fas fa-times"></i>' 
+                    : '<i class="fas fa-bars"></i>';
+            });
+
+            // Theme toggle
+            const themeToggle = document.querySelector('.theme-toggle');
+            const themeBtns = document.querySelectorAll('.theme-btn');
+            const body = document.body;
+            
+            themeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const theme = this.getAttribute('data-theme');
+                    
+                    themeBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    body.setAttribute('data-theme', theme);
+                    localStorage.setItem('theme', theme);
+                    
+                    const themeIcon = document.querySelector('.theme-icon i');
+                    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                });
+            });
+
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            body.setAttribute('data-theme', savedTheme);
+            
+            const activeThemeBtn = document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`);
+            if (activeThemeBtn) {
+                themeBtns.forEach(b => b.classList.remove('active'));
+                activeThemeBtn.classList.add('active');
+                
+                const themeIcon = document.querySelector('.theme-icon i');
+                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            // Expenses page functionality
+            const addExpenseBtn = document.getElementById('addExpenseBtn');
+            const expenseModal = document.getElementById('expenseModal');
+            const closeModal = document.getElementById('closeModal');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const expenseForm = document.getElementById('expenseForm');
+            const expensesTableBody = document.getElementById('expensesTableBody');
+            const searchInput = document.getElementById('searchInput');
+            const statusFilter = document.getElementById('statusFilter');
+            const prevPage = document.getElementById('prevPage');
+            const nextPage = document.getElementById('nextPage');
+            const totalExpense = document.getElementById('totalExpense');
+            const avgExpense = document.getElementById('avgExpense');
+            const balance = document.getElementById('balance');
+            const expenseChart = document.getElementById('expenseChart').getContext('2d');
+
+            let currentPage = 1;
+            const expensesPerPage = 10;
+            let expenses = [
+                { id: 1, date: '2025-04-15', description: 'Mua nguyên liệu chợ', amount: 500000, payer: 'Nguyễn Minh', status: 'Paid' },
+                { id: 2, date: '2025-04-16', description: 'Mua gia vị', amount: 100000, payer: 'Trần Hương', status: 'Pending' },
+            ];
+
+            let chartInstance = null;
+
+            function renderExpenses() {
+                const start = (currentPage - 1) * expensesPerPage;
+                const end = start + expensesPerPage;
+                const filteredExpenses = filterExpenses();
+                const paginatedExpenses = filteredExpenses.slice(start, end);
+
+                expensesTableBody.innerHTML = '';
+                paginatedExpenses.forEach(expense => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatDate(expense.date)}</td>
+                        <td>${expense.description}</td>
+                        <td>${formatCurrency(expense.amount)}</td>
+                        <td>${expense.payer}</td>
+                        <td><span class="status status-${expense.status.toLowerCase()}">${expense.status === 'Paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></td>
+                        <td>
+                            <button class="action-btn edit-btn" data-id="${expense.id}"><i class="fas fa-edit"></i></button>
+                            <button class="action-btn delete-btn" data-id="${expense.id}"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    expensesTableBody.appendChild(row);
+                });
+
+                updatePagination(filteredExpenses.length);
+                updateOverview();
+                updateChart();
+            }
+
+            function filterExpenses() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedStatus = statusFilter.value;
+
+                return expenses.filter(expense => 
+                    expense.description.toLowerCase().includes(searchTerm) &&
+                    (!selectedStatus || expense.status === selectedStatus)
+                );
+            }
+
+            function updatePagination(totalExpenses) {
+                const totalPages = Math.ceil(totalExpenses / expensesPerPage);
+                prevPage.disabled = currentPage === 1;
+                nextPage.disabled = currentPage === totalPages;
+
+                const pagination = document.querySelector('.pagination');
+                const pageButtons = pagination.querySelectorAll('.pagination-btn:not(#prevPage):not(#nextPage)');
+                pageButtons.forEach(btn => btn.remove());
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+                    btn.textContent = i;
+                    btn.addEventListener('click', () => {
+                        currentPage = i;
+                        renderExpenses();
+                    });
+                    nextPage.before(btn);
+                }
+            }
+
+            function updateOverview() {
+                const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+                const members = [...new Set(expenses.map(e => e.payer))];
+                const avg = members.length ? total / members.length : 0;
+                const balancePerMember = members.map(payer => {
+                    const paid = expenses.filter(e => e.payer === payer).reduce((sum, e) => sum + e.amount, 0);
+                    return paid - avg;
+                });
+                const maxBalance = Math.max(...balancePerMember.map(Math.abs));
+
+                totalExpense.textContent = formatCurrency(total);
+                avgExpense.textContent = formatCurrency(avg);
+                balance.textContent = formatCurrency(maxBalance);
+            }
+
+            function updateChart() {
+                const members = [...new Set(expenses.map(e => e.payer))];
+                const data = members.map(payer => {
+                    return expenses.filter(e => e.payer === payer).reduce((sum, e) => sum + e.amount, 0);
+                });
+
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                chartInstance = new Chart(expenseChart, {
+                    type: 'bar',
+                    data: {
+                        labels: members,
+                        datasets: [{
+                            label: 'Chi phí (VND)',
+                            data: data,
+                            backgroundColor: 'rgba(255, 109, 40, 0.6)',
+                            borderColor: 'rgba(255, 109, 40, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: value => formatCurrency(value)
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function formatDate(dateStr) {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            }
+
+            function formatCurrency(amount) {
+                return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+            }
+
+            addExpenseBtn.addEventListener('click', () => {
+                expenseModal.classList.add('active');
+                expenseForm.reset();
+                document.querySelector('.modal-title').textContent = 'Thêm chi phí';
+            });
+
+            closeModal.addEventListener('click', () => {
+                expenseModal.classList.remove('active');
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                expenseModal.classList.remove('active');
+            });
+
+            expenseForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const date = document.getElementById('date').value;
+                const description = document.getElementById('description').value;
+                const amount = parseInt(document.getElementById('amount').value);
+                const payer = document.getElementById('payer').value;
+                const status = document.getElementById('status').value;
+
+                const newExpense = {
+                    id: expenses.length + 1,
+                    date,
+                    description,
+                    amount,
+                    payer,
+                    status
+                };
+
+                expenses.push(newExpense);
+                expenseModal.classList.remove('active');
+                renderExpenses();
+            });
+
+            expensesTableBody.addEventListener('click', (e) => {
+                if (e.target.closest('.edit-btn')) {
+                    const id = e.target.closest('.edit-btn').dataset.id;
+                    const expense = expenses.find(e => e.id == id);
+                    expenseModal.classList.add('active');
+                    document.querySelector('.modal-title').textContent = 'Chỉnh sửa chi phí';
+                    document.getElementById('date').value = expense.date;
+                    document.getElementById('description').value = expense.description;
+                    document.getElementById('amount').value = expense.amount;
+                    document.getElementById('payer').value = expense.payer;
+                    document.getElementById('status').value = expense.status;
+
+                    expenseForm.onsubmit = (e) => {
+                        e.preventDefault();
+                        expense.date = document.getElementById('date').value;
+                        expense.description = document.getElementById('description').value;
+                        expense.amount = parseInt(document.getElementById('amount').value);
+                        expense.payer = document.getElementById('payer').value;
+                        expense.status = document.getElementById('status').value;
+                        expenseModal.classList.remove('active');
+                        renderExpenses();
+                        expenseForm.onsubmit = null;
+                    };
+                }
+
+                if (e.target.closest('.delete-btn')) {
+                    const id = e.target.closest('.delete-btn').dataset.id;
+                    if (confirm('Bạn có chắc muốn xóa chi phí này?')) {
+                        expenses = expenses.filter(e => e.id != id);
+                        renderExpenses();
+                    }
+                }
+            });
+
+            searchInput.addEventListener('input', () => {
+                currentPage = 1;
+                renderExpenses();
+            });
+
+            statusFilter.addEventListener('change', () => {
+                currentPage = 1;
+                renderExpenses();
+            });
+
+            prevPage.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderExpenses();
+                }
+            });
+
+            nextPage.addEventListener('click', () => {
+                const totalExpenses = filterExpenses().length;
+                if (currentPage < Math.ceil(totalExpenses / expensesPerPage)) {
+                    currentPage++;
+                    renderExpenses();
+                }
+            });
+
+            renderExpenses();
+        });
+    </script>
+</body>
+</html>
