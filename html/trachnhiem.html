@@ -6,10 +6,360 @@
     <title>Lịch Sử Đóng Góp & Thống Kê Trách Nhiệm</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../static/css/app.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js">
     <style>
+        :root {
+            --primary: #FF6D28;
+            --primary-light: rgba(255, 109, 40, 0.1);
+            --secondary: #3F979B;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --danger: #F44336;
+            --dark: #222831;
+            --light: #F5F5F5;
+            --gray: #EEEEEE;
+            --border: #E0E0E0;
+            --text: #333333;
+            --text-light: #757575;
+            --card-bg: #FFFFFF;
+            --bg: #FAFAFA;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.3s ease;
+        }
 
+        [data-theme="dark"] {
+            --primary: #FF6D28;
+            --primary-light: rgba(255, 109, 40, 0.2);
+            --secondary: #3F979B;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --danger: #F44336;
+            --dark: #F5F5F5;
+            --light: #222831;
+            --gray: #393E46;
+            --border: #454545;
+            --text: #F5F5F5;
+            --text-light: #BDBDBD;
+            --card-bg: #393E46;
+            --bg: #222831;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            transition: var(--transition);
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            grid-column: 2 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 2rem;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow-sm);
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-icon {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            background-color: var(--primary-light);
+            color: var(--primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .header-icon:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .header-icon.theme-icon {
+            background-color: transparent;
+            color: var(--text);
+        }
+
+        .header-icon.theme-icon:hover {
+            background-color: transparent;
+            color: var(--primary);
+        }
+
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .mobile-menu-btn:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            grid-column: 1 / 2;
+            grid-row: 1 / 3;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow-md);
+            z-index: 20;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-logo {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            background-color: var(--primary);
+            color: white;
+            font-size: 1.25rem;
+            margin-right: 1rem;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-group {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 1.5rem 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            margin: 0.25rem 0;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .nav-item:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-right: 3px solid var(--primary);
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1rem;
+        }
+
+        .nav-text {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--gray);
+            border-radius: var(--radius-sm);
+            padding: 0.25rem;
+        }
+
+        .theme-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Main content */
+        .main-content {
+            grid-column: 2 / 3;
+            padding: 2rem;
+            overflow-y: auto;
+            background-color: var(--bg);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            outline: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #E55C1F;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #2D7A7E;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-light);
+        }
+
+        .btn-icon {
+            margin-right: 0.5rem;
+        }
 
         .stats-section {
             background-color: var(--card-bg);
@@ -19,10 +369,86 @@
             box-shadow: var(--shadow-md);
         }
 
-        .stats-section h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--primary);
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card .change {
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .change.up {
+            color: var(--success);
+        }
+
+        .change.down {
+            color: var(--danger);
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            background-color: var(--card-bg);
+            color: var(--text);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
 
         .leaderboard-table {
@@ -41,10 +467,33 @@
         .leaderboard-table th {
             font-weight: 600;
             color: var(--text-light);
+            background-color: var(--gray);
         }
 
         .leaderboard-table td {
             color: var(--text);
+        }
+
+        .leaderboard-table tr:hover {
+            background-color: var(--primary-light);
+        }
+
+        .member-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .member-avatar {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            margin-right: 0.75rem;
         }
 
         .rank-badge {
@@ -73,6 +522,40 @@
             color: #333;
         }
 
+        .progress-bar {
+            height: 8px;
+            background-color: var(--gray);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 4px;
+        }
+
+        .history-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-light);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
         .history-table {
             width: 100%;
             border-collapse: collapse;
@@ -89,34 +572,168 @@
         .history-table th {
             font-weight: 600;
             color: var(--text-light);
+            background-color: var(--gray);
         }
 
         .history-table td {
             color: var(--text);
         }
 
-        .filter-form {
+        .status {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status.completed {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success);
+        }
+
+        .status.pending {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: var(--warning);
+        }
+
+        .status.overdue {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: var(--danger);
+        }
+
+        .comment {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .action-btn:hover {
+            color: var(--primary);
+        }
+
+        .motivation-card {
+            background-color: var(--primary-light);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .motivation-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-right: 1.5rem;
+        }
+
+        .motivation-content h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .motivation-content p {
+            color: var(--text);
+        }
+
+        .add-task-form {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            display: none;
+        }
+
+        .add-task-form.active {
+            display: block;
+        }
+
+        .form-row {
             display: flex;
             gap: 1rem;
             margin-bottom: 1rem;
         }
 
-        .filter-form select {
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
-            flex: 1;
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1rem;
         }
 
-        .motivation-message {
-            background-color: rgba(255, 109, 40, 0.1);
+        .notification-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 350px;
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+
+        .notification-panel.active {
+            display: block;
+        }
+
+        .notification-header {
             padding: 1rem;
-            border-radius: var(--radius-sm);
-            color: var(--primary);
-            font-weight: 500;
-            text-align: center;
-            margin-top: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .notification-title {
+            font-weight: 600;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .notification-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .notification-item:hover {
+            background-color: var(--primary-light);
+        }
+
+        .notification-item.unread {
+            background-color: var(--primary-light);
+        }
+
+        .notification-message {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
         }
 
         @media (max-width: 1024px) {
@@ -156,26 +773,14 @@
 
             .mobile-menu-btn {
                 display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
-                border-radius: var(--radius-sm);
-                background-color: rgba(255, 109, 40, 0.1);
-                color: var(--primary);
-                font-size: 1.25rem;
-                cursor: pointer;
-                transition: var(--transition);
             }
 
-            .mobile-menu-btn:hover {
-                background-color: rgba(255, 109, 40, 0.2);
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
 
-            .leaderboard-table,
-            .history-table {
-                display: block;
-                overflow-x: auto;
+            .filter-form {
+                flex-direction: column;
             }
         }
 
@@ -188,12 +793,24 @@
                 gap: 1rem;
             }
 
-            .filter-form {
+            .section-actions {
                 flex-direction: column;
+                gap: 0.5rem;
             }
 
-            .filter-form select {
+            .btn {
                 width: 100%;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .notification-panel {
+                width: calc(100% - 40px);
+                right: 20px;
+                left: 20px;
             }
         }
     </style>
@@ -207,7 +824,7 @@
             </div>
             <h1 class="header-title">Lịch Sử & Thống Kê Trách Nhiệm</h1>
             <div class="header-actions">
-                <div class="header-icon">
+                <div class="header-icon notification-icon" id="notification-icon">
                     <i class="fas fa-bell"></i>
                     <span class="badge">3</span>
                 </div>
@@ -217,6 +834,30 @@
                 <div class="user-avatar">NM</div>
             </div>
         </header>
+
+        <!-- Notification Panel -->
+        <div class="notification-panel" id="notification-panel">
+            <div class="notification-header">
+                <div class="notification-title">Thông báo</div>
+                <button class="notification-close" id="notification-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="notification-list">
+                <div class="notification-item unread">
+                    <div class="notification-message">Bạn có công việc mới: "Dọn nhà vệ sinh" được giao vào ngày 15/05</div>
+                    <div class="notification-time">10 phút trước</div>
+                </div>
+                <div class="notification-item unread">
+                    <div class="notification-message">Nguyễn Văn A đã hoàn thành công việc "Rửa bát"</div>
+                    <div class="notification-time">2 giờ trước</div>
+                </div>
+                <div class="notification-item">
+                    <div class="notification-message">Bạn đã đạt hạng 2 trong bảng xếp hạng tuần này</div>
+                    <div class="notification-time">1 ngày trước</div>
+                </div>
+            </div>
+        </div>
 
         <!-- Sidebar -->
         <nav class="sidebar">
@@ -251,7 +892,7 @@
                 </a>
                 <a href="#" class="nav-item">
                     <div class="nav-icon">
-                        <i class="fas fa-trophy"></i>
+                        <i class="fas fa-chart-bar"></i>
                     </div>
                     <div class="nav-text">Thống kê</div>
                 </a>
@@ -260,6 +901,12 @@
                         <i class="fas fa-history"></i>
                     </div>
                     <div class="nav-text">Lịch sử</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="nav-text">Cài đặt</div>
                 </a>
             </div>
 
@@ -277,42 +924,170 @@
 
         <!-- Main content -->
         <main class="main-content">
+            <!-- Stats Overview -->
             <div class="stats-section">
-                <h2>Bảng Thành Tích</h2>
-                <div class="filter-form">
-                    <select id="time-filter" onchange="renderStats()">
-                        <option value="all">Tất cả</option>
-                        <option value="week">Tuần này</option>
-                        <option value="month">Tháng này</option>
-                    </select>
-                    <select id="task-filter" onchange="renderStats()">
-                        <option value="all">Tất cả công việc</option>
-                        <option value="Dọn phòng">Dọn phòng</option>
-                        <option value="Rửa bát">Rửa bát</option>
-                        <option value="Đổ rác">Đổ rác</option>
-                        <option value="Giặt khăn">Giặt khăn</option>
-                    </select>
+                <div class="section-title">
+                    <h2>Tổng quan</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-outline" id="export-btn">
+                            <i class="fas fa-file-export btn-icon"></i>Xuất báo cáo
+                        </button>
+                        <button class="btn btn-primary" id="add-task-btn">
+                            <i class="fas fa-plus btn-icon"></i>Thêm công việc
+                        </button>
+                    </div>
                 </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Tổng công việc</h3>
+                        <div class="value" id="total-tasks">24</div>
+                        <div class="change up">
+                            <i class="fas fa-arrow-up"></i> 2 so với tuần trước
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Hoàn thành</h3>
+                        <div class="value" id="completed-tasks">18</div>
+                        <div class="value" id="completion-rate">(75%)</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Điểm trung bình</h3>
+                        <div class="value" id="avg-points">3.2</div>
+                        <div class="change up">
+                            <i class="fas fa-arrow-up"></i> 0.4 so với tháng trước
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Thành viên tích cực</h3>
+                        <div class="value" id="active-member">Nguyễn Văn A</div>
+                        <div class="value" id="active-points">(12 điểm)</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="stats-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Add Task Form -->
+            <div class="add-task-form" id="add-task-form">
+                <h3>Thêm công việc mới</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="task-type">Loại công việc</label>
+                        <select id="task-type" class="form-control">
+                            <option value="Dọn phòng">Dọn phòng</option>
+                            <option value="Rửa bát">Rửa bát</option>
+                            <option value="Đổ rác">Đổ rác</option>
+                            <option value="Giặt khăn">Giặt khăn</option>
+                            <option value="Nấu ăn">Nấu ăn</option>
+                            <option value="Lau nhà">Lau nhà</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-assignee">Người thực hiện</label>
+                        <select id="task-assignee" class="form-control">
+                            <option value="A">Nguyễn Văn A</option>
+                            <option value="B">Trần Thị B</option>
+                            <option value="C">Lê Văn C</option>
+                            <option value="D">Phạm Thị D</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="task-date">Ngày thực hiện</label>
+                        <input type="date" id="task-date" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="task-comment">Ghi chú (tùy chọn)</label>
+                        <input type="text" id="task-comment" class="form-control" placeholder="Nhập ghi chú...">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-outline" id="cancel-task-btn">Hủy bỏ</button>
+                    <button class="btn btn-primary" id="save-task-btn">Lưu công việc</button>
+                </div>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="stats-section">
+                <div class="section-title">
+                    <h2>Bảng Thành Tích</h2>
+                    <div class="filter-form">
+                        <div class="form-group">
+                            <label for="time-filter">Thời gian</label>
+                            <select id="time-filter" class="form-control" onchange="renderStats()">
+                                <option value="all">Tất cả</option>
+                                <option value="week">Tuần này</option>
+                                <option value="month">Tháng này</option>
+                                <option value="quarter">Quý này</option>
+                                <option value="year">Năm nay</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-filter">Loại công việc</label>
+                            <select id="task-filter" class="form-control" onchange="renderStats()">
+                                <option value="all">Tất cả công việc</option>
+                                <option value="Dọn phòng">Dọn phòng</option>
+                                <option value="Rửa bát">Rửa bát</option>
+                                <option value="Đổ rác">Đổ rác</option>
+                                <option value="Giặt khăn">Giặt khăn</option>
+                                <option value="Nấu ăn">Nấu ăn</option>
+                                <option value="Lau nhà">Lau nhà</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="status-filter">Trạng thái</label>
+                            <select id="status-filter" class="form-control" onchange="renderStats()">
+                                <option value="all">Tất cả</option>
+                                <option value="completed">Đã hoàn thành</option>
+                                <option value="pending">Chưa hoàn thành</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
                 <table class="leaderboard-table">
                     <thead>
                         <tr>
                             <th>Xếp hạng</th>
                             <th>Thành viên</th>
-                            <th>Số công việc hoàn thành</th>
+                            <th>Số công việc</th>
                             <th>Điểm trách nhiệm</th>
+                            <th>Tỷ lệ hoàn thành</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboard-list">
                         <!-- Leaderboard will be populated by JavaScript -->
                     </tbody>
                 </table>
-                <div class="motivation-message" id="motivation-message">
-                    <!-- Motivation message will be populated by JavaScript -->
+                
+                <div class="motivation-card">
+                    <div class="motivation-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="motivation-content">
+                        <h3 id="motivation-title">Chúc mừng Nguyễn Văn A!</h3>
+                        <p id="motivation-message">Bạn đang dẫn đầu với 15 điểm trong tháng này. Hãy tiếp tục phát huy tinh thần trách nhiệm!</p>
+                    </div>
                 </div>
             </div>
 
+            <!-- History -->
             <div class="stats-section">
-                <h2>Lịch Sử Đóng Góp</h2>
+                <div class="section-title">
+                    <h2>Lịch Sử Đóng Góp</h2>
+                </div>
+                
+                <div class="history-tabs">
+                    <div class="tab active" data-tab="all">Tất cả</div>
+                    <div class="tab" data-tab="completed">Đã hoàn thành</div>
+                    <div class="tab" data-tab="pending">Chưa hoàn thành</div>
+                    <div class="tab" data-tab="overdue">Quá hạn</div>
+                </div>
+                
                 <table class="history-table">
                     <thead>
                         <tr>
@@ -320,6 +1095,8 @@
                             <th>Thành viên</th>
                             <th>Công việc</th>
                             <th>Trạng thái</th>
+                            <th>Ghi chú</th>
+                            <th>Hành động</th>
                         </tr>
                     </thead>
                     <tbody id="history-list">
@@ -330,6 +1107,7 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Mobile menu toggle
@@ -347,6 +1125,7 @@
             const themeToggle = document.querySelector('.theme-toggle');
             const themeBtns = document.querySelectorAll('.theme-btn');
             const body = document.body;
+            const themeIcon = document.querySelector('.theme-icon i');
             
             themeBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -358,11 +1137,11 @@
                     body.setAttribute('data-theme', theme);
                     localStorage.setItem('theme', theme);
                     
-                    const themeIcon = document.querySelector('.theme-icon i');
                     themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
                 });
             });
 
+            // Apply saved theme
             const savedTheme = localStorage.getItem('theme') || 'light';
             body.setAttribute('data-theme', savedTheme);
             
@@ -371,35 +1150,211 @@
                 themeBtns.forEach(b => b.classList.remove('active'));
                 activeThemeBtn.classList.add('active');
                 
-                const themeIcon = document.querySelector('.theme-icon i');
                 themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
             }
 
-            // Task history and stats
+            // Notification panel
+            const notificationIcon = document.getElementById('notification-icon');
+            const notificationPanel = document.getElementById('notification-panel');
+            const notificationClose = document.getElementById('notification-close');
+            
+            notificationIcon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                notificationPanel.classList.toggle('active');
+            });
+            
+            notificationClose.addEventListener('click', function() {
+                notificationPanel.classList.remove('active');
+            });
+            
+            document.addEventListener('click', function(e) {
+                if (!notificationPanel.contains(e.target)) {
+                    notificationPanel.classList.remove('active');
+                }
+            });
+
+            // Add task form
+            const addTaskBtn = document.getElementById('add-task-btn');
+            const addTaskForm = document.getElementById('add-task-form');
+            const cancelTaskBtn = document.getElementById('cancel-task-btn');
+            
+            addTaskBtn.addEventListener('click', function() {
+                addTaskForm.classList.add('active');
+            });
+            
+            cancelTaskBtn.addEventListener('click', function() {
+                addTaskForm.classList.remove('active');
+            });
+
+            // History tabs
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    renderStats();
+                });
+            });
+
+            // Task data
             let tasks = JSON.parse(localStorage.getItem('tasks')) || [
-                { type: 'Dọn phòng', assignee: 'A', date: '2025-04-28', completed: true },
-                { type: 'Rửa bát', assignee: 'B', date: '2025-04-28', completed: true },
-                { type: 'Đổ rác', assignee: 'C', date: '2025-04-29', completed: false },
-                { type: 'Giặt khăn', assignee: 'A', date: '2025-04-29', completed: true }
+                { type: 'Dọn phòng', assignee: 'A', date: '2025-05-15', completed: true, comment: 'Dọn sạch sẽ' },
+                { type: 'Rửa bát', assignee: 'B', date: '2025-05-15', completed: true, comment: '' },
+                { type: 'Đổ rác', assignee: 'C', date: '2025-05-16', completed: false, comment: 'Quên không đổ' },
+                { type: 'Giặt khăn', assignee: 'A', date: '2025-05-16', completed: true, comment: 'Giặt cả chăn' },
+                { type: 'Nấu ăn', assignee: 'D', date: '2025-05-17', completed: true, comment: 'Nấu ngon' },
+                { type: 'Lau nhà', assignee: 'B', date: '2025-05-17', completed: false, comment: '' },
+                { type: 'Dọn phòng', assignee: 'C', date: '2025-05-18', completed: true, comment: 'Dọn gọn gàng' },
+                { type: 'Rửa bát', assignee: 'A', date: '2025-05-18', completed: true, comment: '' },
+                { type: 'Đổ rác', assignee: 'D', date: '2025-05-19', completed: false, comment: 'Bận việc' },
+                { type: 'Giặt khăn', assignee: 'B', date: '2025-05-19', completed: true, comment: 'Giặt khô' },
+                { type: 'Nấu ăn', assignee: 'A', date: '2025-05-20', completed: true, comment: 'Món mới' },
+                { type: 'Lau nhà', assignee: 'C', date: '2025-05-20', completed: true, comment: 'Lau kỹ' },
+                { type: 'Dọn phòng', assignee: 'D', date: '2025-05-21', completed: false, comment: '' },
+                { type: 'Rửa bát', assignee: 'B', date: '2025-05-21', completed: true, comment: 'Rửa sạch' },
+                { type: 'Đổ rác', assignee: 'A', date: '2025-05-22', completed: true, comment: 'Đúng giờ' },
+                { type: 'Giặt khăn', assignee: 'C', date: '2025-05-22', completed: false, comment: 'Máy hỏng' },
+                { type: 'Nấu ăn', assignee: 'D', date: '2025-05-23', completed: true, comment: 'Nấu nhiều' },
+                { type: 'Lau nhà', assignee: 'A', date: '2025-05-23', completed: true, comment: '' },
+                { type: 'Dọn phòng', assignee: 'B', date: '2025-05-24', completed: true, comment: 'Gọn gàng' },
+                { type: 'Rửa bát', assignee: 'C', date: '2025-05-24', completed: false, comment: 'Bận học' },
+                { type: 'Đổ rác', assignee: 'D', date: '2025-05-25', completed: true, comment: '' },
+                { type: 'Giặt khăn', assignee: 'A', date: '2025-05-25', completed: true, comment: 'Giặt nhanh' },
+                { type: 'Nấu ăn', assignee: 'B', date: '2025-05-26', completed: true, comment: 'Nấu sáng' },
+                { type: 'Lau nhà', assignee: 'C', date: '2025-05-26', completed: false, comment: '' }
             ];
 
-            const members = ['A', 'B', 'C'];
+            const members = [
+                { id: 'A', name: 'Nguyễn Văn A', avatar: 'NA' },
+                { id: 'B', name: 'Trần Thị B', avatar: 'TB' },
+                { id: 'C', name: 'Lê Văn C', avatar: 'LC' },
+                { id: 'D', name: 'Phạm Thị D', avatar: 'PD' }
+            ];
+
             const taskPoints = {
                 'Dọn phòng': 3,
                 'Rửa bát': 2,
                 'Đổ rác': 1,
-                'Giặt khăn': 2
+                'Giặt khăn': 2,
+                'Nấu ăn': 3,
+                'Lau nhà': 2
             };
+
+            // Initialize chart
+            const ctx = document.getElementById('stats-chart').getContext('2d');
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+
+let statsChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'],
+        datasets: [
+            {
+                label: 'Điểm trách nhiệm',
+                data: [12, 19, 15, 22],
+                backgroundColor: 'rgba(255, 109, 40, 0.7)',
+                borderColor: 'rgba(255, 109, 40, 1)',
+                borderWidth: 1
+            },
+            {
+                label: 'Công việc hoàn thành',
+                data: [8, 12, 10, 15],
+                backgroundColor: 'rgba(63, 151, 155, 0.7)',
+                borderColor: 'rgba(63, 151, 155, 1)',
+                borderWidth: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.1)'
+                },
+                ticks: {
+                    color: textColor
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    color: textColor
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    color: textColor
+                }
+            }
+        }
+    }
+});
 
             function saveTasks() {
                 localStorage.setItem('tasks', JSON.stringify(tasks));
+                updateStats();
             }
 
-            function filterTasks(timeFilter, taskFilter) {
+            function updateStats() {
+                // Update total tasks
+                document.getElementById('total-tasks').textContent = tasks.length;
+                
+                // Update completed tasks
+                const completedTasks = tasks.filter(task => task.completed).length;
+                document.getElementById('completed-tasks').textContent = completedTasks;
+                
+                // Update completion rate
+                const completionRate = Math.round((completedTasks / tasks.length) * 100);
+                document.getElementById('completion-rate').textContent = `(${completionRate}%)`;
+                
+                // Calculate average points
+                const totalPoints = tasks.filter(task => task.completed)
+                    .reduce((sum, task) => sum + (taskPoints[task.type] || 1), 0);
+                const avgPoints = (totalPoints / members.length).toFixed(1);
+                document.getElementById('avg-points').textContent = avgPoints;
+                
+                // Find most active member
+                const memberStats = calculateMemberStats('all', 'all', 'completed');
+                if (memberStats.length > 0) {
+                    const activeMember = members.find(m => m.id === memberStats[0].member);
+                    document.getElementById('active-member').textContent = activeMember.name;
+                    document.getElementById('active-points').textContent = `(${memberStats[0].points} điểm)`;
+                }
+                
+                // Update chart data
+                updateChartData();
+            }
+
+            function updateChartData() {
+                // This is a simplified version - in a real app you would calculate weekly data
+                const weeklyData = {
+                    labels: ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4'],
+                    points: [12, 19, 15, 22],
+                    tasks: [8, 12, 10, 15]
+                };
+                
+                statsChart.data.labels = weeklyData.labels;
+                statsChart.data.datasets[0].data = weeklyData.points;
+                statsChart.data.datasets[1].data = weeklyData.tasks;
+                statsChart.update();
+            }
+
+            function calculateMemberStats(timeFilter, taskFilter, statusFilter) {
                 const now = new Date();
-                return tasks.filter(task => {
+                const filteredTasks = tasks.filter(task => {
+                    // Filter by time
                     const taskDate = new Date(task.date);
                     let timeMatch = true;
+                    
                     if (timeFilter === 'week') {
                         const weekStart = new Date(now);
                         weekStart.setDate(now.getDate() - now.getDay());
@@ -407,74 +1362,236 @@
                     } else if (timeFilter === 'month') {
                         timeMatch = taskDate.getMonth() === now.getMonth() && 
                                   taskDate.getFullYear() === now.getFullYear();
+                    } else if (timeFilter === 'quarter') {
+                        const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3;
+                        timeMatch = taskDate.getMonth() >= quarterStartMonth && 
+                                   taskDate.getMonth() < quarterStartMonth + 3 &&
+                                   taskDate.getFullYear() === now.getFullYear();
+                    } else if (timeFilter === 'year') {
+                        timeMatch = taskDate.getFullYear() === now.getFullYear();
                     }
+                    
+                    // Filter by task type
                     const taskMatch = taskFilter === 'all' || task.type === taskFilter;
-                    return timeMatch && taskMatch;
+                    
+                    // Filter by status
+                    let statusMatch = true;
+                    if (statusFilter === 'completed') {
+                        statusMatch = task.completed;
+                    } else if (statusFilter === 'pending') {
+                        statusMatch = !task.completed;
+                    } else if (statusFilter === 'overdue') {
+                        statusMatch = !task.completed && taskDate < now;
+                    }
+                    
+                    return timeMatch && taskMatch && statusMatch;
                 });
+
+                // Calculate stats for each member
+                const stats = members.map(member => {
+                    const memberTasks = filteredTasks.filter(task => task.assignee === member.id);
+                    const completedTasks = memberTasks.filter(task => task.completed);
+                    const taskCount = memberTasks.length;
+                    const completedCount = completedTasks.length;
+                    const points = completedTasks.reduce((sum, task) => sum + (taskPoints[task.type] || 1), 0);
+                    const completionRate = taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0;
+                    
+                    return { 
+                        member: member.id, 
+                        name: member.name,
+                        avatar: member.avatar,
+                        taskCount, 
+                        completedCount,
+                        points, 
+                        completionRate 
+                    };
+                });
+
+                // Sort by points
+                return stats.sort((a, b) => b.points - a.points);
             }
 
             function renderStats() {
                 const timeFilter = document.getElementById('time-filter').value;
                 const taskFilter = document.getElementById('task-filter').value;
-                const filteredTasks = filterTasks(timeFilter, taskFilter);
-
-                // Calculate stats
-                const stats = members.map(member => {
-                    const memberTasks = filteredTasks.filter(task => task.assignee === member && task.completed);
-                    const taskCount = memberTasks.length;
-                    const points = memberTasks.reduce((sum, task) => sum + (taskPoints[task.type] || 1), 0);
-                    return { member, taskCount, points };
-                });
-
-                // Sort by points
-                stats.sort((a, b) => b.points - a.points);
-
+                const statusFilter = document.getElementById('status-filter').value;
+                const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+                
+                // Calculate stats based on filters
+                const stats = calculateMemberStats(timeFilter, taskFilter, activeTab === 'all' ? statusFilter : activeTab);
+                
                 // Render leaderboard
                 const leaderboardList = document.getElementById('leaderboard-list');
                 leaderboardList.innerHTML = '';
+                
                 stats.forEach((stat, index) => {
+                    const member = members.find(m => m.id === stat.member);
                     const row = document.createElement('tr');
+                    
                     row.innerHTML = `
                         <td>
                             <span class="rank-badge rank-${index + 1}">${index + 1}</span>
                         </td>
-                        <td>${stat.member}</td>
+                        <td>
+                            <div class="member-info">
+                                <div class="member-avatar">${member.avatar}</div>
+                                <div>${member.name}</div>
+                            </div>
+                        </td>
                         <td>${stat.taskCount}</td>
                         <td>${stat.points}</td>
+                        <td>
+                            <div>${stat.completionRate}%</div>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${stat.completionRate}%"></div>
+                            </div>
+                        </td>
                     `;
+                    
                     leaderboardList.appendChild(row);
                 });
-
-                // Motivation message
+                
+                // Update motivation message
+                const motivationTitle = document.getElementById('motivation-title');
                 const motivationMessage = document.getElementById('motivation-message');
+                
                 if (stats.length > 0 && stats[0].points > 0) {
-                    motivationMessage.textContent = `Chúc mừng ${stats[0].member} đang dẫn đầu với ${stats[0].points} điểm! Hãy tiếp tục giữ vững phong độ!`;
+                    motivationTitle.textContent = `Chúc mừng ${stats[0].name}!`;
+                    motivationMessage.textContent = `Bạn đang dẫn đầu với ${stats[0].points} điểm trong tháng này. Hãy tiếp tục phát huy tinh thần trách nhiệm!`;
                 } else {
+                    motivationTitle.textContent = 'Không có dữ liệu';
                     motivationMessage.textContent = 'Hãy cùng nhau hoàn thành công việc để leo lên bảng xếp hạng!';
                 }
-
+                
                 // Render history
                 const historyList = document.getElementById('history-list');
                 historyList.innerHTML = '';
+                
+                const now = new Date();
+                const filteredTasks = tasks.filter(task => {
+                    // Filter by time
+                    const taskDate = new Date(task.date);
+                    let timeMatch = true;
+                    
+                    if (timeFilter === 'week') {
+                        const weekStart = new Date(now);
+                        weekStart.setDate(now.getDate() - now.getDay());
+                        timeMatch = taskDate >= weekStart;
+                    } else if (timeFilter === 'month') {
+                        timeMatch = taskDate.getMonth() === now.getMonth() && 
+                                  taskDate.getFullYear() === now.getFullYear();
+                    } else if (timeFilter === 'quarter') {
+                        const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3;
+                        timeMatch = taskDate.getMonth() >= quarterStartMonth && 
+                                   taskDate.getMonth() < quarterStartMonth + 3 &&
+                                   taskDate.getFullYear() === now.getFullYear();
+                    } else if (timeFilter === 'year') {
+                        timeMatch = taskDate.getFullYear() === now.getFullYear();
+                    }
+                    
+                    // Filter by task type
+                    const taskMatch = taskFilter === 'all' || task.type === taskFilter;
+                    
+                    // Filter by status
+                    let statusMatch = true;
+                    if (activeTab === 'completed') {
+                        statusMatch = task.completed;
+                    } else if (activeTab === 'pending') {
+                        statusMatch = !task.completed;
+                    } else if (activeTab === 'overdue') {
+                        statusMatch = !task.completed && taskDate < now;
+                    }
+                    
+                    return timeMatch && taskMatch && statusMatch;
+                }).sort((a, b) => new Date(b.date) - new Date(a.date));
+                
                 filteredTasks.forEach(task => {
+                    const member = members.find(m => m.id === task.assignee);
+                    const taskDate = new Date(task.date);
+                    const formattedDate = taskDate.toLocaleDateString('vi-VN');
+                    const isOverdue = !task.completed && taskDate < now;
+                    
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${task.date}</td>
-                        <td>${task.assignee}</td>
+                        <td>${formattedDate}</td>
+                        <td>${member.name}</td>
                         <td>${task.type}</td>
                         <td>
-                            <span class="status ${task.completed ? 'completed' : 'pending'}">
-                                ${task.completed ? 'Hoàn thành' : 'Chưa làm'}
+                            <span class="status ${task.completed ? 'completed' : isOverdue ? 'overdue' : 'pending'}">
+                                ${task.completed ? 'Hoàn thành' : isOverdue ? 'Quá hạn' : 'Chưa làm'}
                             </span>
+                        </td>
+                        <td>
+                            ${task.comment ? `<div class="comment">${task.comment}</div>` : ''}
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="toggleTaskStatus('${task.date}', '${task.type}', '${task.assignee}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
                         </td>
                     `;
                     historyList.appendChild(row);
                 });
             }
 
+            // Add new task
+            const saveTaskBtn = document.getElementById('save-task-btn');
+            
+            saveTaskBtn.addEventListener('click', function() {
+                const type = document.getElementById('task-type').value;
+                const assignee = document.getElementById('task-assignee').value;
+                const date = document.getElementById('task-date').value;
+                const comment = document.getElementById('task-comment').value;
+                
+                if (!type || !assignee || !date) {
+                    alert('Vui lòng điền đầy đủ thông tin');
+                    return;
+                }
+                
+                tasks.push({
+                    type,
+                    assignee,
+                    date,
+                    completed: false,
+                    comment
+                });
+                
+                saveTasks();
+                renderStats();
+                addTaskForm.classList.remove('active');
+                
+                // Reset form
+                document.getElementById('task-date').value = '';
+                document.getElementById('task-comment').value = '';
+            });
+
+            // Export button
+            const exportBtn = document.getElementById('export-btn');
+            
+            exportBtn.addEventListener('click', function() {
+                alert('Chức năng xuất báo cáo sẽ được thực hiện sau');
+            });
+
             // Initialize
+            updateStats();
             renderStats();
         });
+
+        // Global function to toggle task status
+        function toggleTaskStatus(date, type, assignee) {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            const taskIndex = tasks.findIndex(
+                t => t.date === date && t.type === type && t.assignee === assignee
+            );
+            
+            if (taskIndex !== -1) {
+                tasks[taskIndex].completed = !tasks[taskIndex].completed;
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                
+                // Refresh the display
+                document.dispatchEvent(new Event('DOMContentLoaded'));
+            }
+        }
     </script>
 </body>
 </html>

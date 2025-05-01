@@ -6,200 +6,11 @@
     <title>Phân Chia Công Việc Chung</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="../static/img/logo.png" type="image/x-icon">
+    <!-- css chung -->
     <link rel="stylesheet" href="../static/css/app.css">
-
-    <style>
-
-        .task-section {
-            background-color: var(--card-bg);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-md);
-        }
-
-        .task-section h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-
-        .task-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1rem;
-        }
-
-        .task-table th,
-        .task-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .task-table th {
-            font-weight: 600;
-            color: var(--text-light);
-        }
-
-        .task-table td {
-            color: var(--text);
-        }
-
-        .task-status {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .task-status.completed {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .task-status.pending {
-            background-color: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-        }
-
-        .task-action {
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            font-weight: 500;
-        }
-
-        .task-action.complete {
-            background-color: var(--success);
-            color: white;
-        }
-
-        .task-action.complete:hover {
-            background-color: #0a8f66;
-        }
-
-        .task-action.notify {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .task-action.notify:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .add-task-form {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .add-task-form input,
-        .add-task-form select {
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
-            flex: 1;
-        }
-
-        .add-task-form button {
-            padding: 0.75rem 1.5rem;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .add-task-form button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        @media (max-width: 1024px) {
-            .app-container {
-                grid-template-columns: 240px 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
-            }
-
-            .header {
-                grid-column: 1 / 2;
-                padding: 1rem;
-            }
-
-            .sidebar {
-                grid-column: 1 / 2;
-                grid-row: 2 / 3;
-                height: auto;
-                position: static;
-                display: none;
-            }
-
-            .sidebar.active {
-                display: flex;
-            }
-
-            .main-content {
-                grid-column: 1 / 2;
-                grid-row: 3 / 4;
-                padding: 1.5rem;
-            }
-
-            .mobile-menu-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
-                border-radius: var(--radius-sm);
-                background-color: rgba(255, 109, 40, 0.1);
-                color: var(--primary);
-                font-size: 1.25rem;
-                cursor: pointer;
-                transition: var(--transition);
-            }
-
-            .mobile-menu-btn:hover {
-                background-color: rgba(255, 109, 40, 0.2);
-            }
-
-            .task-table {
-                display: block;
-                overflow-x: auto;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header-title {
-                font-size: 1.25rem;
-            }
-
-            .header-actions {
-                gap: 1rem;
-            }
-
-            .add-task-form {
-                flex-direction: column;
-            }
-
-            .add-task-form input,
-            .add-task-form select,
-            .add-task-form button {
-                width: 100%;
-            }
-        }
-    </style>
+    <!-- css riêng -->
+    <link rel="stylesheet" href="../static/css/phanchiacongviec.css">
 </head>
 <body>
     <div class="app-container">
@@ -208,16 +19,18 @@
             <div class="mobile-menu-btn">
                 <i class="fas fa-bars"></i>
             </div>
-            <h1 class="header-title">Phân Chia Công Việc</h1>
+            <h1 class="header-title">Dashboard</h1>
             <div class="header-actions">
                 <div class="header-icon">
-                    <i class="fas fa-bell"></i>
+                    <a href="/thong-bao" class="btn" style="color: inherit;">
+                        <i class="fas fa-bell"></i>
+                      </a>
                     <span class="badge">3</span>
                 </div>
                 <div class="header-icon theme-icon">
                     <i class="fas fa-moon"></i>
                 </div>
-                <div class="user-avatar">NM</div>
+                <a href="/trang-ca-nhan" class="user-avatar" style="text-decoration: none;">NM</a>
             </div>
         </header>
 
@@ -225,47 +38,97 @@
         <nav class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <i class="fas fa-tasks"></i>
+                    <a href="/trang-ca-nhan">
+                        <img src="../static/img/logo.png" alt="Logo">
+                      </a>
                 </div>
                 <div>
-                    <div class="sidebar-title">Việc Nhà Chung</div>
+                    <div class="sidebar-title">Chung Nhà</div>
                     <div class="sidebar-group">Nhóm: Nhà Mình A2</div>
                 </div>
             </div>
-
+        
             <div class="sidebar-nav">
-                <a href="#" class="nav-item active">
+                <a href="/home" class="nav-item ">
                     <div class="nav-icon">
                         <i class="fas fa-home"></i>
                     </div>
                     <div class="nav-text">Trang chủ</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="/thanh-vien" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="nav-text">Thành viên</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="/noi-quy" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="nav-text">Nội quy</div>
+                </a>
+                <a href="#" class="nav-item active">
                     <div class="nav-icon">
                         <i class="fas fa-tasks"></i>
                     </div>
-                    <div class="nav-text">Công việc</div>
+                    <div class="nav-text">Phân công việc</div>
+                </a>
+                <a href="/trach-nhiem" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="nav-text">Trách nhiệm thành viên</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="nav-text">Thực đơn</div>
                 </a>
                 <a href="#" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-calendar-alt"></i>
                     </div>
-                    <div class="nav-text">Lịch phân công</div>
+                    <div class="nav-text">Lịch nấu ăn</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="/quan-ly-do-dung" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <div class="nav-text">Quản lý đồ dùng</div>
+                </a>
+                <a href="/chi-phi" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="nav-text">Chi phí</div>
+                </a>
+                <a href="/quy-nhom" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-piggy-bank"></i>
+                    </div>
+                    <div class="nav-text">Quỹ nhóm</div>
+                </a>
+                <a href="/thong-ke" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-chart-bar"></i>
                     </div>
                     <div class="nav-text">Thống kê</div>
                 </a>
+                <a href="/tro-chuyen" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="nav-text">Trò chuyện</div>
+                </a>
+                <a href="/binh-chon" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-vote-yea"></i>
+                    </div>
+                    <div class="nav-text">Bình chọn</div>
+                </a>
             </div>
-
+        
             <div class="sidebar-footer">
                 <div class="theme-toggle">
                     <div class="theme-btn active" data-theme="light">
@@ -277,195 +140,158 @@
                 </div>
             </div>
         </nav>
-
         <!-- Main content -->
         <main class="main-content">
-            <div class="task-section">
-                <h2>Lịch Phân Công Tuần Này</h2>
-                <table class="task-table">
-                    <thead>
-                        <tr>
-                            <th>Ngày</th>
-                            <th>Công việc</th>
-                            <th>Người phụ trách</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody id="task-list">
-                        <!-- Tasks will be populated by JavaScript -->
-                    </tbody>
-                </table>
+            <div class="content-header">
+                <h2 class="content-title">Quản lý công việc chung</h2>
+                <div class="content-actions">
+                    <button class="task-btn notify" onclick="openTaskModal()">
+                        <i class="fas fa-plus"></i> Thêm công việc
+                    </button>
+                </div>
+            </div>
 
-                <div class="add-task-form">
-                    <select id="task-type">
-                        <option value="Dọn phòng">Dọn phòng</option>
-                        <option value="Rửa bát">Rửa bát</option>
-                        <option value="Đổ rác">Đổ rác</option>
-                        <option value="Giặt khăn">Giặt khăn</option>
+            <!-- Task statistics -->
+            <div class="task-stats">
+                <div class="stat-card completed">
+                    <div class="stat-value" id="completed-count">0</div>
+                    <div class="stat-label">Đã hoàn thành</div>
+                </div>
+                <div class="stat-card pending">
+                    <div class="stat-value" id="pending-count">0</div>
+                    <div class="stat-label">Đang chờ</div>
+                </div>
+                <div class="stat-card overdue">
+                    <div class="stat-value" id="overdue-count">0</div>
+                    <div class="stat-label">Quá hạn</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-count">0</div>
+                    <div class="stat-label">Tổng công việc</div>
+                </div>
+            </div>
+
+            <!-- Filter controls -->
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label for="filter-status" class="filter-label">Trạng thái:</label>
+                    <select id="filter-status" class="filter-select" onchange="filterTasks()">
+                        <option value="all">Tất cả</option>
+                        <option value="completed">Hoàn thành</option>
+                        <option value="pending">Chưa hoàn thành</option>
+                        <option value="overdue">Quá hạn</option>
                     </select>
-                    <select id="task-assignee">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-assignee" class="filter-label">Người phụ trách:</label>
+                    <select id="filter-assignee" class="filter-select" onchange="filterTasks()">
+                        <option value="all">Tất cả</option>
                         <option value="A">A</option>
                         <option value="B">B</option>
                         <option value="C">C</option>
                     </select>
-                    <input type="date" id="task-date">
-                    <button onclick="addTask()">Thêm công việc</button>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-date" class="filter-label">Từ ngày:</label>
+                    <input type="date" id="filter-date" class="filter-input" onchange="filterTasks()">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-to-date" class="filter-label">Đến ngày:</label>
+                    <input type="date" id="filter-to-date" class="filter-input" onchange="filterTasks()">
+                </div>
+            </div>
+
+            <!-- Task section -->
+            <div class="task-section">
+                <div class="section-header">
+                    <h3 class="section-title">Danh sách công việc</h3>
+                    <div class="section-actions">
+                        <button class="task-btn" onclick="exportToExcel()">
+                            <i class="fas fa-file-export"></i> Xuất Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="task-table-container">
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <th>Ngày</th>
+                                <th>Công việc</th>
+                                <th>Mô tả</th>
+                                <th>Người phụ trách</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="task-list">
+                            <!-- Tasks will be populated by JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </main>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mobile menu toggle
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            const sidebar = document.querySelector('.sidebar');
-            
-            mobileMenuBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-                mobileMenuBtn.innerHTML = sidebar.classList.contains('active') 
-                    ? '<i class="fas fa-times"></i>' 
-                    : '<i class="fas fa-bars"></i>';
-            });
-
-            // Theme toggle
-            const themeToggle = document.querySelector('.theme-toggle');
-            const themeBtns = document.querySelectorAll('.theme-btn');
-            const body = document.body;
-            
-            themeBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const theme = this.getAttribute('data-theme');
-                    
-                    themeBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    body.setAttribute('data-theme', theme);
-                    localStorage.setItem('theme', theme);
-                    
-                    const themeIcon = document.querySelector('.theme-icon i');
-                    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-                });
-            });
-
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            body.setAttribute('data-theme', savedTheme);
-            
-            const activeThemeBtn = document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`);
-            if (activeThemeBtn) {
-                themeBtns.forEach(b => b.classList.remove('active'));
-                activeThemeBtn.classList.add('active');
-                
-                const themeIcon = document.querySelector('.theme-icon i');
-                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            }
-
-            // Task management
-            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-            let members = ['A', 'B', 'C'];
-            let currentRotation = 0;
-
-            function saveTasks() {
-                localStorage.setItem('tasks', JSON.stringify(tasks));
-            }
-
-            function renderTasks() {
-                const taskList = document.getElementById('task-list');
-                taskList.innerHTML = '';
-
-                tasks.forEach((task, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${task.date}</td>
-                        <td>${task.type}</td>
-                        <td>${task.assignee}</td>
-                        <td><span class="task-status ${task.completed ? 'completed' : 'pending'}">
-                            ${task.completed ? 'Hoàn thành' : 'Chưa làm'}
-                        </span></td>
-                        <td>
-                            <button class="task-action complete" onclick="markComplete(${index})" ${task.completed ? 'disabled' : ''}>
-                                Đánh dấu hoàn thành
-                            </button>
-                            <button class="task-action notify" onclick="sendNotification(${index})">
-                                Nhắc nhở
-                            </button>
-                        </td>
-                    `;
-                    taskList.appendChild(row);
-                });
-            }
-
-            window.addTask = function() {
-                const taskType = document.getElementById('task-type').value;
-                const assignee = document.getElementById('task-assignee').value;
-                const date = document.getElementById('task-date').value;
-
-                if (!date) {
-                    alert('Vui lòng chọn ngày!');
-                    return;
-                }
-
-                tasks.push({
-                    type: taskType,
-                    assignee: assignee,
-                    date: date,
-                    completed: false
-                });
-
-                saveTasks();
-                renderTasks();
-            };
-
-            window.markComplete = function(index) {
-                tasks[index].completed = true;
-                saveTasks();
-                renderTasks();
-            };
-
-            window.sendNotification = function(index) {
-                const task = tasks[index];
-                alert(`Đã gửi nhắc nhở cho ${task.assignee}: ${task.type} vào ${task.date}`);
-                // In a real application, this would trigger an actual notification
-            };
-
-            function autoAssignTasks() {
-                const today = new Date();
-                const tasksToAdd = [
-                    'Dọn phòng',
-                    'Rửa bát',
-                    'Đổ rác',
-                    'Giặt khăn'
-                ];
-
-                tasksToAdd.forEach((taskType, i) => {
-                    const date = new Date(today);
-                    date.setDate(today.getDate() + i);
-                    const formattedDate = date.toISOString().split('T')[0];
-                    
-                    // Check if task already exists for this date
-                    if (!tasks.some(t => t.date === formattedDate && t.type === taskType)) {
-                        tasks.push({
-                            type: taskType,
-                            assignee: members[currentRotation % members.length],
-                            date: formattedDate,
-                            completed: false
-                        });
-                        currentRotation++;
-                    }
-                });
-
-                saveTasks();
-                renderTasks();
-            }
-
-            // Initialize tasks
-            autoAssignTasks();
-            renderTasks();
-
-            // Auto-rotate tasks every day
-            setInterval(autoAssignTasks, 24 * 60 * 60 * 1000);
-        });
-    </script>
+    <!-- Add/Edit Task Modal -->
+    <div class="modal" id="task-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Thêm công việc mới</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form class="modal-form" id="task-form">
+                    <input type="hidden" id="task-id">
+                    <div class="form-group">
+                        <label for="modal-task-type">Loại công việc</label>
+                        <select id="modal-task-type" required>
+                            <option value="">Chọn loại công việc</option>
+                            <option value="Dọn phòng">Dọn phòng</option>
+                            <option value="Rửa bát">Rửa bát</option>
+                            <option value="Đổ rác">Đổ rác</option>
+                            <option value="Giặt khăn">Giặt khăn</option>
+                            <option value="Nấu ăn">Nấu ăn</option>
+                            <option value="Mua đồ">Mua đồ</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-task-desc">Mô tả (tùy chọn)</label>
+                        <textarea id="modal-task-desc" placeholder="Thêm chi tiết về công việc..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-task-assignee">Người phụ trách</label>
+                        <select id="modal-task-assignee" required>
+                            <option value="">Chọn người phụ trách</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-task-date">Ngày thực hiện</label>
+                        <input type="date" id="modal-task-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-task-priority">Mức độ ưu tiên</label>
+                        <select id="modal-task-priority">
+                            <option value="low">Thấp</option>
+                            <option value="medium" selected>Trung bình</option>
+                            <option value="high">Cao</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="task-btn" onclick="closeModal()">Hủy</button>
+                <button class="task-btn primary" id="modal-save-btn" onclick="saveTask()">Lưu</button>
+            </div>
+        </div>
+    </div>
+    <!-- js riêng -->
+     <script src="../static/js/phanchiacongviec.js"></script>
+    <!-- js chung -->
+     <script src="../static/js/app.js"></script>
 </body>
 </html>

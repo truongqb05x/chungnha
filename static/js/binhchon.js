@@ -1,218 +1,215 @@
-// Voting management system with percentage display
-let votes = JSON.parse(localStorage.getItem('votes')) || [
-    { id: 1, name: 'Phở bò', type: 'food', date: '2025-05-04', votes: 3, voters: ['NM', 'TV', 'HT'] },
-    { id: 2, name: 'Đi chợ cuối tuần', type: 'activity', date: '2025-05-04', votes: 2, voters: ['NM', 'TV'] },
-    { id: 3, name: 'Cơm rang', type: 'food', date: '2025-05-04', votes: 1, voters: ['HT'] }
-];
+const GROUP_ID  = document.body.dataset.groupId;
+const MEMBER_ID = document.body.dataset.memberId;
 
-// Group members data
-const groupMembers = ['NM', 'TV', 'HT', 'LD', 'PQ'];
-let currentUser = 'NM'; // Simulated current user
-
-// DOM elements
-const voteNameInput = document.getElementById('vote-name');
+const voteNameInput  = document.getElementById('vote-name');
 const voteTypeSelect = document.getElementById('vote-type');
-const voteDateInput = document.getElementById('vote-date');
+const voteDateInput  = document.getElementById('vote-date');
+const voteList       = document.getElementById('vote-list');
+const resultsList    = document.getElementById('results-list');
+const addVoteBtn     = document.getElementById('add-vote-btn');
+const totalMembersEl = document.getElementById('total-members');
 
-// Save votes to localStorage
-function saveVotes() {
-    localStorage.setItem('votes', JSON.stringify(votes));
+// Khởi tạo app
+window.addEventListener('DOMContentLoaded', async () => {
+  voteDateInput.valueAsDate = new Date();
+  addVoteBtn.addEventListener('click', addVoteItem);
+  voteDateInput.addEventListener('change', renderAll);
+  await renderMemberCount();
+  await renderAll();
+});
+
+// Lấy tổng thành viên
+async function renderMemberCount() {
+  const res = await fetch(`/api/group/${GROUP_ID}/members/count`);
+  const { total_members } = await res.json();
+  totalMembersEl.textContent = total_members;
 }
 
-// Format date to display
-function formatDate(dateString) {
-    const options = { day: 'numeric', month: 'numeric', year: 'numeric' };
-    return new Date(dateString).toLocaleDateString('vi-VN', options);
+// Hiển thị vote list và results
+async function renderAll() {
+  const items = await fetchVoteItems(voteDateInput.value);
+  renderVoteList(items);
+  renderResults(items);
 }
 
-// Render voting list
-function renderVotes() {
-    const voteList = document.getElementById('vote-list');
+// Fetch vote items từ API
+async function fetchVoteItems(date) {
+  const res = await fetch(`/api/group/${GROUP_ID}/vote_items?date=${date}`);
+  return res.ok ? await res.json() : [];
+}
+
+// Render danh sách vote
+function renderVoteList(items) {
     voteList.innerHTML = '';
-    
-    // Update member count display
-    document.getElementById('total-members').textContent = groupMembers.length;
+    const total = parseInt(totalMembersEl.textContent, 10) || 1;
+  
+    items.forEach(item => {
+      const percent = Math.round(item.votes * 100 / total);
+      const hasVoted = item.voters.includes(parseInt(MEMBER_ID, 10)); // Kiểm tra xem người dùng đã bình chọn chưa
+  
+      const div = document.createElement('div');
+      div.className = 'vote-item';
+      div.innerHTML = `
+        <div class="vote-info">
+          <h3>${item.name}</h3>
+          <p>${item.type === 'food' ? '🍲 Món ăn' : '🎉 Hoạt động'} • ${new Date(item.vote_date).toLocaleDateString('vi-VN')}</p>
+          <div class="vote-progress"><div class="vote-progress-bar" style="width:${percent}%"></div></div>
+        </div>
+        <div class="vote-count">${item.votes}/${total} phiếu (${percent}%)</div>
+        <button class="vote-btn" onclick="castVote(${item.id})" ${hasVoted ? 'disabled' : ''}>
+          ${hasVoted ? '<i class="fas fa-check-circle"></i> Đã bình chọn' : '<i class="fas fa-vote-yea"></i> Bình chọn'}
+        </button>
+      `;
+      voteList.appendChild(div);
+    });
+  }
 
-    votes.forEach(vote => {
-        const hasVoted = vote.voters.includes(currentUser);
-        const votePercentage = Math.round((vote.votes / groupMembers.length) * 100);
-        
-        const voteItem = document.createElement('div');
-        voteItem.className = 'vote-item';
-        voteItem.innerHTML = `
-            <div class="vote-info">
-                <h3>${vote.name}</h3>
-                <p>${vote.type === 'food' ? '🍲 Món ăn' : '🎉 Hoạt động'} • ${formatDate(vote.date)}</p>
-                <div class="vote-progress">
-                    <div class="vote-progress-bar" style="width: ${votePercentage}%"></div>
-                </div>
-            </div>
-            <div class="vote-count">
-                ${vote.votes}/${groupMembers.length} phiếu (${votePercentage}%)
-            </div>
-            <button class="vote-btn" onclick="castVote(${vote.id})" ${hasVoted ? 'disabled' : ''}>
-                ${hasVoted ? '<i class="fas fa-check-circle"></i> Đã bình chọn' : '<i class="fas fa-vote-yea"></i> Bình chọn'}
-            </button>
-        `;
-        voteList.appendChild(voteItem);
+// Render kết quả
+function renderResults(items) {
+  resultsList.innerHTML = '';
+  const total = parseInt(totalMembersEl.textContent, 10) || 1;
+
+  const grouped = items.reduce((acc, v) => {
+    const key = `${v.type}-${v.vote_date}`;
+    (acc[key] = acc[key]||[]).push(v);
+    return acc;
+  }, {});
+
+  Object.entries(grouped).forEach(([key, arr]) => {
+    const [type, date] = key.split('-');
+    arr.sort((a,b)=>b.votes-a.votes);
+
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'result-group';
+    const sumVotes = arr.reduce((s,i)=>s+i.votes,0);
+    groupDiv.innerHTML = `
+      <h3>${type==='food'?'🍲 Món ăn':'🎉 Hoạt động'} • ${new Date(date).toLocaleDateString('vi-VN')}
+        <span class="total-votes">${sumVotes}/${total} phiếu</span>
+      </h3>
+    `;
+
+    arr.forEach(item => {
+      const pct = Math.round(item.votes*100/total);
+      const voters = item.voters.map(id=> id==MEMBER_ID? `<strong>${id}</strong>`:id).join(', ') || 'Chưa có ai bình chọn';
+
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'result-item';
+      itemDiv.innerHTML = `
+        <div class="result-header"><span>${item.name}</span><span class="result-percentage">${pct}%</span></div>
+        <div class="vote-progress"><div class="vote-progress-bar" style="width:${pct}%"></div></div>
+        <div class="result-voters"><i class="fas fa-user-check"></i> ${voters}</div>
+      `;
+      groupDiv.appendChild(itemDiv);
     });
 
-    renderResults();
+    resultsList.appendChild(groupDiv);
+  });
 }
 
-// Render results with percentage
-function renderResults() {
-    const resultsList = document.getElementById('results-list');
+// Thêm mục vote
+async function addVoteItem() {
+  const name = voteNameInput.value.trim();
+  const type = voteTypeSelect.value;
+  const date = voteDateInput.value;
+  if (!name || !date) return alert('Nhập đủ tên và ngày!');
+
+  await fetch(`/api/group/${GROUP_ID}/vote_items`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ name, type, vote_date: date, member_id: MEMBER_ID })
+  });
+  voteNameInput.value = '';
+  await renderAll();
+}
+
+// Cast vote
+async function castVote(id) {
+    const res = await fetch('/api/vote', {
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ vote_item_id: id, member_id: MEMBER_ID })
+    });
+    if (!res.ok) {
+      const e = await res.json(); 
+      return alert(e.error);
+    }
+    await renderAll(); // Hiển thị lại danh sách vote và kết quả mới
+  }
+  
+async function loadVoteItems() {
+    const voteDate = voteDateInput.value || new Date().toISOString().slice(0, 10);
+    const res = await fetch(`/api/group/${GROUP_ID}/vote_items?date=${voteDate}`);
+    const data = await res.json();
+
+    voteList.innerHTML = '';
     resultsList.innerHTML = '';
 
-    // Group votes by type and date
-    const groupedVotes = votes.reduce((acc, vote) => {
-        const key = `${vote.type}-${vote.date}`;
-        if (!acc[key]) {
-            acc[key] = [];
-        }
-        acc[key].push(vote);
-        return acc;
-    }, {});
+    let maxVotes = 0;
+    data.forEach(item => {
+        maxVotes = Math.max(maxVotes, item.votes);
 
-    // Sort and display results
-    Object.entries(groupedVotes).forEach(([key, items]) => {
-        const [type, date] = key.split('-');
-        items.sort((a, b) => b.votes - a.votes);
-
-        const resultGroup = document.createElement('div');
-        resultGroup.className = 'result-group';
-        resultGroup.innerHTML = `
-            <h3>
-                ${type === 'food' ? '🍲 Món ăn' : '🎉 Hoạt động'} • ${formatDate(date)}
-                <span class="total-votes">${items.reduce((sum, item) => sum + item.votes, 0)}/${groupMembers.length} phiếu</span>
-            </h3>
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'vote-item';
+        itemDiv.innerHTML = ` 
+            <span>${item.name} (${item.type === 'food' ? 'Món ăn' : 'Hoạt động'})</span>
+            <button data-id="${item.id}">Bình chọn</button>
+            <div class="voters">${item.voters.join(', ')}</div>
         `;
-        
-        items.forEach(item => {
-            const percentage = Math.round((item.votes / groupMembers.length) * 100);
-            const votersList = item.voters.map(voter => {
-                // Highlight current user in voters list
-                return voter === currentUser ? `<strong>${voter}</strong>` : voter;
-            }).join(', ');
+        voteList.appendChild(itemDiv);
 
-            const resultItem = document.createElement('div');
-            resultItem.className = 'result-item';
-            resultItem.innerHTML = `
-                <div class="result-header">
-                    <span>${item.name}</span>
-                    <span class="result-percentage">${percentage}%</span>
-                </div>
-                <div class="vote-progress">
-                    <div class="vote-progress-bar" style="width: ${percentage}%"></div>
-                </div>
-                <div class="result-voters">
-                    <i class="fas fa-user-check"></i> ${votersList || 'Chưa có ai bình chọn'}
-                </div>
-            `;
-            resultGroup.appendChild(resultItem);
+        const resultDiv = document.createElement('div');
+        resultDiv.className = 'result-item';
+        resultDiv.innerHTML = `
+            <span>${item.name}</span>
+            <div class="bar-container">
+                <div class="bar" style="width: ${(item.votes / maxVotes) * 100 || 0}%;"></div>
+                <span class="vote-count">${item.votes} phiếu</span>
+            </div>
+        `;
+        resultsList.appendChild(resultDiv);
+    });
+
+    document.querySelectorAll('.vote-item button').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const voteItemId = btn.dataset.id;
+            const res = await fetch('/api/vote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vote_item_id: voteItemId, member_id: MEMBER_ID })
+            });
+
+            const result = await res.json();
+            if (res.status === 201) {
+                alert('Bình chọn thành công!');
+                loadVoteItems();
+            } else {
+                alert(result.error || 'Lỗi khi bỏ phiếu.');
+            }
         });
-        resultsList.appendChild(resultGroup);
     });
 }
 
-// Add new vote item
-window.addVoteItem = function() {
-    const voteName = voteNameInput.value.trim();
-    const voteType = voteTypeSelect.value;
-    const voteDate = voteDateInput.value;
+addVoteBtn.addEventListener('click', async () => {
+    const name = voteNameInput.value;
+    const type = voteTypeSelect.value;
+    const voteDate = voteDateInput.value || new Date().toISOString().slice(0, 10);
 
-    if (!voteName) {
-        alert('Vui lòng nhập tên món ăn/hoạt động!');
-        return;
+    if (!name) return alert('Vui lòng nhập tên mục.');
+
+    const res = await fetch(`/api/group/${GROUP_ID}/vote_items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, type, vote_date: voteDate, member_id: MEMBER_ID })
+    });
+
+    if (res.status === 201) {
+        voteNameInput.value = '';
+        loadVoteItems();
+    } else {
+        alert('Lỗi khi thêm mục bình chọn.');
     }
+});
 
-    if (!voteDate) {
-        alert('Vui lòng chọn ngày bình chọn!');
-        return;
-    }
-
-    const newId = votes.length > 0 ? Math.max(...votes.map(v => v.id)) + 1 : 1;
-    votes.push({
-        id: newId,
-        name: voteName,
-        type: voteType,
-        date: voteDate,
-        votes: 0,
-        voters: []
-    });
-
-    // Reset form
-    voteNameInput.value = '';
-    voteDateInput.value = '';
-    voteNameInput.focus();
-
-    saveVotes();
-    renderVotes();
-};
-
-// Cast a vote
-window.castVote = function(voteId) {
-    const vote = votes.find(v => v.id === voteId);
-    
-    if (!vote) return;
-    
-    if (vote.voters.includes(currentUser)) {
-        alert('Bạn đã bình chọn cho mục này rồi!');
-        return;
-    }
-
-    vote.votes++;
-    vote.voters.push(currentUser);
-    saveVotes();
-    renderVotes();
-};
-
-// Reset votes weekly
-function resetWeeklyVotes() {
-    const now = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay());
-
-    votes = votes.filter(vote => {
-        const voteDate = new Date(vote.date);
-        return voteDate >= weekStart;
-    });
-
-    votes.forEach(vote => {
-        vote.votes = 0;
-        vote.voters = [];
-    });
-
-    saveVotes();
-    renderVotes();
-    alert('Đã reset bình chọn tuần mới!');
-}
-
-// Initialize the app
-function initApp() {
-    // Set default date to today
-    voteDateInput.valueAsDate = new Date();
-    
-    // Add event listeners
-    voteNameInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') addVoteItem();
-    });
-    
-    renderVotes();
-    
-    // Schedule weekly reset
-    const now = new Date();
-    const nextSunday = new Date(now);
-    nextSunday.setDate(now.getDate() + (7 - now.getDay()));
-    nextSunday.setHours(0, 0, 0, 0);
-    const timeToNextSunday = nextSunday - now;
-
-    setTimeout(() => {
-        resetWeeklyVotes();
-        setInterval(resetWeeklyVotes, 7 * 24 * 60 * 60 * 1000);
-    }, timeToNextSunday);
-}
-
-// Start the app
-document.addEventListener('DOMContentLoaded', initApp);
+window.addEventListener('DOMContentLoaded', () => {
+    voteDateInput.addEventListener('change', loadVoteItems);
+    loadVoteItems(); // Load initial data
+});

@@ -1,0 +1,301 @@
+[data-theme="dark"] .main-content {
+    background-color: #111827;
+}
+
+.mobile-menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background-color: rgba(255, 109, 40, 0.1);
+    color: var(--primary);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.mobile-menu-btn:hover {
+    background-color: rgba(255, 109, 40, 0.2);
+}
+
+/* Announcement Styles */
+.announcement-section {
+    background-color: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+}
+
+.announcement-section h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.announcement-section h2 i {
+    font-size: 1.5rem;
+}
+
+.announcement-item {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    transition: var(--transition);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.75rem;
+}
+
+.announcement-item:hover {
+    background-color: rgba(255, 109, 40, 0.05);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.announcement-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.announcement-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.announcement-meta {
+    display: flex;
+    gap: 1.5rem;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.announcement-meta i {
+    margin-right: 0.25rem;
+    width: 16px;
+    text-align: center;
+}
+
+.announcement-content {
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    color: var(--text);
+    padding: 0.5rem 0;
+}
+
+.announcement-priority {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.announcement-priority.high {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+}
+
+.announcement-priority.medium {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.announcement-priority.low {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.announcement-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btn.mark-read {
+    background-color: var(--success);
+    color: white;
+}
+
+.action-btn.mark-read:hover {
+    background-color: #0a8f66;
+    transform: translateY(-1px);
+}
+
+.action-btn.mark-read:disabled {
+    background-color: var(--text-lighter);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.action-btn.mark-read i {
+    font-size: 0.8rem;
+}
+
+/* Form Styles */
+.announcement-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px dashed var(--border);
+}
+
+.announcement-form input,
+.announcement-form textarea,
+.announcement-form select {
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    background-color: var(--card-bg);
+    color: var(--text);
+    transition: var(--transition);
+}
+
+.announcement-form input:focus,
+.announcement-form textarea:focus,
+.announcement-form select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 109, 40, 0.1);
+}
+
+.announcement-form textarea {
+    resize: vertical;
+    min-height: 150px;
+    line-height: 1.6;
+}
+
+.announcement-form button {
+    padding: 0.85rem 1.75rem;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    align-self: flex-start;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.announcement-form button:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.announcement-form button i {
+    font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .app-container {
+        grid-template-columns: 240px 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+    }
+
+    .header {
+        grid-column: 1 / 2;
+        padding: 1rem;
+    }
+
+    .sidebar {
+        grid-column: 1 / 2;
+        grid-row: 2 / 3;
+        height: auto;
+        position: static;
+        display: none;
+    }
+
+    .sidebar.active {
+        display: flex;
+    }
+
+    .main-content {
+        grid-column: 1 / 2;
+        grid-row: 3 / 4;
+        padding: 1.5rem;
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+    }
+    
+    .announcement-section {
+        padding: 1.5rem;
+    }
+    
+    .announcement-item {
+        padding: 1.25rem 1rem;
+    }
+    
+    .announcement-priority {
+        position: static;
+        margin-bottom: 0.5rem;
+        display: inline-block;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-title {
+        font-size: 1.25rem;
+    }
+
+    .header-actions {
+        gap: 1rem;
+    }
+
+    .announcement-form input,
+    .announcement-form textarea,
+    .announcement-form select,
+    .announcement-form button {
+        width: 100%;
+    }
+
+    .announcement-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .announcement-meta {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}

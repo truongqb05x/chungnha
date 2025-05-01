@@ -6,427 +6,11 @@
     <title>Thông Báo Quan Trọng</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="../static/img/logo.png" type="image/x-icon">
+    <!-- css chung -->
     <link rel="stylesheet" href="../static/css/app.css">
-
-    <style>
-
-        .announcement-section {
-            background-color: var(--card-bg);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-md);
-        }
-
-        .announcement-section h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-
-        .announcement-item {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-            position: relative;
-        }
-
-        .announcement-item:last-child {
-            border-bottom: none;
-        }
-
-        .announcement-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .announcement-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .announcement-meta {
-            display: flex;
-            gap: 1rem;
-            color: var(--text-light);
-            font-size: 0.9rem;
-        }
-
-        .announcement-content {
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 0.5rem;
-        }
-
-        .announcement-priority {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .announcement-priority.high {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--error);
-        }
-
-        .announcement-priority.medium {
-            background-color: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-        }
-
-        .announcement-priority.low {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .announcement-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .action-btn {
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            font-weight: 500;
-        }
-
-        .action-btn.mark-read {
-            background-color: var(--success);
-            color: white;
-        }
-
-        .action-btn.mark-read:hover {
-            background-color: #0a8f66;
-        }
-
-        .announcement-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .announcement-form input,
-        .announcement-form textarea,
-        .announcement-form select {
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
-        }
-
-        .announcement-form textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .announcement-form button {
-            padding: 0.75rem 1.5rem;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: var(--transition);
-            align-self: flex-start;
-        }
-
-        .announcement-form button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        @media (max-width: 1024px) {
-            .app-container {
-                grid-template-columns: 240px 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
-            }
-
-            .header {
-                grid-column: 1 / 2;
-                padding: 1rem;
-            }
-
-            .sidebar {
-                grid-column: 1 / 2;
-                grid-row: 2 / 3;
-                height: auto;
-                position: static;
-                display: none;
-            }
-
-            .sidebar.active {
-                display: flex;
-            }
-
-            .main-content {
-                grid-column: 1 / 2;
-                grid-row: 3 / 4;
-                padding: 1.5rem;
-            }
-
-            .mobile-menu-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
-                border-radius: var(--radius-sm);
-                background-color: rgba(255, 109, 40, 0.1);
-                color: var(--primary);
-                font-size: 1.25rem;
-                cursor: pointer;
-                transition: var(--transition);
-            }
-
-            .mobile-menu-btn:hover {
-                background-color: rgba(255, 109, 40, 0.2);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header-title {
-                font-size: 1.25rem;
-            }
-
-            .header-actions {
-                gap: 1rem;
-            }
-
-            .announcement-form input,
-            .announcement-form textarea,
-            .announcement-form select,
-            .announcement-form button {
-                width: 100%;
-            }
-
-            .announcement-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
-            }
-
-            .announcement-meta {
-                flex-direction: column;
-                gap: 0.25rem;
-            }
-        }
-    </style>
-    <style>
-        /* Thêm các style mới này vào phần style hiện có */
-        
-        .announcement-section {
-            background-color: var(--card-bg);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border);
-        }
-        
-        .announcement-section h2 {
-            font-size: 1.75rem;
-            margin-bottom: 1.5rem;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .announcement-section h2 i {
-            font-size: 1.5rem;
-        }
-        
-        .announcement-item {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-            position: relative;
-            transition: var(--transition);
-            border-radius: var(--radius-sm);
-            margin-bottom: 0.75rem;
-        }
-        
-        .announcement-item:hover {
-            background-color: rgba(255, 109, 40, 0.05);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .announcement-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-        
-        .announcement-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 0.5rem;
-        }
-        
-        .announcement-meta {
-            display: flex;
-            gap: 1.5rem;
-            color: var(--text-light);
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-        
-        .announcement-meta i {
-            margin-right: 0.25rem;
-            width: 16px;
-            text-align: center;
-        }
-        
-        .announcement-content {
-            font-size: 1rem;
-            line-height: 1.7;
-            margin-bottom: 1rem;
-            color: var(--text);
-            padding: 0.5rem 0;
-        }
-        
-        .announcement-priority {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .announcement-actions {
-            display: flex;
-            justify-content: flex-end;
-        }
-        
-        .action-btn {
-            padding: 0.5rem 1.25rem;
-            border-radius: var(--radius-sm);
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            font-weight: 500;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .action-btn.mark-read {
-            background-color: var(--success);
-            color: white;
-        }
-        
-        .action-btn.mark-read:hover {
-            background-color: #0a8f66;
-            transform: translateY(-1px);
-        }
-        
-        .action-btn.mark-read:disabled {
-            background-color: var(--text-lighter);
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .action-btn.mark-read i {
-            font-size: 0.8rem;
-        }
-        
-        /* Cải thiện form */
-        .announcement-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px dashed var(--border);
-        }
-        
-        .announcement-form input,
-        .announcement-form textarea,
-        .announcement-form select {
-            padding: 0.85rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            background-color: var(--card-bg);
-            color: var(--text);
-            transition: var(--transition);
-        }
-        
-        .announcement-form input:focus,
-        .announcement-form textarea:focus,
-        .announcement-form select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(255, 109, 40, 0.1);
-        }
-        
-        .announcement-form textarea {
-            resize: vertical;
-            min-height: 150px;
-            line-height: 1.6;
-        }
-        
-        .announcement-form button {
-            padding: 0.85rem 1.75rem;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: var(--transition);
-            align-self: flex-start;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .announcement-form button:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-        
-        .announcement-form button i {
-            font-size: 0.9rem;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .announcement-section {
-                padding: 1.5rem;
-            }
-            
-            .announcement-item {
-                padding: 1.25rem 1rem;
-            }
-            
-            .announcement-priority {
-                position: static;
-                margin-bottom: 0.5rem;
-                display: inline-block;
-            }
-        }
-    </style>
+    <!-- css riêng -->
+     <link rel="stylesheet" href="../static/css/thongbao.css">
 </head>
 <body>
     <div class="app-container">
@@ -521,157 +105,94 @@
                 </div>
             </div>
         </main>
-        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Mobile menu toggle
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            const sidebar = document.querySelector('.sidebar');
-            
-            mobileMenuBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-                mobileMenuBtn.innerHTML = sidebar.classList.contains('active') 
-                    ? '<i class="fas fa-times"></i>' 
-                    : '<i class="fas fa-bars"></i>';
-            });
-
-            // Theme toggle
-            const themeToggle = document.querySelector('.theme-toggle');
-            const themeBtns = document.querySelectorAll('.theme-btn');
-            const body = document.body;
-            
-            themeBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const theme = this.getAttribute('data-theme');
-                    
-                    themeBtns.forEach(b => b.classList.remove('active'))
-
-                    body.setAttribute('data-theme', theme);
-                    localStorage.setItem('theme', theme);
-                    
-                    const themeIcon = document.querySelector('.theme-icon i');
-                    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-                });
-            });
-
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            body.setAttribute('data-theme', savedTheme);
-            
-            const activeThemeBtn = document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`);
-            if (activeThemeBtn) {
-                themeBtns.forEach(b => b.classList.remove('active'));
-                activeThemeBtn.classList.add('active');
-                
-                const themeIcon = document.querySelector('.theme-icon i');
-                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            }
-
-            // Announcement management
-            let announcements = JSON.parse(localStorage.getItem('announcements')) || [
-                {
-                    id: 1,
-                    title: 'Đóng tiền nhà tháng 5',
-                    content: 'Mọi người vui lòng đóng tiền nhà trước ngày 5/5. Số tiền: 2,000,000 VNĐ/người.',
-                    priority: 'high',
-                    author: 'Admin',
-                    timestamp: '2025-04-28T09:00:00Z',
-                    readBy: []
-                },
-                {
-                    id: 2,
-                    title: 'Lịch cắt điện',
-                    content: 'Khu vực sẽ cắt điện từ 8:00 - 12:00 ngày 3/5 để bảo trì. Vui lòng sắp xếp công việc.',
-                    priority: 'medium',
-                    author: 'Admin',
-                    timestamp: '2025-04-27T15:00:00Z',
-                    readBy: ['A', 'B']
-                }
-            ];
-            let currentUser = 'NM'; // Simulated current user
-
-            function saveAnnouncements() {
-                localStorage.setItem('announcements', JSON.stringify(announcements));
-            }
-
-            function renderAnnouncements() {
-    const announcementList = document.getElementById('announcement-list');
-    announcementList.innerHTML = '';
-    const unreadCount = announcements.filter(a => !a.readBy.includes(currentUser)).length;
-    document.querySelector('.badge').textContent = unreadCount;
-
-    // Sắp xếp thông báo mới nhất lên đầu
-    const sortedAnnouncements = [...announcements].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-    sortedAnnouncements.forEach(announcement => {
-        const isRead = announcement.readBy.includes(currentUser);
-        const priorityText = announcement.priority === 'high' ? 'Quan trọng' : 
-                           announcement.priority === 'medium' ? 'Trung bình' : 'Thấp';
-        const priorityIcon = announcement.priority === 'high' ? 'fa-exclamation-circle' : 
-                           announcement.priority === 'medium' ? 'fa-info-circle' : 'fa-chevron-circle-down';
+          const announcementList    = document.getElementById('announcement-list');
+          const badge               = document.querySelector('.badge');
+          const titleInput          = document.getElementById('announcement-title');
+          const contentInput        = document.getElementById('announcement-content');
+          const prioritySelect      = document.getElementById('announcement-priority');
+          const currentMemberId     = 1; // Nhập đúng ID thành viên hiện tại
         
-        const announcementItem = document.createElement('div');
-        announcementItem.className = 'announcement-item';
-        announcementItem.innerHTML = `
-            <div class="announcement-priority ${announcement.priority}">
-                <i class="fas ${priorityIcon}"></i> ${priorityText}
-            </div>
-            <div class="announcement-title">${announcement.title}</div>
-            <div class="announcement-meta">
-                <span><i class="fas fa-user"></i> ${announcement.author}</span>
-                <span><i class="fas fa-clock"></i> ${new Date(announcement.timestamp).toLocaleString('vi-VN')}</span>
-            </div>
-            <div class="announcement-content">${announcement.content}</div>
-            <div class="announcement-actions">
-                <button class="action-btn mark-read" onclick="markAsRead(${announcement.id})" ${isRead ? 'disabled' : ''}>
-                    <i class="fas fa-check"></i> ${isRead ? 'Đã đọc' : 'Đánh dấu đã đọc'}
-                </button>
-            </div>
-        `;
-        announcementList.appendChild(announcementItem);
-    });
-}
-            window.addAnnouncement = function() {
-                const title = document.getElementById('announcement-title').value.trim();
-                const content = document.getElementById('announcement-content').value.trim();
-                const priority = document.getElementById('announcement-priority').value;
-
-                if (!title || !content) {
-                    alert('Vui lòng nhập tiêu đề và nội dung thông báo!');
-                    return;
-                }
-
-                const newId = announcements.length > 0 ? Math.max(...announcements.map(a => a.id)) + 1 : 1;
-                announcements.unshift({
-                    id: newId,
-                    title: title,
-                    content: content,
-                    priority: priority,
-                    author: 'Admin',
-                    timestamp: new Date().toISOString(),
-                    readBy: []
-                });
-
-                document.getElementById('announcement-title').value = '';
-                document.getElementById('announcement-content').value = '';
-
-                saveAnnouncements();
-                renderAnnouncements();
-            };
-
-            window.markAsRead = function(announcementId) {
-                const announcement = announcements.find(a => a.id === announcementId);
-                if (!announcement.readBy.includes(currentUser)) {
-                    announcement.readBy.push(currentUser);
-                    saveAnnouncements();
-                    renderAnnouncements();
-                }
-            };
-
-            // Initialize
+          let announcements = [];
+        
+          // 1) Lấy thông báo từ API
+          async function fetchAnnouncements() {
+            const res = await fetch('/api/announcements');
+            announcements = await res.json();
             renderAnnouncements();
+          }
+        
+          // 2) Hiển thị
+          function renderAnnouncements() {
+            announcementList.innerHTML = '';
+            // Đếm chưa đọc
+            const unread = announcements.filter(a => !a.readBy.includes(currentMemberId)).length;
+            badge.textContent = unread;
+            // Sắp xếp mới nhất trước
+            announcements.forEach(a => {
+              const isRead = a.readBy.includes(currentMemberId);
+              const prioText = { high:'Quan trọng', medium:'Trung bình', low:'Thấp' }[a.priority];
+              const prioIcon = { high:'fa-exclamation-circle', medium:'fa-info-circle', low:'fa-chevron-circle-down' }[a.priority];
+              const item = document.createElement('div');
+              item.className = 'announcement-item';
+              item.innerHTML = `
+                <div class="announcement-priority ${a.priority}">
+                  <i class="fas ${prioIcon}"></i> ${prioText}
+                </div>
+                <div class="announcement-title">${a.title}</div>
+                <div class="announcement-meta">
+                  <span><i class="fas fa-user"></i> ${a.author_name}</span>
+                  <span><i class="fas fa-clock"></i> ${new Date(a.timestamp).toLocaleString('vi-VN', {
+                    day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'
+                  })}</span>
+                </div>
+                <div class="announcement-content">${a.content}</div>
+                <div class="announcement-actions">
+                  <button class="action-btn mark-read" onclick="markAsRead(${a.id})" ${isRead?'disabled':''}>
+                    <i class="fas fa-check"></i> ${isRead?'Đã đọc':'Đánh dấu đã đọc'}
+                  </button>
+                </div>`;
+              announcementList.appendChild(item);
+            });
+          }
+        
+          // 3) Đăng thông báo mới
+          window.addAnnouncement = async function() {
+            const title    = titleInput.value.trim();
+            const content  = contentInput.value.trim();
+            const priority = prioritySelect.value;
+            if (!title || !content) {
+              return alert('Vui lòng nhập tiêu đề và nội dung!');
+            }
+            await fetch('/api/announcements', {
+              method: 'POST',
+              headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ title, content, priority })
+            });
+            titleInput.value = '';
+            contentInput.value = '';
+            await fetchAnnouncements();
+            alert('Thông báo đã được đăng!');
+          }
+        
+          // 4) Đánh dấu đã đọc
+          window.markAsRead = async function(id) {
+            await fetch(`/api/announcements/${id}/read`, {
+              method: 'POST',
+              headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ member_id: currentMemberId })
+            });
+            await fetchAnnouncements();
+          }
+        
+          // Khởi tạo
+          fetchAnnouncements();
         });
-                
-    </script>
+        </script>
+            <!-- js chung -->
+     <script src="../static/js/app.js"></script>
 </body>
 </html>

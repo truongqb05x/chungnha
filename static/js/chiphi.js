@@ -1,240 +1,218 @@
-            // Expenses page functionality
-            const addExpenseBtn = document.getElementById('addExpenseBtn');
-            const expenseModal = document.getElementById('expenseModal');
-            const closeModal = document.getElementById('closeModal');
-            const cancelBtn = document.getElementById('cancelBtn');
-            const expenseForm = document.getElementById('expenseForm');
-            const expensesTableBody = document.getElementById('expensesTableBody');
-            const searchInput = document.getElementById('searchInput');
-            const statusFilter = document.getElementById('statusFilter');
-            const prevPage = document.getElementById('prevPage');
-            const nextPage = document.getElementById('nextPage');
-            const totalExpense = document.getElementById('totalExpense');
-            const avgExpense = document.getElementById('avgExpense');
-            const balance = document.getElementById('balance');
-            const expenseChart = document.getElementById('expenseChart').getContext('2d');
+const addExpenseBtn   = document.getElementById('addExpenseBtn');
+const expenseModal    = document.getElementById('expenseModal');
+const closeModalBtn   = document.getElementById('closeModal');
+const cancelBtn       = document.getElementById('cancelBtn');
+const expenseForm     = document.getElementById('expenseForm');
+const tableBody       = document.getElementById('expensesTableBody');
+const searchInput     = document.getElementById('searchInput');
+const statusFilter    = document.getElementById('statusFilter');
+const prevPageBtn     = document.getElementById('prevPage');
+const nextPageBtn     = document.getElementById('nextPage');
+const totalExpenseEl  = document.getElementById('totalExpense');
+const avgExpenseEl    = document.getElementById('avgExpense');
+const balanceEl       = document.getElementById('balance');
+const chartCtx        = document.getElementById('expenseChart').getContext('2d');
+const payerSelect     = document.getElementById('payer');
 
-            let currentPage = 1;
-            const expensesPerPage = 10;
-            let expenses = [
-                { id: 1, date: '2025-04-15', description: 'Mua nguyên liệu chợ', amount: 500000, payer: 'Nguyễn Minh', status: 'Paid' },
-                { id: 2, date: '2025-04-16', description: 'Mua gia vị', amount: 100000, payer: 'Trần Hương', status: 'Pending' },
-            ];
+let expenses   = [];
+let members    = [];
+let currentPage = 1;
+const perPage   = 10;
+let chartInstance = null;
 
-            let chartInstance = null;
+// --- Khởi động ---
+window.addEventListener('load', async () => {
+  await fetchMembers();
+  await fetchExpenses();
+});
 
-            function renderExpenses() {
-                const start = (currentPage - 1) * expensesPerPage;
-                const end = start + expensesPerPage;
-                const filteredExpenses = filterExpenses();
-                const paginatedExpenses = filteredExpenses.slice(start, end);
+// --- Lấy members để đổ vào <select> ---
+async function fetchMembers() {
+  const res = await fetch('/api/members_exp');
+  members = await res.json();
+  payerSelect.innerHTML = members
+      .map(m => `<option value="${m.id}">${m.full_name}</option>`)
+      .join('');
+}
 
-                expensesTableBody.innerHTML = '';
-                paginatedExpenses.forEach(expense => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${formatDate(expense.date)}</td>
-                        <td>${expense.description}</td>
-                        <td>${formatCurrency(expense.amount)}</td>
-                        <td>${expense.payer}</td>
-                        <td><span class="status status-${expense.status.toLowerCase()}">${expense.status === 'Paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}</span></td>
-                        <td>
-                            <button class="action-btn edit-btn" data-id="${expense.id}"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn delete-btn" data-id="${expense.id}"><i class="fas fa-trash"></i></button>
-                        </td>
-                    `;
-                    expensesTableBody.appendChild(row);
-                });
+// --- Lấy expenses từ server ---
+async function fetchExpenses() {
+  const res = await fetch('/api/expenses_exp');
+  expenses = await res.json();
+  currentPage = 1;
+  renderExpenses();
+}
 
-                updatePagination(filteredExpenses.length);
-                updateOverview();
-                updateChart();
-            }
+// --- Render bảng, filter, paginate ---
+function filterExpenses() {
+  const term   = searchInput.value.toLowerCase();
+  const status = statusFilter.value;
+  return expenses.filter(e =>
+    e.description.toLowerCase().includes(term) &&
+    (!status || e.status === status)
+  );
+}
 
-            function filterExpenses() {
-                const searchTerm = searchInput.value.toLowerCase();
-                const selectedStatus = statusFilter.value;
+function renderExpenses() {
+  const filtered = filterExpenses();
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const start = (currentPage - 1) * perPage;
+  const pageItems = filtered.slice(start, start + perPage);
 
-                return expenses.filter(expense => 
-                    expense.description.toLowerCase().includes(searchTerm) &&
-                    (!selectedStatus || expense.status === selectedStatus)
-                );
-            }
+  // Bảng
+  tableBody.innerHTML = '';
+  if (!pageItems.length) {
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;">Không có chi phí</td></tr>`;
+  } else {
+    pageItems.forEach(e => {
+      const paidClass = e.status === 'Paid'
+        ? 'status-paid' : 'status-pending';
+      tableBody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${formatDate(e.date)}</td>
+          <td>${e.description}</td>
+          <td>${formatCurrency(e.amount)}</td>
+          <td>${e.payer_name}</td>
+          <td><span class="status ${paidClass}">
+                ${e.status==='Paid'?'Đã thanh toán':'Chưa thanh toán'}
+              </span></td>
+          <td>
+            <button class="action-btn edit-btn" data-id="${e.id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn delete-btn" data-id="${e.id}">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `);
+    });
+  }
 
-            function updatePagination(totalExpenses) {
-                const totalPages = Math.ceil(totalExpenses / expensesPerPage);
-                prevPage.disabled = currentPage === 1;
-                nextPage.disabled = currentPage === totalPages;
+  // Pagination
+  prevPageBtn.disabled = currentPage === 1;
+  nextPageBtn.disabled = currentPage === totalPages || totalPages===0;
 
-                const pagination = document.querySelector('.pagination');
-                const pageButtons = pagination.querySelectorAll('.pagination-btn:not(#prevPage):not(#nextPage)');
-                pageButtons.forEach(btn => btn.remove());
+  // Overview & Chart
+  updateOverview(filtered);
+  updateChart(filtered);
+}
 
-                for (let i = 1; i <= totalPages; i++) {
-                    const btn = document.createElement('button');
-                    btn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
-                    btn.textContent = i;
-                    btn.addEventListener('click', () => {
-                        currentPage = i;
-                        renderExpenses();
-                    });
-                    nextPage.before(btn);
-                }
-            }
+// --- Thống kê tổng, trung bình, cân bằng ---
+function updateOverview(list) {
+  const total = list.reduce((s,e)=>s+e.amount,0);
+  const payers = [...new Set(list.map(e=>e.payer_name))];
+  const avg   = payers.length ? total / payers.length : 0;
+  const diffs = payers.map(p => {
+    const paid = list.filter(e=>e.payer_name===p)
+                     .reduce((s,e)=>s+e.amount,0);
+    return paid - avg;
+  });
+  const maxBal = diffs.reduce((a,b)=>Math.max(a,Math.abs(b)),0);
 
-            function updateOverview() {
-                const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-                const members = [...new Set(expenses.map(e => e.payer))];
-                const avg = members.length ? total / members.length : 0;
-                const balancePerMember = members.map(payer => {
-                    const paid = expenses.filter(e => e.payer === payer).reduce((sum, e) => sum + e.amount, 0);
-                    return paid - avg;
-                });
-                const maxBalance = Math.max(...balancePerMember.map(Math.abs));
+  totalExpenseEl.textContent = formatCurrency(total);
+  avgExpenseEl.textContent   = formatCurrency(avg);
+  balanceEl.textContent      = formatCurrency(maxBal);
+}
 
-                totalExpense.textContent = formatCurrency(total);
-                avgExpense.textContent = formatCurrency(avg);
-                balance.textContent = formatCurrency(maxBalance);
-            }
+// --- Vẽ chart ---
+function updateChart(list) {
+  const payers = [...new Set(list.map(e=>e.payer_name))];
+  const data   = payers.map(p =>
+    list.filter(e=>e.payer_name===p).reduce((s,e)=>s+e.amount,0)
+  );
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(chartCtx, {
+    type: 'bar',
+    data: {
+      labels: payers,
+      datasets: [{ label:'Chi phí (VND)', data }]
+    },
+    options: { responsive:true }
+  });
+}
 
-            function updateChart() {
-                const members = [...new Set(expenses.map(e => e.payer))];
-                const data = members.map(payer => {
-                    return expenses.filter(e => e.payer === payer).reduce((sum, e) => sum + e.amount, 0);
-                });
+// --- Format helpers ---
+function formatDate(d) {
+  return new Date(d)
+    .toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function formatCurrency(v) {
+  return v.toLocaleString('vi-VN',{style:'currency',currency:'VND'});
+}
 
-                if (chartInstance) {
-                    chartInstance.destroy();
-                }
 
-                chartInstance = new Chart(expenseChart, {
-                    type: 'bar',
-                    data: {
-                        labels: members,
-                        datasets: [{
-                            label: 'Chi phí (VND)',
-                            data: data,
-                            backgroundColor: 'rgba(255, 109, 40, 0.6)',
-                            borderColor: 'rgba(255, 109, 40, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: value => formatCurrency(value)
-                                }
-                            }
-                        }
-                    }
-                });
-            }
+/////////////////////////////////////
+// XỬ LÝ SỰ KIỆN CRUD           //
+/////////////////////////////////////
 
-            function formatDate(dateStr) {
-                const date = new Date(dateStr);
-                return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            }
+// Mở modal thêm
+addExpenseBtn.onclick = () => {
+  expenseForm.reset();
+  document.querySelector('.modal-title').textContent = 'Thêm chi phí';
+  expenseModal.classList.add('active');
+};
 
-            function formatCurrency(amount) {
-                return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
-            }
+// Đóng modal
+closeModalBtn.onclick = cancelBtn.onclick = () =>
+  expenseModal.classList.remove('active');
 
-            addExpenseBtn.addEventListener('click', () => {
-                expenseModal.classList.add('active');
-                expenseForm.reset();
-                document.querySelector('.modal-title').textContent = 'Thêm chi phí';
-            });
+// Submit form thêm/sửa
+expenseForm.onsubmit = async e => {
+  e.preventDefault();
+  const payload = {
+    date:        document.getElementById('date').value,
+    description: document.getElementById('description').value,
+    amount:      parseInt(document.getElementById('amount').value),
+    payer_id:    parseInt(payerSelect.value),
+    status:      document.getElementById('status').value
+  };
+  const expId = document.getElementById('date').dataset.editId;
+  if (expId) {
+    await fetch(`/api/expenses_exp/${expId}`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    delete document.getElementById('date').dataset.editId;
+  } else {
+    await fetch('/api/expenses_exp', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+  }
+  expenseModal.classList.remove('active');
+  await fetchExpenses();
+};
 
-            closeModal.addEventListener('click', () => {
-                expenseModal.classList.remove('active');
-            });
+// Edit / Delete buttons
+tableBody.addEventListener('click', async e => {
+  const tr = e.target.closest('button');
+  if (!tr) return;
+  const id = tr.dataset.id;
+  if (tr.classList.contains('edit-btn')) {
+    // load dữ liệu vào form
+    const exp = expenses.find(x=>x.id==id);
+    document.getElementById('date').value       = exp.date;
+    document.getElementById('description').value= exp.description;
+    document.getElementById('amount').value     = exp.amount;
+    payerSelect.value                           = exp.payer_id;
+    document.getElementById('status').value     = exp.status;
+    document.getElementById('date').dataset.editId = id;
+    document.querySelector('.modal-title').textContent = 'Chỉnh sửa chi phí';
+    expenseModal.classList.add('active');
+  }
+  if (tr.classList.contains('delete-btn')) {
+    if (confirm('Xóa khoản chi này?')) {
+      await fetch(`/api/expenses_exp/${id}`, { method:'DELETE' });
+      await fetchExpenses();
+    }
+  }
+});
 
-            cancelBtn.addEventListener('click', () => {
-                expenseModal.classList.remove('active');
-            });
-
-            expenseForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const date = document.getElementById('date').value;
-                const description = document.getElementById('description').value;
-                const amount = parseInt(document.getElementById('amount').value);
-                const payer = document.getElementById('payer').value;
-                const status = document.getElementById('status').value;
-
-                const newExpense = {
-                    id: expenses.length + 1,
-                    date,
-                    description,
-                    amount,
-                    payer,
-                    status
-                };
-
-                expenses.push(newExpense);
-                expenseModal.classList.remove('active');
-                renderExpenses();
-            });
-
-            expensesTableBody.addEventListener('click', (e) => {
-                if (e.target.closest('.edit-btn')) {
-                    const id = e.target.closest('.edit-btn').dataset.id;
-                    const expense = expenses.find(e => e.id == id);
-                    expenseModal.classList.add('active');
-                    document.querySelector('.modal-title').textContent = 'Chỉnh sửa chi phí';
-                    document.getElementById('date').value = expense.date;
-                    document.getElementById('description').value = expense.description;
-                    document.getElementById('amount').value = expense.amount;
-                    document.getElementById('payer').value = expense.payer;
-                    document.getElementById('status').value = expense.status;
-
-                    expenseForm.onsubmit = (e) => {
-                        e.preventDefault();
-                        expense.date = document.getElementById('date').value;
-                        expense.description = document.getElementById('description').value;
-                        expense.amount = parseInt(document.getElementById('amount').value);
-                        expense.payer = document.getElementById('payer').value;
-                        expense.status = document.getElementById('status').value;
-                        expenseModal.classList.remove('active');
-                        renderExpenses();
-                        expenseForm.onsubmit = null;
-                    };
-                }
-
-                if (e.target.closest('.delete-btn')) {
-                    const id = e.target.closest('.delete-btn').dataset.id;
-                    if (confirm('Bạn có chắc muốn xóa chi phí này?')) {
-                        expenses = expenses.filter(e => e.id != id);
-                        renderExpenses();
-                    }
-                }
-            });
-
-            searchInput.addEventListener('input', () => {
-                currentPage = 1;
-                renderExpenses();
-            });
-
-            statusFilter.addEventListener('change', () => {
-                currentPage = 1;
-                renderExpenses();
-            });
-
-            prevPage.addEventListener('click', () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    renderExpenses();
-                }
-            });
-
-            nextPage.addEventListener('click', () => {
-                const totalExpenses = filterExpenses().length;
-                if (currentPage < Math.ceil(totalExpenses / expensesPerPage)) {
-                    currentPage++;
-                    renderExpenses();
-                }
-            });
-
-            renderExpenses();
+// Search / Filter / Pagination
+searchInput.oninput    =
+statusFilter.onchange  = () => { currentPage=1; renderExpenses(); };
+prevPageBtn.onclick    = () => { currentPage--; renderExpenses(); };
+nextPageBtn.onclick    = () => { currentPage++; renderExpenses(); };

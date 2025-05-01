@@ -11,6 +11,7 @@ app.secret_key = 'your_secret_key'  # Đặt secret key mạnh để bảo mật
 app.permanent_session_lifetime = timedelta(days=1)
 app.config['STATIC_FOLDER'] = 'static'
 app.jinja_env.loader = FileSystemLoader(['templates', 'html'])
+from datetime import date
 
 # Đảm bảo Flask có thể phục vụ file tĩnh từ thư mục 'static'
 @app.route('/static/<path:filename>')
@@ -33,6 +34,58 @@ def index():
 @app.route('/home')
 def trangchu():
     return render_template('home.html')
+# Trang thành viên
+@app.route('/thanh-vien')
+def thanhvien():
+    return render_template('thanhvien.html')
+# Trang nội quy
+@app.route('/noi-quy')
+def noiquy():
+    return render_template('noiquy.html')
+# Trang phân công việc
+@app.route('/phan-cong-viec')
+def phancongviec():
+    return render_template('phanchiacongviec.html')
+# Trang trách nhiệm
+@app.route('/trach-nhiem')
+def trachnhiem():
+    return render_template('trachnhiem.html')
+# Trang quản lý đồ dùng
+@app.route('/quan-ly-do-dung')
+def quanlydodung():
+    return render_template('quanlyvatdung.html')
+# Trang chi phí
+@app.route('/chi-phi')
+def chiphi():
+    return render_template('chiphi.html')
+# Trang quỹ nhóm
+@app.route('/quy-nhom')
+def quynhom():
+    return render_template('quynhom.html')
+# Trang thống kê
+@app.route('/thong-ke')
+def thongke():
+    return render_template('thongke.html')
+# Trang trò chuyện
+@app.route('/tro-chuyen')
+def trochuyen():
+    return render_template('trochuyen.html')
+# Trang bình chọn
+@app.route('/binh-chon')
+def binhchon():
+    return render_template('binhchon.html')
+# Trang thông báo
+@app.route('/thong-bao')
+def thongbao():
+    return render_template('thongbao.html')
+# Trang thực đơn
+@app.route('/thuc-don')
+def thucdon():
+    return render_template('thucdon.html')
+# Trang cá nhân
+@app.route('/trang-ca-nhan')
+def profile():
+    return render_template('profile.html')
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -75,6 +128,22 @@ def login():
     db.close()
 
     return jsonify({"success": False, "message": "Email hoặc mật khẩu không đúng"}), 401
+from flask import session, jsonify
+
+@app.route('/check_session', methods=['GET'])
+def check_session():
+    user_id = session.get('user_id')
+    full_name = session.get('full_name')
+
+    if user_id and full_name:
+        return jsonify({
+            "id": user_id,
+            "full_name": full_name,
+            "avatar": full_name[:2]  # avatar tạm lấy 2 ký tự đầu
+        })
+    else:
+        return jsonify({"error": "Chưa đăng nhập"}), 401
+
 @app.route('/register', methods=['POST'])
 def register():
     data = request.form
@@ -109,6 +178,34 @@ def register():
 def get_current_user_id():
     """Lấy user_id của người dùng hiện tại từ session."""
     return session.get('user_id')
+from flask import Flask, jsonify, request
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+import mysql.connector
+from mysql.connector import Error
+
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+# Cấu hình JWT
+app.config['JWT_SECRET_KEY'] = 'your-secret-key'  # Thay bằng khóa bí mật mạnh
+jwt = JWTManager(app)
+
+
+# Middleware để xử lý lỗi kết nối
+def handle_db_operation(query_func):
+    def wrapper(*args, **kwargs):
+        connection = None
+        try:
+            connection = get_db_connection()
+            cursor = connection.cursor(dictionary=True)
+            result = query_func(cursor, connection, *args, **kwargs)
+            connection.commit()
+            return result
+        except Error as e:
+            return jsonify({"error": str(e)}), 500
+        finally:
+            if connection and connection.is_connected():
+                cursor.close()
+                connection.close()
+    return wrapper
 
 # Route để trả về thông tin thành viên
 @app.route('/api/member/<int:member_id>', methods=['GET'])
@@ -614,6 +711,1420 @@ def toggle_like_comment(comment_id):
     cursor.close()
     conn.close()
     return jsonify({'action': action}), 200
+# Hiển thị trang bỏ phiếu
+@app.route('/vote')
+def vote_page():
+    # Giả định user đã login và có user_id trong session
+    user_id = session.get('user_id', 1)  # thay logic thực tế
+    group_id = session.get('group_id', 1)
+
+    # Lấy member_id tương ứng
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT id FROM members WHERE user_id=%s AND group_id=%s',
+        (user_id, group_id)
+    )
+    member_id = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+
+    return render_template('binhchon.html', group_id=group_id, member_id=member_id)
+
+# API: đếm thành viên
+@app.route('/api/group/<int:group_id>/members/count', methods=['GET'])
+def get_member_count(group_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT COUNT(*) FROM members WHERE group_id=%s AND status="Active"',
+        (group_id,)
+    )
+    total = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+    return jsonify({'total_members': total})
+
+# API: lấy mục vote
+@app.route('/api/group/<int:group_id>/vote_items', methods=['GET'])
+def get_vote_items(group_id):
+    vote_date = request.args.get('date', date.today().isoformat())
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Lấy các vote_items cho group_id và vote_date
+    cursor.execute(
+        '''SELECT vi.id, vi.name, vi.type, vi.vote_date
+           FROM vote_items vi
+           WHERE vi.group_id=%s AND vi.vote_date=%s''',
+        (group_id, vote_date)
+    )
+    items = cursor.fetchall()
+
+    for item in items:
+        # Đếm số lượng phiếu cho từng vote_item
+        cursor.execute(
+            'SELECT COUNT(*) AS votes FROM votes WHERE vote_item_id=%s',
+            (item['id'],)
+        )
+        row = cursor.fetchone()
+        item['votes'] = row['votes'] if row else 0
+
+        # Lấy danh sách những người đã bầu cho vote_item
+        cursor.execute(
+            '''SELECT u.full_name
+               FROM votes v
+               JOIN members m ON v.member_id=m.id
+               JOIN users u ON m.user_id=u.id
+               WHERE v.vote_item_id=%s''',
+            (item['id'],)
+        )
+        voters = cursor.fetchall()
+        # Nếu có kết quả, thêm tên người bầu vào danh sách 'voters'
+        item['voters'] = [voter['full_name'] for voter in voters] if voters else []
+
+    cursor.close()
+    conn.close()
+    return jsonify(items)
+# API: thêm mục vote
+@app.route('/api/group/<int:group_id>/vote_items', methods=['POST'])
+def add_vote_item(group_id):
+    data = request.json
+    name = data.get('name')
+    type_ = data.get('type')
+    vote_date = data.get('vote_date')
+    member_id = data.get('member_id')
+    if not all([name, type_, vote_date, member_id]):
+        return jsonify({'error': 'Missing fields'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        '''INSERT INTO vote_items (group_id, member_id, name, type, vote_date)
+           VALUES (%s, %s, %s, %s, %s)''',
+        (group_id, member_id, name, type_, vote_date)
+    )
+    conn.commit()
+    new_id = cursor.lastrowid
+    cursor.close()
+    conn.close()
+    return jsonify({'id': new_id}), 201
+
+# API: bỏ phiếu
+@app.route('/api/vote', methods=['POST'])
+def cast_vote():
+    data = request.json
+    vote_item_id = data.get('vote_item_id')
+    member_id = data.get('member_id')
+    if not all([vote_item_id, member_id]):
+        return jsonify({'error': 'Missing fields'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            'INSERT INTO votes (vote_item_id, member_id) VALUES (%s, %s)',
+            (vote_item_id, member_id)
+        )
+        conn.commit()
+    except mysql.connector.IntegrityError:
+        cursor.close()
+        conn.close()
+        return jsonify({'error': 'Already voted'}), 409
+
+    cursor.close()
+    conn.close()
+    return jsonify({'success': True}), 201
+# Item Categories Routes
+@app.route('/api/categories', methods=['GET'])
+def get_categories():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute('SELECT * FROM item_categories WHERE group_id = %s', (1,))  # Assuming group_id=1
+    categories = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(categories)
+
+@app.route('/api/categories', methods=['POST'])
+def create_category():
+    data = request.get_json()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        'INSERT INTO item_categories (group_id, name) VALUES (%s, %s)',
+        (1, data['name'])  # Assuming group_id=1
+    )
+    conn.commit()
+    category_id = cursor.lastrowid
+    cursor.close()
+    conn.close()
+    return jsonify({'id': category_id, 'name': data['name']}), 201
+
+# Shared Items Routes
+@app.route('/api/items', methods=['GET'])
+def get_items():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute('''
+        SELECT si.*, ic.name as category_name
+        FROM shared_items si
+        LEFT JOIN item_categories ic ON si.category_id = ic.id
+        WHERE si.group_id = %s AND si.is_active = 1
+    ''', (1,))  # Assuming group_id=1
+    items = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(items)
+
+@app.route('/api/items', methods=['POST'])
+def create_item():
+    data = request.get_json()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        INSERT INTO shared_items 
+        (group_id, category_id, member_id, name, description, quantity, threshold, unit, image_url)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''',
+        (
+            1,  # group_id
+            data.get('category_id') or None,
+            1,  # member_id
+            data['name'],
+            data.get('description'),
+            data['quantity'],
+            data['threshold'],
+            data.get('unit'),
+            data.get('image_url')
+        )
+    )
+    
+    # Log history
+    item_id = cursor.lastrowid
+    cursor.execute(
+        '''
+        INSERT INTO item_histories 
+        (item_id, member_id, action_type, quantity_change, new_quantity, notes)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        ''',
+        (item_id, 1, 'create', data['quantity'], data['quantity'], 'Created new item')
+    )
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    # Create notification if quantity is low
+    if data['quantity'] <= data['threshold']:
+        create_low_stock_notification(item_id, data['name'], data['quantity'], data['threshold'])
+    
+    return jsonify({'id': item_id, 'message': 'Item created'}), 201
+
+@app.route('/api/items/<int:id>', methods=['PUT'])
+def update_item(id):
+    data = request.get_json()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT quantity FROM shared_items WHERE id = %s', (id,))
+    old_quantity = cursor.fetchone()[0]
+    
+    cursor.execute(
+        '''
+        UPDATE shared_items 
+        SET name = %s, category_id = %s, description = %s, quantity = %s, 
+            threshold = %s, unit = %s, image_url = %s, updated_at = %s
+        WHERE id = %s
+        ''',
+        (
+            data['name'],
+            data.get('category_id') or None,
+            data.get('description'),
+            data['quantity'],
+            data['threshold'],
+            data.get('unit'),
+            data.get('image_url'),
+            datetime.now(),
+            id
+        )
+    )
+    
+    # Log history
+    quantity_change = data['quantity'] - old_quantity
+    cursor.execute(
+        '''
+        INSERT INTO item_histories 
+        (item_id, member_id, action_type, quantity_change, old_quantity, new_quantity, notes)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ''',
+        (id, 1, 'update', quantity_change, old_quantity, data['quantity'], 'Updated item details')
+    )
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    # Create notification if quantity is low
+    if data['quantity'] <= data['threshold']:
+        create_low_stock_notification(id, data['name'], data['quantity'], data['threshold'])
+    
+    return jsonify({'message': 'Item updated'})
+
+@app.route('/api/items/<int:id>', methods=['DELETE'])
+def delete_item(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('UPDATE shared_items SET is_active = 0 WHERE id = %s', (id,))
+    
+    # Log history
+    cursor.execute(
+        '''
+        INSERT INTO item_histories 
+        (item_id, member_id, action_type, notes)
+        VALUES (%s, %s, %s, %s)
+        ''',
+        (id, 1, 'delete', 'Item deactivated')
+    )
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({'message': 'Item deleted'})
+
+@app.route('/api/items/<int:id>/quantity', methods=['PATCH'])
+def update_item_quantity(id):
+    data = request.get_json()
+    change = data['change']
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT quantity, threshold, name FROM shared_items WHERE id = %s', (id,))
+    item = cursor.fetchone()
+    old_quantity = item[0]
+    threshold = item[1]
+    name = item[2]
+    
+    new_quantity = max(0, old_quantity + change)
+    cursor.execute(
+        'UPDATE shared_items SET quantity = %s WHERE id = %s',
+        (new_quantity, id)
+    )
+    
+    # Log history
+    cursor.execute(
+        '''
+        INSERT INTO item_histories 
+        (item_id, member_id, action_type, quantity_change, old_quantity, new_quantity)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        ''',
+        (id, 1, 'update', change, old_quantity, new_quantity)
+    )
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    # Create notification if quantity is low
+    if new_quantity <= threshold:
+        create_low_stock_notification(id, name, new_quantity, threshold)
+    
+    return jsonify({'message': 'Quantity updated', 'new_quantity': new_quantity})
+
+# Shopping List Routes
+@app.route('/api/shopping-list', methods=['GET'])
+def get_shopping_list():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute('''
+        SELECT sl.*, si.name as item_name
+        FROM shopping_lists sl
+        LEFT JOIN shared_items si ON sl.item_id = si.id
+        WHERE sl.group_id = %s AND sl.is_completed = 0
+    ''', (1,))  # Assuming group_id=1
+    items = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(items)
+
+@app.route('/api/shopping-list', methods=['POST'])
+def add_to_shopping_list():
+    data = request.get_json()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        INSERT INTO shopping_lists 
+        (group_id, member_id, item_id, item_name, quantity, unit, notes)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ''',
+        (
+            1,  # group_id
+            1,  # member_id
+            data.get('item_id') or None,
+            data['item_name'],
+            data['quantity'],
+            data.get('unit'),
+            data.get('notes')
+        )
+    )
+    conn.commit()
+    item_id = cursor.lastrowid
+    cursor.close()
+    conn.close()
+    return jsonify({'id': item_id, 'message': 'Added to shopping list'}), 201
+
+@app.route('/api/shopping-list/<int:id>', methods=['DELETE'])
+def remove_from_shopping_list(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM shopping_lists WHERE id = %s', (id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({'message': 'Item removed from shopping list'})
+
+@app.route('/api/shopping-list/<int:id>/complete', methods=['PATCH'])
+def complete_shopping_item(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        UPDATE shopping_lists 
+        SET is_completed = 1, completed_by = %s, completed_at = %s
+        WHERE id = %s
+        ''',
+        (1, datetime.now(), id)  # Assuming member_id=1
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({'message': 'Shopping item marked as completed'})
+
+@app.route('/api/shopping-list/clear', methods=['DELETE'])
+def clear_shopping_list():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM shopping_lists WHERE group_id = %s AND is_completed = 1', (1,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({'message': 'Completed shopping items cleared'})
+
+# Helper function for notifications
+def create_low_stock_notification(item_id, item_name, quantity, threshold):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    notification_type = 'low_stock' if quantity > 0 else 'out_of_stock'
+    message = f"{item_name} {'sắp hết' if quantity > 0 else 'đã hết'} (Số lượng: {quantity}/{threshold})"
+    
+    cursor.execute(
+        '''
+        INSERT INTO item_notifications 
+        (group_id, item_id, member_id, notification_type, title, message)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        ''',
+        (1, item_id, 1, notification_type, f"Cảnh báo: {item_name}", message)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+GROUP_ID = 1   # tạm lấy nhóm=1, bạn có thể lấy từ session hoặc param khác
+
+# --- Lấy danh sách tasks (có filter qua querystring nếu cần) ---
+@app.route('/api/tasks', methods=['GET'])
+def get_tasks():
+    status = request.args.get('status')      # 'completed', 'pending', 'overdue' hoặc None
+    assignee = request.args.get('assignee')  # 'A','B','C' hoặc None
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    sql = "SELECT * FROM tasks WHERE group_id = %s"
+    params = [GROUP_ID]
+
+    # thêm điều kiện filter nếu có
+    today = date.today().isoformat()
+    if status == 'completed':
+        sql += " AND completed = 1"
+    elif status == 'pending':
+        sql += " AND completed = 0 AND due_date >= %s"
+        params.append(today)
+    elif status == 'overdue':
+        sql += " AND completed = 0 AND due_date < %s"
+        params.append(today)
+
+    if assignee and assignee != 'all':
+        sql += " AND assignee_id = (SELECT id FROM members WHERE initial = %s LIMIT 1)"
+        params.append(assignee)
+
+    if from_date:
+        sql += " AND due_date >= %s"
+        params.append(from_date)
+    if to_date:
+        sql += " AND due_date <= %s"
+        params.append(to_date)
+
+    cursor.execute(sql, params)
+    tasks = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(tasks)
+
+
+# --- Tạo mới task ---
+@app.route('/api/tasks', methods=['POST'])
+def create_task():
+    data = request.get_json()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO tasks
+          (group_id, custom_type, description, assignee_id, due_date, priority, completed)
+        VALUES
+          (%s, %s, %s,
+           (SELECT id FROM members WHERE initial = %s LIMIT 1),
+           %s, %s, 0)
+        """,
+        (GROUP_ID,
+         data.get('type'),        # vì bạn lưu type trực tiếp vào custom_type
+         data.get('desc'),
+         data.get('assignee'),
+         data.get('date'),
+         data.get('priority'))
+    )
+    conn.commit()
+    new_id = cursor.lastrowid
+    cursor.close()
+    conn.close()
+    return jsonify({"id": new_id}), 201
+
+
+# --- Cập nhật task (edit + markComplete) ---
+@app.route('/api/tasks/<int:task_id>', methods=['PUT'])
+def update_task(task_id):
+    data = request.get_json()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        UPDATE tasks
+        SET
+          custom_type = %s,
+          description = %s,
+          assignee_id = (SELECT id FROM members WHERE initial = %s LIMIT 1),
+          due_date = %s,
+          priority = %s,
+          completed = %s
+        WHERE id = %s AND group_id = %s
+        """,
+        (data.get('type'),
+         data.get('desc'),
+         data.get('assignee'),
+         data.get('date'),
+         data.get('priority'),
+         1 if data.get('completed') else 0,
+         task_id,
+         GROUP_ID)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"updated": True})
+
+
+# --- Xóa task ---
+@app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
+def delete_task(task_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM tasks WHERE id = %s AND group_id = %s",
+        (task_id, GROUP_ID)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"deleted": True})
+
+
+# --- Đánh dấu hoàn thành nhanh (PATCH) ---
+@app.route('/api/tasks/<int:task_id>/complete', methods=['PATCH'])
+def mark_complete(task_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE tasks SET completed = 1 WHERE id = %s AND group_id = %s",
+        (task_id, GROUP_ID)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"completed": True})
+
+# Nếu bạn đã xác định group_id trong session hay token, hãy thay thế hằng số này
+GROUP_ID = 1
+
+# --- Lấy danh sách thành viên để hiển thị tên trong <select> ---
+@app.route('/api/members_exp', methods=['GET'])
+def get_members_exp():
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+    cur.execute("""
+        SELECT m.id, u.full_name
+        FROM members m
+        JOIN users u ON m.user_id = u.id
+        WHERE m.group_id = %s
+        ORDER BY u.full_name
+    """, (GROUP_ID,))
+    members = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify(members)
+
+
+# --- GET tất cả expenses ---
+@app.route('/api/expenses_exp', methods=['GET'])
+def get_expenses_exp():
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+    cur.execute("""
+        SELECT
+          e.id,
+          e.expense_date AS date,
+          e.description,
+          e.amount,
+          e.status,
+          e.member_id AS payer_id,
+          u.full_name AS payer_name
+        FROM expenses e
+        JOIN members m  ON e.member_id = m.id
+        JOIN users u    ON m.user_id   = u.id
+        WHERE e.group_id = %s
+        ORDER BY e.expense_date DESC
+    """, (GROUP_ID,))
+    expenses = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify(expenses)
+
+
+# --- POST tạo mới expense ---
+@app.route('/api/expenses_exp', methods=['POST'])
+def create_expense_exp():
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO expenses
+          (group_id, member_id, expense_date, description, amount, status)
+        VALUES
+          (%s, %s, %s, %s, %s, %s)
+    """, (
+        GROUP_ID,
+        data['payer_id'],
+        data['date'],
+        data['description'],
+        data['amount'],
+        data['status']
+    ))
+    conn.commit()
+    new_id = cur.lastrowid
+    cur.close()
+    conn.close()
+    return jsonify({'id': new_id}), 201
+
+
+# --- PUT cập nhật expense ---
+@app.route('/api/expenses_exp/<int:exp_id>', methods=['PUT'])
+def update_expense_exp(exp_id):
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE expenses
+        SET
+          member_id    = %s,
+          expense_date = %s,
+          description  = %s,
+          amount       = %s,
+          status       = %s
+        WHERE id = %s AND group_id = %s
+    """, (
+        data['payer_id'],
+        data['date'],
+        data['description'],
+        data['amount'],
+        data['status'],
+        exp_id,
+        GROUP_ID
+    ))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'updated': True})
+
+
+# --- DELETE xóa expense ---
+@app.route('/api/expenses_exp/<int:exp_id>', methods=['DELETE'])
+def delete_expense_exp(exp_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM expenses WHERE id = %s AND group_id = %s",
+        (exp_id, GROUP_ID)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'deleted': True})
+GROUP_ID = 1  # hoặc lấy từ session/token
+
+# --- Lấy danh sách members (đổ vào <select>) ---
+@app.route('/api/members_sched', methods=['GET'])
+def get_members_sched():
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+    cur.execute("""
+        SELECT m.id, u.full_name
+        FROM members m
+        JOIN users u ON m.user_id = u.id
+        WHERE m.group_id = %s
+        ORDER BY u.full_name
+    """, (GROUP_ID,))
+    members = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify(members)
+
+
+# --- Lấy tất cả lịch nấu ăn ---
+@app.route('/api/schedules_sched', methods=['GET'])
+def get_schedules_sched():
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+    cur.execute("""
+        SELECT
+          s.id,
+          s.schedule_date AS date,
+          s.meal,
+          s.status,
+          s.member_id AS cook_id,
+          u.full_name AS cook_name
+        FROM cooking_schedules s
+        JOIN members m  ON s.member_id = m.id
+        JOIN users u    ON m.user_id   = u.id
+        WHERE s.group_id = %s
+        ORDER BY s.schedule_date DESC
+    """, (GROUP_ID,))
+    schedules = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify(schedules)
+
+
+# --- Tạo mới ca nấu ---
+@app.route('/api/schedules_sched', methods=['POST'])
+def create_schedule_sched():
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO cooking_schedules
+          (group_id, member_id, schedule_date, meal, status)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (
+        GROUP_ID,
+        data['cook_id'],
+        data['date'],
+        data['meal'],
+        data['status']
+    ))
+    conn.commit()
+    new_id = cur.lastrowid
+    cur.close()
+    conn.close()
+    return jsonify({'id': new_id}), 201
+
+
+# --- Cập nhật ca nấu ---
+@app.route('/api/schedules_sched/<int:id>', methods=['PUT'])
+def update_schedule_sched(id):
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE cooking_schedules
+        SET
+          member_id     = %s,
+          schedule_date = %s,
+          meal          = %s,
+          status        = %s
+        WHERE id = %s AND group_id = %s
+    """, (
+        data['cook_id'],
+        data['date'],
+        data['meal'],
+        data['status'],
+        id,
+        GROUP_ID
+    ))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'updated': True})
+
+
+# --- Xóa ca nấu ---
+@app.route('/api/schedules_sched/<int:id>', methods=['DELETE'])
+def delete_schedule_sched(id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM cooking_schedules WHERE id = %s AND group_id = %s",
+        (id, GROUP_ID)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'deleted': True})
+
+
+def get_db_connection():
+    connection = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="test"
+    )
+    return connection
+
+# Helper function to execute queries
+def execute_query(query, params=None, fetch=True):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+        if fetch:
+            result = cursor.fetchall()
+            conn.commit()
+            return result
+        conn.commit()
+        return cursor.lastrowid
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+# Routes for Funds
+@app.route('/api/funds/<int:group_id>', methods=['GET'])
+def get_funds(group_id):
+    query = "SELECT * FROM funds WHERE group_id = %s"
+    funds = execute_query(query, (group_id,))
+    return jsonify(funds if funds else [])
+
+@app.route('/api/funds', methods=['POST'])
+def add_fund():
+    data = request.json
+    query = """
+        INSERT INTO funds (group_id, name, amount, description, category)
+        VALUES (%s, %s, %s, %s, %s)
+    """
+    params = (data['group_id'], data['name'], data['amount'], data['description'], data['category'])
+    fund_id = execute_query(query, params, fetch=False)
+    return jsonify({"id": fund_id, "message": "Fund added successfully"})
+
+@app.route('/api/funds/<int:fund_id>', methods=['PUT'])
+def update_fund(fund_id):
+    data = request.json
+    query = """
+        UPDATE funds SET name = %s, amount = %s, description = %s, category = %s
+        WHERE id = %s
+    """
+    params = (data['name'], data['amount'], data['description'], data['category'], fund_id)
+    execute_query(query, params, fetch=False)
+    return jsonify({"message": "Fund updated successfully"})
+
+@app.route('/api/funds/<int:fund_id>', methods=['DELETE'])
+def delete_fund(fund_id):
+    query = "DELETE FROM funds WHERE id = %s"
+    execute_query(query, (fund_id,), fetch=False)
+    return jsonify({"message": "Fund deleted successfully"})
+
+# Routes for Member Contributions
+@app.route('/api/contributions/<int:fund_id>', methods=['GET'])
+def get_contributions(fund_id):
+    query = """
+        SELECT mc.*, m.user_id, u.full_name as name, u.email
+        FROM member_contributions mc
+        JOIN members m ON mc.member_id = m.id
+        JOIN users u ON m.user_id = u.id
+        WHERE mc.fund_id = %s
+    """
+    contributions = execute_query(query, (fund_id,))
+    return jsonify(contributions if contributions else [])
+
+@app.route('/api/contributions', methods=['POST'])
+def add_contribution():
+    data = request.json
+    query = """
+        INSERT INTO member_contributions (member_id, fund_id, amount, period, email, phone)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    params = (data['member_id'], data['fund_id'], data['amount'], data['period'], data.get('email'), data.get('phone'))
+    contribution_id = execute_query(query, params, fetch=False)
+    return jsonify({"id": contribution_id, "message": "Contribution added successfully"})
+
+@app.route('/api/contributions/<int:contribution_id>', methods=['PUT'])
+def update_contribution(contribution_id):
+    data = request.json
+    query = """
+        UPDATE member_contributions
+        SET amount = %s, period = %s, paid = %s, last_paid = %s, email = %s, phone = %s
+        WHERE id = %s
+    """
+    params = (data['amount'], data['period'], data['paid'], data.get('last_paid'), data.get('email'), data.get('phone'), contribution_id)
+    execute_query(query, params, fetch=False)
+    return jsonify({"message": "Contribution updated successfully"})
+
+@app.route('/api/contributions/<int:contribution_id>/confirm', methods=['PUT'])
+def confirm_contribution(contribution_id):
+    data = request.json
+    query = """
+        UPDATE member_contributions
+        SET paid = 1, last_paid = %s
+        WHERE id = %s
+    """
+    params = (data['last_paid'], contribution_id)
+    execute_query(query, params, fetch=False)
+    return jsonify({"message": "Contribution confirmed successfully"})
+
+@app.route('/api/contributions/<int:contribution_id>', methods=['DELETE'])
+def delete_contribution(contribution_id):
+    query = "DELETE FROM member_contributions WHERE id = %s"
+    execute_query(query, (contribution_id,), fetch=False)
+    return jsonify({"message": "Contribution deleted successfully"})
+
+# Routes for Transactions
+@app.route('/api/transactions/<int:fund_id>', methods=['GET'])
+def get_transactions(fund_id):
+    query = """
+        SELECT t.*, u.full_name as member_name
+        FROM transactions t
+        LEFT JOIN members m ON t.member_id = m.id
+        LEFT JOIN users u ON m.user_id = u.id
+        WHERE t.fund_id = %s
+        ORDER BY t.date DESC
+    """
+    transactions = execute_query(query, (fund_id,))
+    return jsonify(transactions if transactions else [])
+
+@app.route('/api/transactions', methods=['POST'])
+def add_transaction():
+    data = request.json
+    query = """
+        INSERT INTO transactions (fund_id, member_id, type, amount, date, description, category)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """
+    params = (
+        data['fund_id'], data.get('member_id'), data['type'], data['amount'],
+        data['date'], data['description'], data['category']
+    )
+    transaction_id = execute_query(query, params, fetch=False)
+    # Update fund balance
+    update_fund_balance(data['fund_id'], data['type'], data['amount'])
+    return jsonify({"id": transaction_id, "message": "Transaction added successfully"})
+
+@app.route('/api/transactions/<int:transaction_id>', methods=['DELETE'])
+def delete_transaction(transaction_id):
+    # Get transaction details to adjust fund balance
+    query = "SELECT fund_id, type, amount FROM transactions WHERE id = %s"
+    transaction = execute_query(query, (transaction_id,))
+    if transaction:
+        transaction = transaction[0]
+        # Reverse the balance update
+        reverse_type = 'expense' if transaction['type'] == 'income' else 'income'
+        update_fund_balance(transaction['fund_id'], reverse_type, transaction['amount'])
+        # Delete transaction
+        query = "DELETE FROM transactions WHERE id = %s"
+        execute_query(query, (transaction_id,), fetch=False)
+        return jsonify({"message": "Transaction deleted successfully"})
+    return jsonify({"error": "Transaction not found"}), 404
+
+# Helper function to update fund balance
+def update_fund_balance(fund_id, transaction_type, amount):
+    query = "SELECT amount FROM funds WHERE id = %s"
+    fund = execute_query(query, (fund_id,))
+    if fund:
+        current_balance = fund[0]['amount']
+        new_balance = current_balance + (amount if transaction_type == 'income' else -amount)
+        query = "UPDATE funds SET amount = %s WHERE id = %s"
+        execute_query(query, (new_balance, fund_id), fetch=False)
+
+# Routes for Notifications
+@app.route('/api/notifications/<int:group_id>', methods=['GET'])
+def get_notifications(group_id):
+    query = """
+        SELECT n.*, u.full_name as member_name
+        FROM notifications n
+        JOIN members m ON n.member_id = m.id
+        JOIN users u ON m.user_id = u.id
+        WHERE n.group_id = %s
+        ORDER BY n.created_at DESC
+    """
+    notifications = execute_query(query, (group_id,))
+    return jsonify(notifications if notifications else [])
+
+@app.route('/api/notifications', methods=['POST'])
+def add_notification():
+    data = request.json
+    query = """
+        INSERT INTO notifications (group_id, member_id, title, message)
+        VALUES (%s, %s, %s, %s)
+    """
+    params = (data['group_id'], data['member_id'], data['title'], data['message'])
+    notification_id = execute_query(query, params, fetch=False)
+    return jsonify({"id": notification_id, "message": "Notification added successfully"})
+
+@app.route('/api/notifications/<int:notification_id>/read', methods=['PUT'])
+def mark_notification_read(notification_id):
+    query = "UPDATE notifications SET is_read = 1, read_at = CURRENT_TIMESTAMP WHERE id = %s"
+    execute_query(query, (notification_id,), fetch=False)
+    return jsonify({"message": "Notification marked as read"})
+
+# Tạm giả member hiện tại
+CURRENT_MEMBER_ID = 1  # thay bằng session['member_id'] thật trên production
+
+# --- Lấy danh sách tất cả thông báo cùng danh sách ai đã đọc ---
+@app.route('/api/announcements', methods=['GET'])
+def list_announcements():
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+    # Lấy thông báo
+    cur.execute("""
+        SELECT
+          a.id,
+          a.title,
+          a.content,
+          a.priority,
+          a.author_id,
+          u.full_name AS author_name,
+          a.created_at AS timestamp
+        FROM announcements a
+        JOIN members m ON a.author_id = m.id
+        JOIN users u   ON m.user_id   = u.id
+        WHERE a.group_id = %s
+        ORDER BY a.created_at DESC
+    """, (1,))  # giả group_id=1
+    ann = cur.fetchall()
+    # Lấy ai đã đọc cho mỗi thông báo
+    for row in ann:
+        cur.execute("""
+            SELECT member_id
+            FROM announcement_reads
+            WHERE announcement_id = %s
+        """, (row['id'],))
+        row['readBy'] = [r['member_id'] for r in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return jsonify(ann)
+
+
+# --- Tạo mới thông báo ---
+@app.route('/api/announcements', methods=['POST'])
+def create_announcement():
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO announcements
+          (group_id, author_id, title, content, priority)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (
+        1,
+        CURRENT_MEMBER_ID,
+        data['title'],
+        data['content'],
+        data['priority']
+    ))
+    conn.commit()
+    new_id = cur.lastrowid
+    cur.close()
+    conn.close()
+    return jsonify({'id': new_id}), 201
+
+
+# --- Đánh dấu đã đọc ---
+@app.route('/api/announcements/<int:aid>/read', methods=['POST'])
+def mark_read(aid):
+    data = request.get_json()
+    member_id = data.get('member_id', CURRENT_MEMBER_ID)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # tránh duplicate key (khóa chính composite)
+    cur.execute("""
+        INSERT IGNORE INTO announcement_reads
+          (announcement_id, member_id)
+        VALUES (%s, %s)
+    """, (aid, member_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'read': True})
+# Route để lấy danh sách chi phí
+@app.route('/api/expenses', methods=['GET'])
+def get_expenses():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT 
+                e.expense_date AS date,
+                e.amount,
+                m.user_id,
+                u.full_name AS payer,
+                e.description,
+                CASE 
+                    WHEN e.description LIKE '%thực phẩm%' THEN 'food'
+                    WHEN e.description LIKE '%dụng cụ%' THEN 'utensil'
+                    ELSE 'other'
+                END AS type
+            FROM expenses e
+            JOIN members m ON e.member_id = m.id
+            JOIN users u ON m.user_id = u.id
+            WHERE e.status = 'Paid'
+        """)
+        expenses = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(expenses)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Route để lấy danh sách lịch nấu ăn
+@app.route('/api/schedules', methods=['GET'])
+def get_schedules():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT 
+                cs.schedule_date AS date,
+                cs.meal,
+                m.user_id,
+                u.full_name AS cook,
+                (SELECT COUNT(*) 
+                 FROM menu_dishes md 
+                 JOIN menus mn ON md.menu_id = mn.id 
+                 WHERE mn.cooking_schedule_id = cs.id) AS dishes
+            FROM cooking_schedules cs
+            JOIN members m ON cs.member_id = m.id
+            JOIN users u ON m.user_id = u.id
+            WHERE cs.status = 'Completed'
+        """)
+        schedules = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(schedules)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Route để lấy danh sách thực đơn và món ăn
+@app.route('/api/menus', methods=['GET'])
+def get_menus():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT 
+                m.menu_date AS date,
+                GROUP_CONCAT(md.dish_name) AS dishes
+            FROM menus m
+            JOIN menu_dishes md ON m.id = md.menu_id
+            GROUP BY m.id, m.menu_date
+        """)
+        menus = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(menus)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+from functools import wraps
+from flask import jsonify
+from mysql.connector import Error
+
+# Middleware để xử lý lỗi kết nối
+def handle_db_operation(query_func):
+    @wraps(query_func)
+    def wrapper(*args, **kwargs):
+        connection = None
+        try:
+            connection = get_db_connection()
+            cursor = connection.cursor(dictionary=True)
+            # query_func giờ đây nhận (cursor, connection, *args, **kwargs)
+            result = query_func(cursor, connection, *args, **kwargs)
+            connection.commit()
+            return result
+        except Error as e:
+            return jsonify({"error": str(e)}), 500
+        finally:
+            if connection and connection.is_connected():
+                cursor.close()
+                connection.close()
+    return wrapper
+
+# Route: Lấy danh sách cuộc trò chuyện của người dùng
+@app.route('/api/conversations', methods=['GET'])
+@handle_db_operation
+def get_conversations(cursor, connection):
+    user_id = request.args.get('user_id', type=int)  # Giả định user_id được gửi qua query
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    query = """
+        SELECT c.id, c.is_group, c.group_id, g.group_name, n.unread_count
+        FROM conversations_chat c
+        LEFT JOIN groups g ON c.group_id = g.id
+        LEFT JOIN conversation_participants_chat cp ON c.id = cp.conversation_id
+        LEFT JOIN notifications_chat n ON c.id = n.conversation_id AND n.user_id = %s
+        WHERE cp.user_id = %s
+    """
+    cursor.execute(query, (user_id, user_id))
+    conversations = cursor.fetchall()
+
+    return jsonify({"conversations": conversations}), 200
+
+# Route: Gửi một tin nhắn mới
+@app.route('/api/conversations/<int:conversation_id>/messages', methods=['POST'])
+@handle_db_operation
+def send_message(cursor, connection, conversation_id):
+    data = request.get_json()
+    sender_id = data.get('sender_id')
+    content = data.get('content')
+
+    if not sender_id or not content:
+        return jsonify({"error": "sender_id and content are required"}), 400
+
+    # Kiểm tra xem người dùng có tham gia cuộc trò chuyện không
+    cursor.execute(
+        "SELECT id FROM conversation_participants_chat WHERE conversation_id = %s AND user_id = %s",
+        (conversation_id, sender_id)
+    )
+    if not cursor.fetchone():
+        return jsonify({"error": "User is not a participant in this conversation"}), 403
+
+    # Thêm tin nhắn
+    query = """
+        INSERT INTO messages_chat (conversation_id, sender_id, content)
+        VALUES (%s, %s, %s)
+    """
+    cursor.execute(query, (conversation_id, sender_id, content))
+    message_id = cursor.lastrowid
+
+    # Cập nhật thông báo cho các thành viên khác
+    cursor.execute(
+        """
+        INSERT INTO notifications_chat (user_id, conversation_id, unread_count, last_message_id)
+        SELECT user_id, %s, 1, %s
+        FROM conversation_participants_chat
+        WHERE conversation_id = %s AND user_id != %s
+        ON DUPLICATE KEY UPDATE
+            unread_count = unread_count + 1,
+            last_message_id = %s
+        """,
+        (conversation_id, message_id, conversation_id, sender_id, message_id)
+    )
+
+    return jsonify({"message_id": message_id, "content": content}), 201
+
+# Route: Lấy danh sách tin nhắn trong một cuộc trò chuyện
+@app.route('/api/conversations/<int:conversation_id>/messages', methods=['GET'])
+@handle_db_operation
+def get_messages(cursor, connection, conversation_id):
+    user_id = request.args.get('user_id', type=int)
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    # Kiểm tra quyền truy cập
+    cursor.execute(
+        "SELECT id FROM conversation_participants_chat WHERE conversation_id = %s AND user_id = %s",
+        (conversation_id, user_id)
+    )
+    if not cursor.fetchone():
+        return jsonify({"error": "User is not a participant in this conversation"}), 403
+
+    # Lấy tin nhắn
+    query = """
+        SELECT m.id, m.sender_id, u.full_name AS sender_name, m.content, m.is_read, m.timestamp
+        FROM messages_chat m
+        JOIN users u ON m.sender_id = u.id
+        WHERE m.conversation_id = %s
+        ORDER BY m.timestamp ASC
+    """
+    cursor.execute(query, (conversation_id,))
+    messages = cursor.fetchall()
+
+    # Đánh dấu tin nhắn là đã đọc
+    cursor.execute(
+        """
+        UPDATE messages_chat
+        SET is_read = 1
+        WHERE conversation_id = %s AND is_read = 0
+        """,
+        (conversation_id,)
+    )
+    cursor.execute(
+        """
+        UPDATE notifications_chat
+        SET unread_count = 0
+        WHERE conversation_id = %s AND user_id = %s
+        """,
+        (conversation_id, user_id)
+    )
+
+    return jsonify({"messages": messages}), 200
+
+# Route: Thêm chi phí mới
+@app.route('/api/groups/<int:group_id>/expenses', methods=['POST'])
+@handle_db_operation
+def add_expense(cursor, connection, group_id):
+    data = request.get_json()
+    user_id = data.get('user_id')
+    description = data.get('description')
+    amount = data.get('amount')
+
+    if not user_id or not amount:
+        return jsonify({"error": "user_id and amount are required"}), 400
+
+    # Kiểm tra xem người dùng có trong nhóm không
+    cursor.execute(
+        "SELECT id FROM members WHERE group_id = %s AND user_id = %s AND status = 'Active'",
+        (group_id, user_id)
+    )
+    if not cursor.fetchone():
+        return jsonify({"error": "User is not an active member of this group"}), 403
+
+    # Thêm chi phí
+    query = """
+        INSERT INTO expenses_chat (group_id, user_id, description, amount)
+        VALUES (%s, %s, %s, %s)
+    """
+    cursor.execute(query, (group_id, user_id, description, amount))
+    expense_id = cursor.lastrowid
+
+    return jsonify({"expense_id": expense_id, "description": description, "amount": amount}), 201
+
+# Route: Tải lên tệp đính kèm
+@app.route('/api/conversations/<int:conversation_id>/messages/<int:message_id>/attachments', methods=['POST'])
+@handle_db_operation
+def upload_attachment(cursor, connection, conversation_id, message_id):
+    user_id = request.form.get('user_id', type=int)
+    file = request.files.get('file')
+
+    if not user_id or not file:
+        return jsonify({"error": "user_id and file are required"}), 400
+
+    # Kiểm tra quyền truy cập
+    cursor.execute(
+        """
+        SELECT m.id
+        FROM messages_chat m
+        JOIN conversation_participants_chat cp ON m.conversation_id = cp.conversation_id
+        WHERE m.id = %s AND m.conversation_id = %s AND cp.user_id = %s
+        """,
+        (message_id, conversation_id, user_id)
+    )
+    if not cursor.fetchone():
+        return jsonify({"error": "Invalid message or user not in conversation"}), 403
+
+    # Giả định tệp được lưu vào hệ thống lưu trữ (ví dụ: S3, local)
+    file_url = f"/uploads/{file.filename}"  # Thay bằng logic lưu trữ thực tế
+    file_type = 'image' if file.mimetype.startswith('image') else 'file'
+
+    query = """
+        INSERT INTO attachments_chat (message_id, file_type, file_url, file_name)
+        VALUES (%s, %s, %s, %s)
+    """
+    cursor.execute(query, (message_id, file_type, file_url, file.filename))
+    attachment_id = cursor.lastrowid
+
+    return jsonify({"attachment_id": attachment_id, "file_url": file_url}), 201
+# lấy tên nhóm của user
+@app.route('/api/user_group', methods=['GET'])
+def get_user_group():
+    # Lấy user_id từ tham số query (ví dụ: ?user_id=1)
+    user_id = request.args.get('user_id')
+    
+    if not user_id:
+        return jsonify({'error': 'User ID is required'}), 400
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    # Truy vấn lấy tên nhóm của người dùng từ bảng members và groups
+    query = '''
+    SELECT g.group_name
+    FROM groups g
+    JOIN members m ON m.group_id = g.id
+    WHERE m.user_id = %s AND m.status = 'Active'
+    LIMIT 1
+    '''
+    cursor.execute(query, (user_id,))
+    group = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if not group:
+        return jsonify({'message': 'No active group found for this user'}), 404
+
+    # Trả về tên nhóm
+    return jsonify({'group': group['group_name']}), 200
+# lấy 2 chức cái tên user
+@app.route('/api/user_initials', methods=['GET'])
+def get_user_initials():
+    # Lấy user_id từ session
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Chưa đăng nhập'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Lấy full_name của user
+        cursor.execute("SELECT full_name FROM users WHERE id = %s", (user_id,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': 'User không tồn tại'}), 404
+
+        full_name = row['full_name'].strip()
+        # Tách theo khoảng trắng
+        parts = full_name.split()
+        if len(parts) >= 2:
+            # Lấy chữ cái đầu của hai từ đầu tiên
+            initials = parts[0][0] + parts[1][0]
+        else:
+            # Nếu chỉ có một từ, lấy hai ký tự đầu của từ đó (hoặc đủ trong phạm vi)
+            initials = full_name[:2]
+
+        initials = initials.upper()
+
+        return jsonify({'initials': initials}), 200
+
+    finally:
+        cursor.close()
+        conn.close()
 
 if __name__ == '__main__':
     app.run(debug=True)

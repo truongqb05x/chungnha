@@ -1,91 +1,578 @@
--- 1. Bảng users: lưu tài khoản
+-- =============================================================================
+-- Schema Cơ Sở Dữ Liệu cho Ứng Dụng Quản Lý Nhóm
+-- Mô tả: Schema này quản lý người dùng, nhóm, hoạt động nhóm, vật dụng, tài chính,
+--        công việc, thực đơn, trò chuyện và thông báo cho ứng dụng dựa trên nhóm.
+--        Các bảng được nhóm theo chức năng để dễ quản lý.
+-- Bộ mã: utf8mb4 (hỗ trợ Unicode)
+-- So sánh: utf8mb4_unicode_ci (không phân biệt hoa thường)
+-- Công cụ: InnoDB (hỗ trợ giao dịch và khóa ngoại)
+-- =============================================================================
+
+-- =============================================================================
+-- NHÓM 1: QUẢN LÝ NGƯỜI DÙNG
+-- Mô tả: Các bảng để quản lý tài khoản người dùng và hoạt động đăng nhập.
+-- =============================================================================
+
+-- Bảng: users
+-- Mô tả: Lưu thông tin tài khoản người dùng để xác thực và hồ sơ.
 CREATE TABLE `users` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `full_name` VARCHAR(255) NOT NULL COMMENT 'Họ và tên người dùng',
   `email` VARCHAR(255) NOT NULL UNIQUE COMMENT 'Email dùng để đăng nhập',
-  `password_hash` VARCHAR(255) NOT NULL COMMENT 'Mật khẩu đã băm',
-  `is_active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '0 = bị khóa, 1 = đang hoạt động',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `password_hash` VARCHAR(255) NOT NULL COMMENT 'Mật khẩu đã mã hóa',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '0 = khóa, 1 = hoạt động',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu trữ thông tin tài khoản người dùng';
 
--- 2. Bảng groups: thông tin nhóm
-CREATE TABLE `groups` (
-    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `group_name` VARCHAR(255) NOT NULL COMMENT 'Tên nhóm',
-    `group_code` VARCHAR(255) NOT NULL UNIQUE COMMENT 'Mã QR nhóm (hoặc mã nhóm)',
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 3. Bảng login_attempts: ghi lại các lần đăng nhập
+-- Bảng: login_attempts
+-- Mô tả: Ghi lại các lần đăng nhập để bảo mật và kiểm tra.
 CREATE TABLE `login_attempts` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  `user_id` INT UNSIGNED NULL COMMENT 'NULL nếu email không tồn tại',
-  `email_attempted` VARCHAR(255) NOT NULL COMMENT 'Email đã nhập',
-  `ip_address` VARCHAR(45) NOT NULL COMMENT 'IP của client',
-  `success` TINYINT(1) NOT NULL COMMENT '1 = đăng nhập thành công, 0 = thất bại',
-  `attempted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `user_id` INT UNSIGNED NULL COMMENT 'Tham chiếu users.id, NULL nếu email không tồn tại',
+  `email_attempted` VARCHAR(255) NOT NULL COMMENT 'Email đã nhập khi đăng nhập',
+  `ip_address` VARCHAR(45) NOT NULL COMMENT 'Địa chỉ IP của thiết bị',
+  `success` TINYINT(1) NOT NULL COMMENT '0 = đăng nhập thất bại, 1 = thành công',
+  `attempted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian thử đăng nhập',
+  CONSTRAINT `fk_login_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu lịch sử các lần đăng nhập';
 
+-- =============================================================================
+-- NHÓM 2: QUẢN LÝ NHÓM
+-- Mô tả: Các bảng quản lý thông tin nhóm và thành viên.
+-- =============================================================================
 
-CREATE TABLE `members` (
-    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `user_id` INT UNSIGNED NOT NULL,
-    `group_id` INT UNSIGNED NOT NULL,
-    `role` ENUM('Admin', 'Member', 'Chef') NOT NULL DEFAULT 'Member',
-    `status` ENUM('Active', 'Inactive', 'Pending') NOT NULL DEFAULT 'Pending',
-    `join_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `leave_date` TIMESTAMP NULL,
-    `avatar` VARCHAR(255) NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_group_id` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-CREATE TABLE IF NOT EXISTS `group_rules` (
+-- Bảng: groups
+-- Mô tả: Lưu thông tin các nhóm.
+CREATE TABLE `groups` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  `group_id` INT UNSIGNED NOT NULL COMMENT 'FK → groups.id',
-  `member_id` INT UNSIGNED NOT NULL COMMENT 'FK → members.id (tác giả)',
-  `title` VARCHAR(255) NOT NULL COMMENT 'Tiêu đề nội quy',
-  `content` TEXT NOT NULL COMMENT 'Nội dung chi tiết',
-  `privacy` ENUM('public','private') NOT NULL DEFAULT 'public' COMMENT 'Công khai hoặc riêng tư',
-  `like_count` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Tổng số lượt thích',
-  `comment_count` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Tổng số bình luận',
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT `fk_group_rules_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_group_rules_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `group_name` VARCHAR(255) NOT NULL COMMENT 'Tên của nhóm',
+  `group_code` VARCHAR(255) NOT NULL UNIQUE COMMENT 'Mã QR hoặc mã định danh nhóm',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo nhóm',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật nhóm'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu thông tin các nhóm';
 
+-- Bảng: members
+-- Mô tả: Quản lý thành viên trong các nhóm và vai trò của họ.
+CREATE TABLE `members` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu users.id',
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `role` ENUM('Admin', 'Member', 'Chef') NOT NULL DEFAULT 'Member' COMMENT 'Vai trò: Quản trị, Thành viên, Đầu bếp',
+  `status` ENUM('Active', 'Inactive', 'Pending') NOT NULL DEFAULT 'Pending' COMMENT 'Trạng thái: Hoạt động, Không hoạt động, Chờ duyệt',
+  `join_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Ngày tham gia nhóm',
+  `leave_date` TIMESTAMP NULL COMMENT 'Ngày rời nhóm, NULL nếu chưa rời',
+  `avatar` VARCHAR(255) NULL COMMENT 'URL ảnh đại diện của thành viên',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi',
+  CONSTRAINT `fk_member_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_member_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý thành viên và vai trò trong nhóm';
+
+-- =============================================================================
+-- NHÓM 3: NỘI QUY NHÓM
+-- Mô tả: Các bảng quản lý nội quy nhóm, bình luận và lượt thích.
+-- =============================================================================
+
+-- Bảng: group_rules
+-- Mô tả: Lưu thông tin nội quy của nhóm.
+CREATE TABLE `group_rules` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (tác giả nội quy)',
+  `title` VARCHAR(255) NOT NULL COMMENT 'Tiêu đề nội quy',
+  `content` TEXT NOT NULL COMMENT 'Nội dung chi tiết của nội quy',
+  `privacy` ENUM('public', 'private') NOT NULL DEFAULT 'public' COMMENT 'Quyền xem: Công khai hoặc Riêng tư',
+  `like_count` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Số lượt thích',
+  `comment_count` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Số bình luận',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo nội quy',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật nội quy',
+  CONSTRAINT `fk_rule_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_rule_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu trữ nội quy của nhóm';
+
+-- Bảng: group_rule_comments
+-- Mô tả: Lưu bình luận về nội quy nhóm.
 CREATE TABLE `group_rule_comments` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  `rule_id` INT UNSIGNED NOT NULL,
-  `member_id` INT UNSIGNED NOT NULL,
-  `content` TEXT NOT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`rule_id`) REFERENCES `group_rules`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `rule_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu group_rules.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người bình luận)',
+  `content` TEXT NOT NULL COMMENT 'Nội dung bình luận',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bình luận',
+  `updated_at` TIMESTAMPassign_to_updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bình luận',
+  CONSTRAINT `fk_comment_rule` FOREIGN KEY (`rule_id`) REFERENCES `group_rules`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_comment_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu trữ bình luận về nội quy nhóm';
 
+-- Bảng: group_rule_comment_likes
+-- Mô tả: Lưu lượt thích trên các bình luận của nội quy.
 CREATE TABLE `group_rule_comment_likes` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  `comment_id` INT UNSIGNED NOT NULL,
-  `member_id` INT UNSIGNED NOT NULL,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY `ux_comment_member` (`comment_id`,`member_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `comment_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu group_rule_comments.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người thích)',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian thích bình luận',
+  CONSTRAINT `fk_like_comment` FOREIGN KEY (`comment_id`) REFERENCES `group_rule_comments`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_like_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `ux_comment_member` (`comment_id`, `member_id`) COMMENT 'Đảm bảo mỗi thành viên chỉ thích một lần'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu trữ lượt thích trên bình luận nội quy';
 
-CREATE TABLE `group_rule_comment_likes` (
+-- =============================================================================
+-- NHÓM 4: BỎ PHIẾU
+-- Mô tả: Các bảng quản lý các mục bỏ phiếu và lượt bỏ phiếu.
+-- =============================================================================
+
+-- Bảng: vote_items
+-- Mô tả: Lưu các mục bỏ phiếu (món ăn, hoạt động) do thành viên đề xuất.
+CREATE TABLE `vote_items` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  `comment_id` INT UNSIGNED NOT NULL COMMENT 'FK → group_rule_comments.id',
-  `member_id` INT UNSIGNED NOT NULL COMMENT 'FK → members.id (người like bình luận)',
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT `fk_rule_comment_likes_comment` FOREIGN KEY (`comment_id`) REFERENCES `group_rule_comments`(`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_rule_comment_likes_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
-  UNIQUE KEY `ux_comment_member` (`comment_id`,`member_id`)
-) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_unicode_ci;
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người tạo mục)',
+  `name` VARCHAR(255) NOT NULL COMMENT 'Tên món ăn hoặc hoạt động',
+  `type` ENUM('food', 'activity') NOT NULL COMMENT 'Loại: food = món ăn, activity = hoạt động',
+  `vote_date` DATE NOT NULL COMMENT 'Ngày tổ chức bỏ phiếu',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo mục',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật mục',
+  CONSTRAINT `fk_vote_item_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_vote_item_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu trữ các mục bỏ phiếu trong nhóm';
+
+-- Bảng: votes
+-- Mô tả: Lưu từng lượt bỏ phiếu của thành viên.
+CREATE TABLE `votes` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `vote_item_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu vote_items.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người bỏ phiếu)',
+  `voted_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian bỏ phiếu',
+  CONSTRAINT `fk_vote_item` FOREIGN KEY (`vote_item_id`) REFERENCES `vote_items`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_vote_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `ux_vote_once` (`vote_item_id`, `member_id`) COMMENT 'Mỗi thành viên chỉ bỏ phiếu một lần cho mỗi mục'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu trữ các lượt bỏ phiếu';
+
+-- =============================================================================
+-- NHÓM 5: QUẢN LÝ VẬT DỤNG
+-- Mô tả: Các bảng quản lý danh mục, vật dụng, lịch sử thay đổi, danh sách mua sắm và thông báo vật dụng.
+-- =============================================================================
+
+-- Bảng: item_categories
+-- Mô tả: Lưu danh mục vật dụng (Thực phẩm, Vệ sinh, Đồ dùng...).
+CREATE TABLE `item_categories` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `name` VARCHAR(255) NOT NULL COMMENT 'Tên danh mục vật dụng',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo danh mục',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật danh mục',
+  CONSTRAINT `fk_category_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu trữ danh mục vật dụng của nhóm';
+
+-- Bảng: shared_items
+-- Mô tả: Lưu thông tin vật dụng chung của nhóm.
+CREATE TABLE `shared_items` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `category_id` INT UNSIGNED NULL COMMENT 'Tham chiếu item_categories.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người thêm vật dụng)',
+  `name` VARCHAR(255) NOT NULL COMMENT 'Tên vật dụng',
+  `description` TEXT NULL COMMENT 'Mô tả chi tiết vật dụng',
+  `quantity` INT NOT NULL DEFAULT 0 COMMENT 'Số lượng hiện có',
+  `threshold` INT NOT NULL DEFAULT 1 COMMENT 'Ngưỡng cảnh báo khi số lượng thấp',
+  `unit` VARCHAR(50) NULL COMMENT 'Đơn vị tính (gói, chai, lọ...)',
+  `image_url` VARCHAR(255) NULL COMMENT 'URL hình ảnh vật dụng',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '0 = ngừng theo dõi, 1 = đang theo dõi',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo vật dụng',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật vật dụng',
+  CONSTRAINT `fk_item_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_item_category` FOREIGN KEY (`category_id`) REFERENCES `item_categories`(`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_item_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý vật dụng chung của nhóm';
+
+-- Bảng: item_histories
+-- Mô tả: Lưu lịch sử thay đổi vật dụng (thêm, bớt, cập nhật...).
+CREATE TABLE `item_histories` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `item_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu shared_items.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người thực hiện)',
+  `action_type` ENUM('add', 'remove', 'update', 'create', 'delete') NOT NULL COMMENT 'Loại hành động',
+  `quantity_change` INT NOT NULL DEFAULT 0 COMMENT 'Số lượng thay đổi (dương = thêm, âm = bớt)',
+  `old_quantity` INT NULL COMMENT 'Số lượng trước thay đổi',
+  `new_quantity` INT NULL COMMENT 'Số lượng sau thay đổi',
+  `notes` TEXT NULL COMMENT 'Ghi chú về thay đổi',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian thực hiện thay đổi',
+  CONSTRAINT `fk_history_item` FOREIGN KEY (`item_id`) REFERENCES `shared_items`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_history_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu lịch sử thay đổi vật dụng';
+
+-- Bảng: shopping_lists
+-- Mô tả: Quản lý danh sách mua sắm của nhóm.
+CREATE TABLE `shopping_lists` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người thêm)',
+  `item_id` INT UNSIGNED NULL COMMENT 'Tham chiếu shared_items.id (nếu liên quan)',
+  `item_name` VARCHAR(255) NOT NULL COMMENT 'Tên vật dụng cần mua',
+  `quantity` INT NOT NULL DEFAULT 1 COMMENT 'Số lượng cần mua',
+  `unit` VARCHAR(50) NULL COMMENT 'Đơn vị tính',
+  `is_completed` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0 = chưa mua, 1 = đã mua',
+  `completed_by` INT UNSIGNED NULL COMMENT 'Tham chiếu members.id (người đánh dấu đã mua)',
+  `completed_at` TIMESTAMP NULL COMMENT 'Thời gian đánh dấu đã mua',
+  `notes` TEXT NULL COMMENT 'Ghi chú thêm',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo mục',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật mục',
+  CONSTRAINT `fk_shopping_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_shopping_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_shopping_item` FOREIGN KEY (`item_id`) REFERENCES `shared_items`(`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_shopping_completed_by` FOREIGN KEY (`completed_by`) REFERENCES `members`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý danh sách mua sắm';
+
+-- Bảng: item_notifications
+-- Mô tả: Lưu thông báo liên quan đến vật dụng (hết hàng, nhắc mua...).
+CREATE TABLE `item_notifications` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `item_id` INT UNSIGNED NULL COMMENT 'Tham chiếu shared_items.id (nếu liên quan)',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người tạo thông báo)',
+  `notification_type` ENUM('low_stock', 'out_of_stock', 'shopping_reminder', 'custom') NOT NULL COMMENT 'Loại thông báo',
+  `title` VARCHAR(255) NOT NULL COMMENT 'Tiêu đề thông báo',
+  `message` TEXT NOT NULL COMMENT 'Nội dung thông báo',
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0 = chưa đọc, 1 = đã đọc',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo thông báo',
+  `read_at` TIMESTAMP NULL COMMENT 'Thời gian đọc thông báo',
+  CONSTRAINT `fk_notification_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_notification_item` FOREIGN KEY (`item_id`) REFERENCES `shared_items`(`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_notification_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu thông báo liên quan đến vật dụng';
+
+-- =============================================================================
+-- NHÓM 6: CÀI ĐẶT THÔNG BÁO
+-- Mô tả: Quản lý cài đặt thông báo của thành viên.
+-- =============================================================================
+
+-- Bảng: member_notification_settings
+-- Mô tả: Lưu cài đặt thông báo cho từng thành viên.
+CREATE TABLE `member_notification_settings` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id',
+  `notification_type` VARCHAR(50) NOT NULL COMMENT 'Loại thông báo (ví dụ: low_stock)',
+  `is_enabled` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '0 = tắt, 1 = bật',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo cài đặt',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật cài đặt',
+  CONSTRAINT `fk_setting_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `ux_member_notification` (`member_id`, `notification_type`) COMMENT 'Đảm bảo mỗi loại thông báo chỉ cài đặt một lần'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý cài đặt thông báo của thành viên';
+
+-- =============================================================================
+-- NHÓM 7: QUẢN LÝ CÔNG VIỆC
+-- Mô tả: Các bảng quản lý loại công việc và công việc chung.
+-- =============================================================================
+
+-- Bảng: task_types
+-- Mô tả: Lưu danh mục loại công việc (Dọn phòng, Rửa bát...).
+CREATE TABLE `task_types` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `name` VARCHAR(100) NOT NULL COMMENT 'Tên loại công việc',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo loại',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật loại',
+  CONSTRAINT `fk_task_type_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu danh mục loại công việc';
+
+-- Bảng: tasks
+-- Mô tả: Quản lý công việc chung của nhóm.
+CREATE TABLE `tasks` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `type_id` INT UNSIGNED NULL COMMENT 'Tham chiếu task_types.id',
+  `custom_type` VARCHAR(100) NULL COMMENT 'Tên loại công việc tùy chỉnh',
+  `description` TEXT NULL COMMENT 'Mô tả chi tiết công việc',
+  `assignee_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người được giao)',
+  `due_date` DATE NOT NULL COMMENT 'Ngày hết hạn công việc',
+  `priority` ENUM('low', 'medium', 'high') NOT NULL DEFAULT 'medium' COMMENT 'Mức độ ưu tiên',
+  `completed` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0 = chưa hoàn thành, 1 = đã hoàn thành',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo công việc',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật công việc',
+  CONSTRAINT `fk_task_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_task_type` FOREIGN KEY (`type_id`) REFERENCES `task_types`(`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_task_assignee` FOREIGN KEY (`assignee_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý công việc chung của nhóm';
+
+-- =============================================================================
+-- NHÓM 8: QUẢN LÝ TÀI CHÍNH
+-- Mô tả: Các bảng quản lý chi phí, quỹ, đóng góp và giao dịch.
+-- =============================================================================
+
+-- Bảng: expenses
+-- Mô tả: Lưu các khoản chi phí của thành viên trong nhóm.
+CREATE TABLE `expenses` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người chi)',
+  `expense_date` DATE NOT NULL COMMENT 'Ngày phát sinh chi phí',
+  `description` VARCHAR(255) NOT NULL COMMENT 'Mô tả chi phí',
+  `amount` BIGINT UNSIGNED NOT NULL COMMENT 'Số tiền chi (VNĐ)',
+  `status` ENUM('Paid', 'Pending') NOT NULL DEFAULT 'Pending' COMMENT 'Trạng thái: Đã thanh toán, Chưa thanh toán',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi',
+  CONSTRAINT `fk_expense_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_expense_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  INDEX `idx_expense_date` (`expense_date`) COMMENT 'Chỉ mục để tìm kiếm theo ngày',
+  INDEX `idx_expense_status` (`status`) COMMENT 'Chỉ mục để tìm kiếm theo trạng thái'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý chi phí của thành viên';
+
+-- Bảng: funds
+-- Mô tả: Lưu thông tin các quỹ của nhóm (Quỹ chung, Quỹ du lịch...).
+CREATE TABLE `funds` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `name` VARCHAR(255) NOT NULL COMMENT 'Tên quỹ',
+  `amount` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Số tiền hiện tại (VNĐ)',
+  `description` TEXT NULL COMMENT 'Mô tả quỹ',
+  `category` ENUM('general', 'saving', 'event', 'emergency') NOT NULL DEFAULT 'general' COMMENT 'Loại quỹ',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo quỹ',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật quỹ',
+  CONSTRAINT `fk_fund_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý các quỹ của nhóm';
+
+-- Bảng: member_contributions
+-- Mô tả: Lưu thông tin đóng góp của thành viên vào quỹ.
+CREATE TABLE `member_contributions` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id',
+  `fund_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu funds.id',
+  `amount` BIGINT UNSIGNED NOT NULL COMMENT 'Số tiền đóng góp (VNĐ)',
+  `period` ENUM('weekly', 'monthly', 'quarterly', 'yearly') NOT NULL COMMENT 'Chu kỳ đóng góp',
+  `last_paid` DATE NULL COMMENT 'Ngày đóng góp gần nhất',
+  `paid` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0 = chưa đóng, 1 = đã đóng',
+  `email` VARCHAR(255) NULL COMMENT 'Email liên hệ (tùy chọn)',
+  `phone` VARCHAR(50) NULL COMMENT 'Số điện thoại (tùy chọn)',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi',
+  CONSTRAINT `fk_contribution_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_contribution_fund` FOREIGN KEY (`fund_id`) REFERENCES `funds`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý đóng góp của thành viên vào quỹ';
+
+-- Bảng: transactions
+-- Mô tả: Lưu các giao dịch thu/chi của quỹ.
+CREATE TABLE `transactions` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `fund_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu funds.id',
+  `member_id` INT UNSIGNED NULL COMMENT 'Tham chiếu members.id (người thực hiện, tùy chọn)',
+  `type` ENUM('income', 'expense') NOT NULL COMMENT 'Loại giao dịch: Thu hoặc Chi',
+  `amount` BIGINT UNSIGNED NOT NULL COMMENT 'Số tiền giao dịch (VNĐ)',
+  `date` DATE NOT NULL COMMENT 'Ngày giao dịch',
+  `description` VARCHAR(255) NOT NULL COMMENT 'Mô tả giao dịch',
+  `category` ENUM('contribution', 'food', 'utility', 'event', 'other') NOT NULL COMMENT 'Loại giao dịch',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo giao dịch',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật giao dịch',
+  CONSTRAINT `fk_transaction_fund` FOREIGN KEY (`fund_id`) REFERENCES `funds`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_transaction_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý giao dịch của quỹ';
+
+-- =============================================================================
+-- NHÓM 9: LỊCH NẤU ĂN
+-- Mô tả: Quản lý lịch nấu ăn của thành viên.
+-- =============================================================================
+
+-- Bảng: cooking_schedules
+-- Mô tả: Lưu lịch nấu ăn của thành viên trong nhóm.
+CREATE TABLE `cooking_schedules` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người nấu)',
+  `schedule_date` DATE NOT NULL COMMENT 'Ngày nấu ăn',
+  `meal` ENUM('Breakfast', 'Lunch', 'Dinner') NOT NULL COMMENT 'Bữa ăn: Sáng, Trưa, Tối',
+  `status` ENUM('Pending', 'Completed') NOT NULL DEFAULT 'Pending' COMMENT 'Trạng thái: Chưa hoàn thành, Hoàn thành',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo lịch',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật lịch',
+  CONSTRAINT `fk_schedule_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_schedule_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  INDEX `idx_schedule_date` (`schedule_date`) COMMENT 'Chỉ mục để tìm kiếm theo ngày',
+  INDEX `idx_schedule_meal` (`meal`) COMMENT 'Chỉ mục để tìm kiếm theo bữa ăn',
+  INDEX `idx_schedule_status` (`status`) COMMENT 'Chỉ mục để tìm kiếm theo trạng thái'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý lịch nấu ăn của nhóm';
+
+-- =============================================================================
+-- NHÓM 10: THỰC ĐƠN
+-- Mô tả: Quản lý thực đơn và món ăn trong thực đơn.
+-- =============================================================================
+
+-- Bảng: menus
+-- Mô tả: Lưu thông tin thực đơn của nhóm.
+CREATE TABLE `menus` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người tạo)',
+  `cooking_schedule_id` INT UNSIGNED NULL COMMENT 'Tham chiếu cooking_schedules.id (liên quan đến lịch nấu, nếu có)',
+  `menu_date` DATE NOT NULL COMMENT 'Ngày áp dụng thực đơn',
+  `description` TEXT NULL COMMENT 'Mô tả hoặc ghi chú về thực đơn',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo thực đơn',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật thực đơn',
+  CONSTRAINT `fk_menu_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_menu_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_menu_schedule` FOREIGN KEY (`cooking_schedule_id`) REFERENCES `cooking_schedules`(`id`) ON DELETE SET NULL,
+  INDEX `idx_menu_date` (`menu_date`) COMMENT 'Chỉ mục để tìm kiếm theo ngày'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý thực đơn của nhóm';
+
+-- Bảng: menu_dishes
+-- Mô tả: Lưu danh sách món ăn trong mỗi thực đơn.
+CREATE TABLE `menu_dishes` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `menu_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu menus.id',
+  `dish_name` VARCHAR(255) NOT NULL COMMENT 'Tên món ăn',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo món ăn',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật món ăn',
+  CONSTRAINT `fk_dish_menu` FOREIGN KEY (`menu_id`) REFERENCES `menus`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Lưu danh sách món ăn trong thực đơn';
+
+-- =============================================================================
+-- NHÓM 11: THÔNG BÁO VÀ THÔNG BÁO NHÓM
+-- Mô tả: Quản lý thông báo chung và trạng thái đọc thông báo.
+-- =============================================================================
+
+-- Bảng: notifications
+-- Mô tả: Lưu thông báo chung cho thành viên trong nhóm.
+CREATE TABLE `notifications` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người nhận)',
+  `title` VARCHAR(255) NOT NULL COMMENT 'Tiêu đề thông báo',
+  `message` TEXT NOT NULL COMMENT 'Nội dung thông báo',
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0 = chưa đọc, 1 = đã đọc',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo thông báo',
+  `read_at` TIMESTAMP NULL COMMENT 'Thời gian đọc thông báo',
+  CONSTRAINT `fk_notification_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_notification_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý thông báo chung của nhóm';
+
+-- Bảng: announcements
+-- Mô tả: Lưu các thông báo quan trọng của nhóm.
+CREATE TABLE `announcements` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
+  `author_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người tạo)',
+  `title` VARCHAR(255) NOT NULL COMMENT 'Tiêu đề thông báo',
+  `content` TEXT NOT NULL COMMENT 'Nội dung chi tiết',
+  `priority` ENUM('high', 'medium', 'low') NOT NULL DEFAULT 'medium' COMMENT 'Mức độ ưu tiên',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo thông báo',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật thông báo',
+  CONSTRAINT `fk_announcement_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_announcement_author` FOREIGN KEY (`author_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  INDEX `idx_announcement_priority` (`priority`) COMMENT 'Chỉ mục để tìm kiếm theo mức ưu tiên',
+  INDEX `idx_announcement_created` (`created_at`) COMMENT 'Chỉ mục để tìm kiếm theo thời gian tạo'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý các thông báo quan trọng';
+
+-- Bảng: announcement_reads
+-- Mô tả: Đánh dấu trạng thái đọc của thành viên đối với thông báo.
+CREATE TABLE `announcement_reads` (
+  `announcement_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu announcements.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người đọc)',
+  `read_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian đọc thông báo',
+  PRIMARY KEY (`announcement_id`, `member_id`),
+  CONSTRAINT `fk_read_announcement` FOREIGN KEY (`announcement_id`) REFERENCES `announcements`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_read_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý trạng thái đọc thông báo';
+
+-- =============================================================================
+-- NHÓM 12: TRÒ CHUYỆN
+-- Mô tả: Quản lý trò chuyện cá nhân và nhóm, tin nhắn, tệp đính kèm và thông báo trò chuyện.
+-- =============================================================================
+
+-- Bảng: conversations_chat
+-- Mô tả: Lưu thông tin các cuộc trò chuyện (cá nhân hoặc nhóm).
+CREATE TABLE `conversations_chat` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `is_group` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0 = trò chuyện cá nhân, 1 = trò chuyện nhóm',
+  `group_id` INT UNSIGNED NULL COMMENT 'Tham chiếu groups.id, NULL nếu là cá nhân',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo cuộc trò chuyện',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật cuộc trò chuyện',
+  CONSTRAINT `fk_conversation_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý các cuộc trò chuyện';
+
+-- Bảng: conversation_participants_chat
+-- Mô tả: Lưu thông tin người tham gia cuộc trò chuyện.
+CREATE TABLE `conversation_participants_chat` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `conversation_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu conversations_chat.id',
+  `user_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu users.id',
+  `is_muted` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0 = nhận thông báo, 1 = tắt thông báo',
+  `joined_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tham gia',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi',
+  CONSTRAINT `fk_participant_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `conversations_chat`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_participant_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `ux_participant` (`conversation_id`, `user_id`) COMMENT 'Đảm bảo mỗi người chỉ tham gia một lần'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý người tham gia trò chuyện';
+
+-- Bảng: messages_chat
+-- Mô tả: Lưu nội dung tin nhắn trong cuộc trò chuyện.
+CREATE TABLE `messages_chat` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `conversation_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu conversations_chat.id',
+  `sender_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu users.id (người gửi)',
+  `content` TEXT NOT NULL COMMENT 'Nội dung tin nhắn',
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0 = chưa đọc, 1 = đã đọc',
+  `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian gửi tin nhắn',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo tin nhắn',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật tin nhắn',
+  CONSTRAINT `fk_message_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `conversations_chat`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_message_sender` FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý tin nhắn trong trò chuyện';
+
+-- Bảng: attachments_chat
+-- Mô tả: Lưu thông tin tệp đính kèm trong tin nhắn.
+CREATE TABLE `attachments_chat` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `message_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu messages_chat.id',
+  `file_type` ENUM('image', 'file', 'other') NOT NULL COMMENT 'Loại tệp đính kèm',
+  `file_url` VARCHAR(255) NOT NULL COMMENT 'URL hoặc đường dẫn tệp',
+  `file_name` VARCHAR(255) NULL COMMENT 'Tên tệp',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo tệp',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật tệp',
+  CONSTRAINT `fk_attachment_message` FOREIGN KEY (`message_id`) REFERENCES `messages_chat`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý tệp đính kèm trong tin nhắn';
+
+-- Bảng: notifications_chat
+-- Mô tả: Lưu thông báo về tin nhắn chưa đọc trong cuộc trò chuyện.
+CREATE TABLE `notifications_chat` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu users.id',
+  `conversation_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu conversations_chat.id',
+  `unread_count` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Số tin nhắn chưa đọc',
+  `last_message_id` INT UNSIGNED NULL COMMENT 'Tham chiếu messages_chat.id (tin nhắn cuối)',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo thông báo',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật thông báo',
+  CONSTRAINT `fk_notification_chat_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_notification_chat_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `conversations_chat`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_notification_chat_message` FOREIGN KEY (`last_message_id`) REFERENCES `messages_chat`(`id`) ON DELETE SET NULL,
+  UNIQUE KEY `ux_notification` (`user_id`, `conversation_id`) COMMENT 'Đảm bảo mỗi người chỉ có một thông báo mỗi cuộc trò chuyện'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý thông báo về tin nhắn chưa đọc';

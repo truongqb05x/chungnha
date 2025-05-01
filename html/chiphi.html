@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="shortcut icon" href="../static/img/logo.png" type="image/x-icon">
     <!-- CSS chung của toàn bộ giao diện (template chính) -->
     <link rel="stylesheet" href="../static/css/app.css">
 
@@ -160,37 +161,13 @@
                     </tr>
                 </thead>
                 <tbody id="expensesTableBody">
-                    <!-- Sample data -->
-                    <tr>
-                        <td>15/04/2025</td>
-                        <td>Mua nguyên liệu chợ</td>
-                        <td>500,000đ</td>
-                        <td>Nguyễn Minh</td>
-                        <td><span class="status status-paid">Đã thanh toán</span></td>
-                        <td>
-                            <button class="action-btn edit-btn" data-id="1"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn delete-btn" data-id="1"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>16/04/2025</td>
-                        <td>Mua gia vị</td>
-                        <td>100,000đ</td>
-                        <td>Trần Hương</td>
-                        <td><span class="status status-pending">Chưa thanh toán</span></td>
-                        <td>
-                            <button class="action-btn edit-btn" data-id="2"><i class="action-btn edit-btn" data-id="2"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn delete-btn" data-id="2"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
+                    <!-- dữ liệu được render bởi JavaScript -->
                 </tbody>
             </table>
 
             <div class="pagination">
                 <button class="pagination-btn" id="prevPage" disabled>Trước</button>
-                <button class="pagination-btn active">1</button>
-                <button class="pagination-btn">2</button>
-                <button class="pagination-btn">3</button>
+                <!-- các nút trang sẽ được JS chèn -->
                 <button class="pagination-btn" id="nextPage">Sau</button>
             </div>
 
@@ -216,7 +193,9 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="payer">Người chi</label>
-                            <input type="text" class="form-input" id="payer" required placeholder="Nhập tên người chi">
+                            <select class="form-input" id="payer" required>
+                                <!-- JS load từ /api/members_exp -->
+                            </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="status">Trạng thái</label>
@@ -237,8 +216,7 @@
 
     <!-- JavaScript dùng chung cho toàn bộ giao diện (template chính) -->
     <script src="../static/js/app.js"></script>
-
+    <!-- Script riêng cho trang chi phí -->
     <script src="../static/js/chiphi.js"></script>
-
 </body>
 </html>

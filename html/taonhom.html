@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bếp Chung - Quản lý bữa ăn nhóm</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF6D28;
+            --primary-light: #FF9A3C;
+            --primary-dark: #E05D20;
+            --secondary: #3A98B9;
+            --accent: #FFB830;
+            --text: #333333;
+            --text-light: #6B7280;
+            --text-lighter: #9CA3AF;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border: #E5E7EB;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --transition: all 0.2s ease;
+        }
+
+        [data-theme="dark"] {
+            --primary: #FF8C42;
+            --primary-light: #FFA566;
+            --primary-dark: #E57339;
+            --secondary: #4AB1D1;
+            --accent: #FFC154;
+            --text: #F3F4F6;
+            --text-light: #D1D5DB;
+            --text-lighter: #9CA3AF;
+            --bg: #1F2937;
+            --card-bg: #374151;
+            --border: #4B5563;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            transition: var(--transition);
+            line-height: 1.5;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: 80px 1fr;
+            min-height: 100vh;
+        }
+
+        .header {
+            grid-column: 2 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-icon {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .header-icon:hover {
+            color: var(--primary);
+        }
+
+        .badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background-color: var(--error);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 3px rgba(255, 109, 40, 0.2);
+        }
+
+        .sidebar {
+            grid-column: 1 / 2;
+            grid-row: 1 / 3;
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem 1.5rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-logo {
+            font-size: 1.75rem;
+            color: var(--primary);
+        }
+
+        .sidebar-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-group {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 1rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 109, 40, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 109, 40, 0.1);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            font-size: 1.1rem;
+            margin-right: 0.75rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-text {
+            font-size: 0.95rem;
+        }
+
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 50px;
+            padding: 0.25rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .theme-btn {
+            width: 50%;
+            padding: 0.5rem;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .theme-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .main-content {
+            grid-column: 2 / 3;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Modal styles */
+        #group-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            font-family: 'Inter', sans-serif;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            width: 380px;
+            max-width: 90%;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .modal-subtitle {
+            font-size: 15px;
+            color: var(--text-light);
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .qr-section {
+            margin: 0 auto 25px;
+            position: relative;
+            width: 180px;
+        }
+
+        .qr-code {
+            width: 180px;
+            height: 180px;
+            background-color: var(--bg);
+            border-radius: var(--radius-md);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-lighter);
+            margin: 0 auto;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .qr-placeholder {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .qr-placeholder-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: var(--border);
+        }
+
+        .qr-instruction {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .modal-btn {
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(255, 109, 40, 0.1);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: var(--text-light);
+            font-size: 13px;
+        }
+
+        .divider::before, .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .divider::before {
+            margin-right: 10px;
+        }
+
+        .divider::after {
+            margin-left: 10px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 5px;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        .btn-icon {
+            font-size: 18px;
+        }
+
+        /* Empty state in main content */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 60vh;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            color: var(--text-lighter);
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+        }
+
+        .empty-description {
+            color: var(--text-light);
+            max-width: 500px;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 240px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr;
+            }
+
+            .header {
+                grid-column: 1 / 2;
+                padding: 1rem;
+            }
+
+            .sidebar {
+                grid-column: 1 / 2;
+                grid-row: 2 / 3;
+                height: auto;
+                position: static;
+                display: none;
+            }
+
+            .sidebar.active {
+                display: flex;
+            }
+
+            .main-content {
+                grid-column: 1 / 2;
+                grid-row: 3 / 4;
+                padding: 1.5rem;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: var(--radius-sm);
+                background-color: rgba(255, 109, 40, 0.1);
+                color: var(--primary);
+                font-size: 1.25rem;
+                cursor: pointer;
+                transition: var(--transition);
+            }
+
+            .mobile-menu-btn:hover {
+                background-color: rgba(255, 109, 40, 0.2);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-title {
+                font-size: 1.25rem;
+            }
+
+            .header-actions {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </div>
+            <h1 class="header-title">Bếp Chung</h1>
+            <div class="header-actions">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </div>
+                <div class="header-icon theme-icon">
+                    <i class="fas fa-moon"></i>
+                </div>
+                <div class="user-avatar">NM</div>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div>
+                    <div class="sidebar-title">Bếp Chung</div>
+                    <div class="sidebar-group" id="current-group">Chưa tham gia nhóm</div>
+                </div>
+            </div>
+
+            <div class="sidebar-nav">
+                <a href="#" class="nav-item active">
+                    <div class="nav-icon">
+                        <i class="fas fa-home"></i>
+                    </div [
+                    <div class="nav-text">Trang chủ</div>
+                </a>
+                <a href="#" class="nav-item disabled">
+                    <div class="nav-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="nav-text">Thành viên</div>
+                </a>
+                <a href="#" class="nav-item disabled">
+                    <div class="nav-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="nav-text">Thực đơn</div>
+                </a>
+                <a href="#" class="nav-item disabled">
+                    <div class="nav-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="nav-text">Đi chợ</div>
+                </a>
+                <a href="#" class="nav-item disabled">
+                    <div class="nav-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="nav-text">Chi phí</div>
+                </a>
+                <a href="#" class="nav-item disabled">
+                    <div class="nav-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="nav-text">Lịch nấu ăn</div>
+                </a>
+                <a href="#" class="nav-item disabled">
+                    <div class="nav-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="nav-text">Thống kê</div>
+                </a>
+                <a href="#" class="nav-item disabled">
+                    <div class="nav-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="nav-text">Trò chuyện</div>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="theme-toggle">
+                    <div class="theme-btn active" data-theme="light">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="theme-btn" data-theme="dark">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="main-content">
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <h2 class="empty-title">Bạn chưa tham gia nhóm nào</h2>
+                <p class="empty-description">
+                    Tham gia nhóm để bắt đầu quản lý bữa ăn cùng mọi người. 
+                    Bạn có thể tải mã QR để tham gia nhóm hiện có hoặc tạo nhóm mới.
+                </p>
+                <button class="modal-btn btn-primary" id="open-group-modal-btn">
+                    <i class="fas fa-users"></i> Tham gia nhóm ngay
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Group Modal -->
+    <div id="group-modal" style="display: none;">
+        <div class="modal-content">
+            <button class="close-btn" id="close-modal-btn">×</button>
+            
+            <div class="modal-header">
+                <div class="modal-title">Tham gia nhóm</div>
+                <div class="modal-subtitle">
+                    Bạn chưa tham gia nhóm nào. Tải mã QR để tham gia nhóm hiện có hoặc tạo nhóm mới.
+                </div>
+            </div>
+            
+            <div class="qr-section">
+                <div class="qr-code">
+                    <div class="qr-placeholder">
+                        <div class="qr-placeholder-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 11H11V3H3V11ZM5 5H9V9H5V5Z" fill="currentColor"/>
+                                <path d="M3 21H11V13H3V21ZM5 15H9V19H5V15Z" fill="currentColor"/>
+                                <path d="M13 11H21V3H13V11ZM15 5H19V9H15V5Z" fill="currentColor"/>
+                                <path d="M13 21H21V13H13V21ZM15 15H19V19H15V15Z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div>Mã QR nhóm</div>
+                    </div>
+                    <img id="qr-image" src="" alt="QR Code" style="display: none;">
+                </div>
+                <div class="qr-instruction">Tải lên mã QR để tham gia nhóm</div>
+            </div>
+            
+            <div class="action-buttons">
+                <label class="modal-btn btn-primary" for="upload-qr-input">
+                    <span class="btn-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 15V21H20V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 3V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 11L12 15L16 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    Tải mã QR
+                </label>
+                <input type="file" id="upload-qr-input" accept="image/*" style="display: none;">
+                <div class="divider">hoặc</div>
+                <button class="modal-btn btn-outline" id="create-group-btn">
+                    <span class="btn-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 4V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    Tạo nhóm mới
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // User state
+            const userState = {
+                isLoggedIn: true,
+                hasJoinedGroup: false,
+                currentGroup: null
+            };
+
+            // DOM elements
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const sidebar = document.querySelector('.sidebar');
+            const themeToggle = document.querySelector('.theme-toggle');
+            const themeBtns = document.querySelectorAll('.theme-btn');
+            const body = document.body;
+            const currentGroupEl = document.getElementById('current-group');
+            const openModalBtn = document.getElementById('open-group-modal-btn');
+            const groupModal = document.getElementById('group-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const uploadQrInput = document.getElementById('upload-qr-input');
+            const createGroupBtn = document.getElementById('create-group-btn');
+            const navItems = document.querySelectorAll('.nav-item');
+            const qrImage = document.getElementById('qr-image');
+            const qrPlaceholder = document.querySelector('.qr-placeholder');
+
+            // Mobile menu toggle
+            mobileMenuBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                mobileMenuBtn.innerHTML = sidebar.classList.contains('active') 
+                    ? '<i class="fas fa-times"></i>' 
+                    : '<i class="fas fa-bars"></i>';
+            });
+
+            // Theme toggle
+            themeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const theme = this.getAttribute('data-theme');
+                    
+                    themeBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    body.setAttribute('data-theme', theme);
+                    localStorage.setItem('theme', theme);
+                    
+                    const themeIcon = document.querySelector('.theme-icon i');
+                    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                });
+            });
+
+            // Apply saved theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            body.setAttribute('data-theme', savedTheme);
+            
+            const activeThemeBtn = document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`);
+            if (activeThemeBtn) {
+                themeBtns.forEach(b => b.classList.remove('active'));
+                activeThemeBtn.classList.add('active');
+                
+                const themeIcon = document.querySelector('.theme-icon i');
+                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            // Group modal functions
+            function openGroupModal() {
+                groupModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeGroupModal() {
+                groupModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                qrImage.style.display = 'none';
+                qrPlaceholder.style.display = 'block';
+                qrImage.src = '';
+                uploadQrInput.value = '';
+            }
+
+            function joinGroup(groupName) {
+                userState.hasJoinedGroup = true;
+                userState.currentGroup = groupName;
+                
+                // Update UI
+                currentGroupEl.textContent = `Nhóm: ${groupName}`;
+                
+                // Enable nav items
+                navItems.forEach(item => {
+                    if (item.classList.contains('disabled')) {
+                        item.classList.remove('disabled');
+                    }
+                });
+                
+                // Hide empty state and show actual content
+                document.querySelector('.main-content').innerHTML = `
+                    <h2>Chào mừng đến với nhóm ${groupName}</h2>
+                    <p>Bắt đầu quản lý bữa ăn cùng mọi người nào!</p>
+                `;
+            }
+
+            // Event listeners
+            openModalBtn.addEventListener('click', openGroupModal);
+            closeModalBtn.addEventListener('click', closeGroupModal);
+
+            uploadQrInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        qrImage.src = e.target.result;
+                        qrImage.style.display = 'block';
+                        qrPlaceholder.style.display = 'none';
+
+                        // Use qr-scanner to decode QR code
+                        QrScanner.scanImage(qrImage)
+                            .then(result => {
+                                // Simulate successful QR code scan
+                                const modalContent = document.querySelector('.modal-content');
+                                modalContent.innerHTML = `
+                                    <button class="close-btn" id="close-modal-btn">×</button>
+                                    
+                                    <div class="modal-header">
+                                        <div class="modal-title">Thành công!</div>
+                                        <div class="modal-subtitle">
+                                            Bạn đã tham gia nhóm "Nhà Mình A2" thành công.
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="qr-section" style="margin-bottom: 15px;">
+                                        <div class="qr-code" style="background-color: #E8F5E9; border-color: #C8E6C9;">
+                                            <i class="fas fa-check-circle" style="font-size: 60px; color: var(--success);"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="modal-btn btn-primary" id="confirm-join-btn" style="width: 100%;">
+                                        <i class="fas fa-users"></i> Vào nhóm ngay
+                                    </button>
+                                `;
+                                
+                                // Add event listener for the new button
+                                document.getElementById('confirm-join-btn').addEventListener('click', function() {
+                                    joinGroup("Nhà Mình A2");
+                                    closeGroupModal();
+                                });
+                                
+                                // Re-add close button listener
+                                document.getElementById('close-modal-btn').addEventListener('click', closeGroupModal);
+                            })
+                            .catch(err => {
+                                alert('Không thể đọc mã QR. Vui lòng thử lại với hình ảnh rõ nét hơn.');
+                                qrImage.style.display = 'none';
+                                qrPlaceholder.style.display = 'block';
+                                qrImage.src = '';
+                                uploadQrInput.value = '';
+                            });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            createGroupBtn.addEventListener('click', function() {
+                const modalContent = document.querySelector('.modal-content');
+                modalContent.innerHTML = `
+                    <button class="close-btn" id="close-modal-btn">×</button>
+                    
+                    <div class="modal-header">
+                        <div class="modal-title">Tạo nhóm mới</div>
+                        <div class="modal-subtitle">
+                            Đặt tên cho nhóm của bạn
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <input type="text" id="group-name-input" placeholder="Ví dụ: Nhà Mình A2" style="
+                            width: 100%;
+                            padding: 12px;
+                            border: 1px solid var(--border);
+                            border-radius: var(--radius-sm);
+                            font-size: 15px;
+                            background-color: var(--bg);
+                            color: var(--text);
+                        ">
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="modal-btn btn-primary" id="confirm-create-btn">
+                            <i class="fas fa-plus"></i> Tạo nhóm
+                        </button>
+                    </div>
+                `;
+                
+                // Add event listeners
+                document.getElementById('confirm-create-btn').addEventListener('click', function() {
+                    const groupName = document.getElementById('group-name-input').value.trim();
+                    if (groupName) {
+                        joinGroup(groupName);
+                        closeGroupModal();
+                    } else {
+                        alert('Vui lòng nhập tên nhóm');
+                    }
+                });
+                
+                document.getElementById('close-modal-btn').addEventListener('click', closeGroupModal);
+            });
+
+            // Disable nav items if not in a group
+            if (!userState.hasJoinedGroup) {
+                navItems.forEach((item, index) => {
+                    if (index > 0) { // Keep Home enabled
+                        item.classList.add('disabled');
+                    }
+                });
+            }
+
+            // Show modal automatically if not in a group
+            if (!userState.hasJoinedGroup) {
+                setTimeout(openGroupModal, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

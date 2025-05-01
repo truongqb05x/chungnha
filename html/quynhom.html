@@ -6,522 +6,833 @@
     <title>Quản Lý Quỹ Nhóm</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../static/css/app.css">
-
-    <style>
-
-
-        .fund-section {
-            background-color: var(--card-bg);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-md);
-        }
-
-        .fund-section h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-
-        .fund-overview {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .fund-card {
-            flex: 1;
-            padding: 1rem;
-            background-color: rgba(255, 109, 40, 0.1);
-            border-radius: var(--radius-sm);
-            text-align: center;
-        }
-
-        .fund-card h3 {
-            font-size: 1.1rem;
-            color: var(--text-light);
-            margin-bottom: 0.5rem;
-        }
-
-        .fund-card p {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        .contribution-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1rem;
-        }
-
-        .contribution-table th,
-        .contribution-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .contribution-table th {
-            font-weight: 600;
-            color: var(--text-light);
-        }
-
-        .contribution-table td {
-            color: var(--text);
-        }
-
-        .status {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .status.paid {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .status.pending {
-            background-color: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-        }
-
-        .action-btn {
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-sm);
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            font-weight: 500;
-        }
-
-        .action-btn.confirm {
-            background-color: var(--success);
-            color: white;
-        }
-
-        .action-btn.confirm:hover {
-            background-color: #0a8f66;
-        }
-
-        .action-btn.notify {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .action-btn.notify:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .fund-form {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .fund-form input,
-        .fund-form select {
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
-            flex: 1;
-        }
-
-        .fund-form button {
-            padding: 0.75rem 1.5rem;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .fund-form button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        @media (max-width: 1024px) {
-            .app-container {
-                grid-template-columns: 240px 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
-            }
-
-            .header {
-                grid-column: 1 / 2;
-                padding: 1rem;
-            }
-
-            .sidebar {
-                grid-column: 1 / 2;
-                grid-row: 2 / 3;
-                height: auto;
-                position: static;
-                display: none;
-            }
-
-            .sidebar.active {
-                display: flex;
-            }
-
-            .main-content {
-                grid-column: 1 / 2;
-                grid-row: 3 / 4;
-                padding: 1.5rem;
-            }
-
-            .mobile-menu-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
-                border-radius: var(--radius-sm);
-                background-color: rgba(255, 109, 40, 0.1);
-                color: var(--primary);
-                font-size: 1.25rem;
-                cursor: pointer;
-                transition: var(--transition);
-            }
-
-            .mobile-menu-btn:hover {
-                background-color: rgba(255, 109, 40, 0.2);
-            }
-
-            .fund-overview {
-                flex-direction: column;
-            }
-
-            .contribution-table {
-                display: block;
-                overflow-x: auto;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header-title {
-                font-size: 1.25rem;
-            }
-
-            .header-actions {
-                gap: 1rem;
-            }
-
-            .fund-form {
-                flex-direction: column;
-            }
-
-            .fund-form input,
-            .fund-form select,
-            .fund-form button {
-                width: 100%;
-            }
-        }
-    </style>
+    <link rel="shortcut icon" href="../static/img/logo.png" type="image/x-icon">
+    <!-- css chung -->
+     <link rel="stylesheet" href="../static/css/app.css">
+    <!-- css riêng -->
+     <link rel="stylesheet" href="../static/css/quynhom.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="header">
-            <div class="mobile-menu-btn">
-                <i class="fas fa-bars"></i>
-            </div>
-            <h1 class="header-title">Quản Lý Quỹ Nhóm</h1>
-            <div class="header-actions">
-                <div class="header-icon">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge">3</span>
+        <div class="app-container">
+            <!-- Header -->
+            <header class="header">
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
                 </div>
-                <div class="header-icon theme-icon">
-                    <i class="fas fa-moon"></i>
-                </div>
-                <div class="user-avatar">NM</div>
-            </div>
-        </header>
-
-        <!-- Sidebar -->
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <i class="fas fa-wallet"></i>
-                </div>
-                <div>
-                    <div class="sidebar-title">Quỹ Nhóm</div>
-                    <div class="sidebar-group">Nhóm: Nhà Mình A2</div>
-                </div>
-            </div>
-
-            <div class="sidebar-nav">
-                <a href="#" class="nav-item active">
-                    <div class="nav-icon">
-                        <i class="fas fa-home"></i>
+                <h1 class="header-title">Quản Lý Quỹ Nhóm</h1>
+                <div class="header-actions">
+                    <div class="header-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge" id="notification-count">0</span>
                     </div>
-                    <div class="nav-text">Trang chủ</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="nav-text">Thành viên</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="nav-text">Quỹ chung</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-history"></i>
-                    </div>
-                    <div class="nav-text">Lịch sử góp quỹ</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div class="nav-text">Thống kê</div>
-                </a>
-            </div>
-
-            <div class="sidebar-footer">
-                <div class="theme-toggle">
-                    <div class="theme-btn active" data-theme="light">
-                        <i class="fas fa-sun"></i>
-                    </div>
-                    <div class="theme-btn" data-theme="dark">
+                    <div class="header-icon theme-icon">
                         <i class="fas fa-moon"></i>
                     </div>
+                    <div class="user-avatar">NM</div>
+                </div>
+            </header>
+    
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div>
+                        <div class="sidebar-title">Quỹ Nhóm</div>
+                        <div class="sidebar-group">Nhóm: Nhà Mình A2</div>
+                    </div>
+                </div>
+                <div class="sidebar-nav">
+                    <a href="#" class="nav-item active">
+                        <div class="nav-icon"><i class="fas fa-home"></i></div>
+                        <div class="nav-text">Trang chủ</div>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <div class="nav-icon"><i class="fas fa-users"></i></div>
+                        <div class="nav-text">Thành viên</div>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <div class="nav-icon"><i class="fas fa-wallet"></i></div>
+                        <div class="nav-text">Quỹ chung</div>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <div class="nav-icon"><i class="fas fa-exchange-alt"></i></div>
+                        <div class="nav-text">Giao dịch</div>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <div class="nav-icon"><i class="fas fa-history"></i></div>
+                        <div class="nav-text">Lịch sử</div>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
+                        <div class="nav-text">Thống kê</div>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <div class="nav-icon"><i class="fas fa-cog"></i></div>
+                        <div class="nav-text">Cài đặt</div>
+                    </a>
+                </div>
+                <div class="sidebar-footer">
+                    <div class="theme-toggle">
+                        <div class="theme-btn active" data-theme="light"><i class="fas fa-sun"></i></div>
+                        <div class="theme-btn" data-theme="dark"><i class="fas fa-moon"></i></div>
+                    </div>
+                </div>
+            </nav>
+    
+            <!-- Main content -->
+            <main class="main-content">
+                <!-- Fund Overview -->
+                <div class="card">
+                    <div class="section-title">
+                        <h2>Tổng Quan Quỹ</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-secondary" onclick="openAddFundModal()">
+                                <i class="fas fa-plus"></i> Thêm quỹ
+                            </button>
+                        </div>
+                    </div>
+                    <div class="fund-overview">
+                        <div class="fund-card" style="background-color: rgba(66, 133, 244, 0.1);">
+                            <div class="icon" style="background-color: rgba(66, 133, 244, 0.2); color: var(--secondary);">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <h3>Số dư quỹ</h3>
+                            <p id="fund-balance">0 VNĐ</p>
+                            <div class="trend up">
+                                <i class="fas fa-arrow-up"></i> 12% so với tháng trước
+                            </div>
+                        </div>
+                        <div class="fund-card" style="background-color: rgba(16, 185, 129, 0.1);">
+                            <div class="icon" style="background-color: rgba(16, 185, 129, 0.2); color: var(--success);">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3>Thành viên</h3>
+                            <p id="member-count">0</p>
+                            <div class="trend up">
+                                <i class="fas fa-arrow-up"></i> 2 thành viên mới
+                            </div>
+                        </div>
+                        <div class="fund-card" style="background-color: rgba(255, 109, 40, 0.1);">
+                            <div class="icon" style="background-color: rgba(255, 109, 40, 0.2); color: var(--primary);">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h3>Đã góp tháng này</h3>
+                            <p id="paid-count">0</p>
+                            <div class="trend down">
+                                <i class="fas fa-arrow-down"></i> 3 thành viên chưa góp
+                            </div>
+                        </div>
+                        <div class="fund-card" style="background-color: rgba(245, 158, 11, 0.1);">
+                            <div class="icon" style="background-color: rgba(245, 158, 11, 0.2); color: var(--warning);">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h3>Chờ xử lý</h3>
+                            <p id="pending-count">0</p>
+                            <div class="trend up">
+                                <i class="fas fa-arrow-up"></i> 2 yêu cầu mới
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Contribution Management -->
+                <div class="card">
+                    <div class="section-title">
+                        <h2>Quản Lý Góp Quỹ</h2>
+                        <div class="section-actions">
+                            <button class="btn" onclick="openAddMemberModal()">
+                                <i class="fas fa-plus"></i> Thêm thành viên
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportToExcel()">
+                                <i class="fas fa-file-export"></i> Xuất Excel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="contribution-table">
+                            <thead>
+                                <tr>
+                                    <th>Thành viên</th>
+                                    <th>Số tiền</th>
+                                    <th>Chu kỳ</th>
+                                    <th>Lần góp cuối</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contribution-list"></tbody>
+                        </table>
+                    </div>
+                    <!-- Add Member Form -->
+                    <div class="fund-form">
+                        <div class="form-group">
+                            <label for="member-name">Tên thành viên</label>
+                            <input type="text" id="member-name" class="form-control" placeholder="Nhập tên thành viên">
+                        </div>
+                        <div class="form-group">
+                            <label for="contribution-amount">Số tiền (VNĐ)</label>
+                            <input type="number" id="contribution-amount" class="form-control" placeholder="Nhập số tiền" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="contribution-period">Chu kỳ</label>
+                            <select id="contribution-period" class="form-control">
+                                <option value="weekly">Hàng tuần</option>
+                                <option value="monthly" selected>Hàng tháng</option>
+                                <option value="quarterly">Hàng quý</option>
+                                <option value="yearly">Hàng năm</option>
+                            </select>
+                        </div>
+                        <button class="btn" onclick="addMember()">
+                            <i class="fas fa-plus"></i> Thêm thành viên
+                        </button>
+                    </div>
+                </div>
+    
+                <!-- Recent Transactions -->
+                <div class="card">
+                    <div class="section-title">
+                        <h2>Giao Dịch Gần Đây</h2>
+                        <div class="section-actions">
+                            <button class="btn" onclick="openTransactionModal()">
+                                <i class="fas fa-plus"></i> Thêm giao dịch
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="contribution-table">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Mô tả</th>
+                                    <th>Số tiền</th>
+                                    <th>Người thực hiện</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transaction-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    
+        <!-- Add Member Modal -->
+        <div class="modal" id="addMemberModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Thêm Thành Viên Mới</h3>
+                    <button class="modal-close" onclick="closeModal('addMemberModal')">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="modal-member-id">Thành viên</label>
+                        <select id="modal-member-id" class="form-control">
+                            <option value="">Chọn thành viên</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-contribution-amount">Số tiền (VNĐ)</label>
+                        <input type="number" id="modal-contribution-amount" class="form-control" placeholder="Nhập số tiền" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-contribution-period">Chu kỳ</label>
+                        <select id="modal-contribution-period" class="form-control">
+                            <option value="weekly">Hàng tuần</option>
+                            <option value="monthly" selected>Hàng tháng</option>
+                            <option value="quarterly">Hàng quý</option>
+                            <option value="yearly">Hàng năm</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-member-email">Email (tùy chọn)</label>
+                        <input type="email" id="modal-member-email" class="form-control" placeholder="Nhập email">
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-member-phone">Số điện thoại (tùy chọn)</label>
+                        <input type="tel" id="modal-member-phone" class="form-control" placeholder="Nhập số điện thoại">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" onclick="addMemberFromModal()">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal('addMemberModal')">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
                 </div>
             </div>
-        </nav>
-
-        <!-- Main content -->
-        <main class="main-content">
-            <div class="fund-section">
-                <h2>Tổng Quan Quỹ</h2>
-                <div class="fund-overview">
-                    <div class="fund-card">
-                        <h3>Số dư quỹ</h3>
-                        <p id="fund-balance">0 VNĐ</p>
+        </div>
+    
+        <!-- Add Fund Modal -->
+        <div class="modal" id="addFundModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Thêm Quỹ Mới</h3>
+                    <button class="modal-close" onclick="closeModal('addFundModal')">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="fund-name">Tên quỹ</label>
+                        <input type="text" id="fund-name" class="form-control" placeholder="Nhập tên quỹ">
                     </div>
-                    <div class="fund-card">
-                        <h3>Số thành viên</h3>
-                        <p id="member-count">0</p>
+                    <div class="form-group">
+                        <label for="fund-amount">Số tiền (VNĐ)</label>
+                        <input type="number" id="fund-amount" class="form-control" placeholder="Nhập số tiền" min="0">
                     </div>
-                    <div class="fund-card">
-                        <h3>Đã góp tháng này</h3>
-                        <p id="paid-count">0</p>
+                    <div class="form-group">
+                        <label for="fund-description">Mô tả</label>
+                        <textarea id="fund-description" class="form-control" placeholder="Nhập mô tả" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="fund-category">Danh mục</label>
+                        <select id="fund-category" class="form-control">
+                            <option value="general">Quỹ chung</option>
+                            <option value="saving">Tiết kiệm</option>
+                            <option value="event">Sự kiện</option>
+                            <option value="emergency">Khẩn cấp</option>
+                        </select>
                     </div>
                 </div>
-
-                <h2>Quản Lý Góp Quỹ</h2>
-                <table class="contribution-table">
-                    <thead>
-                        <tr>
-                            <th>Thành viên</th>
-                            <th>Số tiền</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody id="contribution-list">
-                        <!-- Contributions will be populated by JavaScript -->
-                    </tbody>
-                </table>
-
-                <div class="fund-form">
-                    <input type="text" id="member-name" placeholder="Tên thành viên">
-                    <input type="number" id="contribution-amount" placeholder="Số tiền (VNĐ)" min="0">
-                    <select id="contribution-period">
-                        <option value="weekly">Hàng tuần</option>
-                        <option value="monthly">Hàng tháng</option>
-                    </select>
-                    <button onclick="addMember()">Thêm thành viên</button>
+                <div class="modal-footer">
+                    <button class="btn" onclick="addFund()">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal('addFundModal')">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
                 </div>
             </div>
-        </main>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mobile menu toggle
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            const sidebar = document.querySelector('.sidebar');
-            
-            mobileMenuBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-                mobileMenuBtn.innerHTML = sidebar.classList.contains('active') 
-                    ? '<i class="fas fa-times"></i>' 
-                    : '<i class="fas fa-bars"></i>';
-            });
-
-            // Theme toggle
-            const themeToggle = document.querySelector('.theme-toggle');
-            const themeBtns = document.querySelectorAll('.theme-btn');
-            const body = document.body;
-            
-            themeBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const theme = this.getAttribute('data-theme');
-                    
-                    themeBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    body.setAttribute('data-theme', theme);
-                    localStorage.setItem('theme', theme);
-                    
-                    const themeIcon = document.querySelector('.theme-icon i');
-                    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-                });
-            });
-
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            body.setAttribute('data-theme', savedTheme);
-            
-            const activeThemeBtn = document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`);
-            if (activeThemeBtn) {
-                themeBtns.forEach(b => b.classList.remove('active'));
-                activeThemeBtn.classList.add('active');
-                
-                const themeIcon = document.querySelector('.theme-icon i');
-                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        </div>
+    
+        <!-- Transaction Modal -->
+        <div class="modal" id="transactionModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Thêm Giao Dịch Mới</h3>
+                    <button class="modal-close" onclick="closeModal('transactionModal')">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="transaction-type">Loại giao dịch</label>
+                        <select id="transaction-type" class="form-control">
+                            <option value="income">Thu</option>
+                            <option value="expense">Chi</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="transaction-amount">Số tiền (VNĐ)</label>
+                        <input type="number" id="transaction-amount" class="form-control" placeholder="Nhập số tiền" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="transaction-date">Ngày</label>
+                        <input type="date" id="transaction-date" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="transaction-description">Mô tả</label>
+                        <input type="text" id="transaction-description" class="form-control" placeholder="Nhập mô tả">
+                    </div>
+                    <div class="form-group">
+                        <label for="transaction-category">Danh mục</label>
+                        <select id="transaction-category" class="form-control">
+                            <option value="contribution">Đóng góp</option>
+                            <option value="food">Ăn uống</option>
+                            <option value="utility">Tiện ích</option>
+                            <option value="event">Sự kiện</option>
+                            <option value="other">Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="transaction-member">Thành viên (tùy chọn)</label>
+                        <select id="transaction-member" class="form-control">
+                            <option value="">Chọn thành viên</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" onclick="addTransaction()">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal('transactionModal')">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                </div>
+            </div>
+        </div>
+    
+        <script>
+            // Configuration
+            const API_BASE_URL = '/api';
+            const GROUP_ID = 1; // Giả định group_id = 1, thay đổi theo thực tế
+            const FUND_ID = 1;  // Giả định fund_id = 1, thay đổi theo thực tế
+    
+            // Helper function for API requests
+            async function apiRequest(endpoint, method = 'GET', data = null) {
+                const options = {
+                    method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+                return response.json();
             }
-
-            // Fund management
-            let fund = JSON.parse(localStorage.getItem('fund')) || {
-                balance: 0,
-                members: [
-                    { name: 'A', amount: 100000, period: 'monthly', paid: false, lastPaid: null },
-                    { name: 'B', amount: 100000, period: 'monthly', paid: false, lastPaid: null },
-                    { name: 'C', amount: 100000, period: 'monthly', paid: false, lastPaid: null }
-                ]
-            };
-
-            function saveFund() {
-                localStorage.setItem('fund', JSON.stringify(fund));
-            }
-
-            function renderFund() {
+    
+            // Render fund overview and contributions
+            async function renderFund() {
                 const contributionList = document.getElementById('contribution-list');
                 contributionList.innerHTML = '';
-
+    
+                // Fetch contributions
+                const contributions = await apiRequest(`/contributions/${FUND_ID}`);
                 let paidCount = 0;
-                fund.members.forEach((member, index) => {
+                let pendingCount = 0;
+    
+                // Calculate total balance
+                const fund = await apiRequest(`/funds/${GROUP_ID}`);
+                const totalBalance = fund.length > 0 ? fund[0].amount : 0;
+    
+                contributions.forEach((member, index) => {
                     if (member.paid) paidCount++;
+                    else pendingCount++;
+    
+                    const lastPaidDate = member.last_paid ? new Date(member.last_paid) : null;
+                    const formattedDate = lastPaidDate ? lastPaidDate.toLocaleDateString('vi-VN') : 'Chưa có';
+    
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${member.name}</td>
-                        <td>${member.amount.toLocaleString()} VNĐ</td>
-                        <td><span class="status ${member.paid ? 'paid' : 'pending'}">
-                            ${member.paid ? 'Đã góp' : 'Chưa góp'}
-                        </span></td>
                         <td>
-                            <button class="action-btn confirm" onclick="confirmContribution(${index})" ${member.paid ? 'disabled' : ''}>
-                                Xác nhận góp
-                            </button>
-                            <button class="action-btn notify" onclick="sendReminder(${index})">
-                                Nhắc nhở
-                            </button>
+                            <div class="member-info">
+                                <div class="member-avatar">${member.name.charAt(0)}</div>
+                                <div>
+                                    <div>${member.name}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-light)">${member.email || 'Không có email'}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${member.amount.toLocaleString('vi-VN')} VNĐ</td>
+                        <td>${getPeriodText(member.period)}</td>
+                        <td>${formattedDate}</td>
+                        <td>
+                            <span class="status ${member.paid ? 'paid' : getPaymentStatus(member)}">
+                                ${member.paid ? 'Đã góp' : getPaymentStatusText(member)}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="action-btn confirm" onclick="confirmContribution(${member.id})" ${member.paid ? 'disabled' : ''}>
+                                    <i class="fas fa-check"></i> Xác nhận
+                                </button>
+                                <button class="action-btn notify" onclick="sendReminder(${member.id})">
+                                    <i class="fas fa-bell"></i> Nhắc nhở
+                                </button>
+                                <button class="action-btn edit" onclick="editMember(${member.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete" onclick="deleteMember(${member.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     `;
                     contributionList.appendChild(row);
                 });
-
-                document.getElementById('fund-balance').textContent = `${fund.balance.toLocaleString()} VNĐ`;
-                document.getElementById('member-count').textContent = fund.members.length;
+    
+                document.getElementById('fund-balance').textContent = `${totalBalance.toLocaleString('vi-VN')} VNĐ`;
+                document.getElementById('member-count').textContent = contributions.length;
                 document.getElementById('paid-count').textContent = paidCount;
+                document.getElementById('pending-count').textContent = pendingCount;
             }
-
-            window.addMember = function() {
-                const memberName = document.getElementById('member-name').value.trim();
-                const amount = parseInt(document.getElementById('contribution-amount').value) || 0;
-                const period = document.getElementById('contribution-period').value;
-
-                if (!memberName || amount <= 0) {
-                    alert('Vui lòng nhập tên thành viên và số tiền hợp lệ!');
+    
+            // Render transactions
+            async function renderTransactions() {
+                const transactionList = document.getElementById('transaction-list');
+                transactionList.innerHTML = '';
+    
+                const transactions = await apiRequest(`/transactions/${FUND_ID}`);
+                transactions.forEach((transaction, index) => {
+                    const transactionDate = new Date(transaction.date);
+                    const formattedDate = transactionDate.toLocaleDateString('vi-VN');
+                    const memberName = transaction.member_name || 'Nhóm';
+    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formattedDate}</td>
+                        <td>${transaction.description}</td>
+                        <td style="color: ${transaction.type === 'income' ? 'var(--success)' : 'var(--danger)'}">
+                            ${transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString('vi-VN')} VNĐ
+                        </td>
+                        <td>${memberName}</td>
+                        <td>
+                            <button class="action-btn delete" onclick="deleteTransaction(${transaction.id})">
+                                <i class="fas fa-trash"></i> Xóa
+                            </button>
+                        </td>
+                    `;
+                    transactionList.appendChild(row);
+                });
+            }
+    
+            // Update member dropdown for transactions
+            async function updateMemberDropdown() {
+                const dropdown = document.getElementById('transaction-member');
+                const modalDropdown = document.getElementById('modal-member-id');
+                dropdown.innerHTML = '<option value="">Chọn thành viên</option>';
+                modalDropdown.innerHTML = '<option value="">Chọn thành viên</option>';
+    
+                const contributions = await apiRequest(`/contributions/${FUND_ID}`);
+                contributions.forEach(member => {
+                    const option = document.createElement('option');
+                    option.value = member.member_id;
+                    option.textContent = member.name;
+                    dropdown.appendChild(option);
+    
+                    const modalOption = document.createElement('option');
+                    modalOption.value = member.member_id;
+                    modalOption.textContent = member.name;
+                    modalDropdown.appendChild(modalOption);
+                });
+            }
+    
+            // Helper functions
+            function getPeriodText(period) {
+                const periods = {
+                    'weekly': 'Hàng tuần',
+                    'monthly': 'Hàng tháng',
+                    'quarterly': 'Hàng quý',
+                    'yearly': 'Hàng năm'
+                };
+                return periods[period] || period;
+            }
+    
+            function getPaymentStatus(member) {
+                if (member.paid) return 'paid';
+                if (!member.last_paid) return 'pending';
+    
+                const lastPaidDate = new Date(member.last_paid);
+                const now = new Date();
+                let daysPassed = (now - lastPaidDate) / (1000 * 60 * 60 * 24);
+    
+                if (member.period === 'weekly') {
+                    return daysPassed > 7 ? 'overdue' : 'pending';
+                } else if (member.period === 'monthly') {
+                    const monthsPassed = (now.getFullYear() - lastPaidDate.getFullYear()) * 12 +
+                                        (now.getMonth() - lastPaidDate.getMonth());
+                    return monthsPassed >= 1 ? 'overdue' : 'pending';
+                } else if (member.period === 'quarterly') {
+                    const monthsPassed = (now.getFullYear() - lastPaidDate.getFullYear()) * 12 +
+                                        (now.getMonth() - lastPaidDate.getMonth());
+                    return monthsPassed >= 3 ? 'overdue' : 'pending';
+                } else if (member.period === 'yearly') {
+                    const yearsPassed = now.getFullYear() - lastPaidDate.getFullYear();
+                    return yearsPassed >= 1 ? 'overdue' : 'pending';
+                }
+                return 'pending';
+            }
+    
+            function getPaymentStatusText(member) {
+                const status = getPaymentStatus(member);
+                return status === 'overdue' ? 'Quá hạn' : 'Chưa góp';
+            }
+    
+            // Modal functions
+            window.openAddMemberModal = function() {
+                document.getElementById('addMemberModal').classList.add('active');
+                document.getElementById('modal-member-id').focus();
+            };
+    
+            window.closeModal = function(modalId) {
+                document.getElementById(modalId).classList.remove('active');
+                // Clear modal fields
+                if (modalId === 'addMemberModal') {
+                    document.getElementById('modal-member-id').value = '';
+                    document.getElementById('modal-contribution-amount').value = '';
+                    document.getElementById('modal-contribution-period').value = 'monthly';
+                    document.getElementById('modal-member-email').value = '';
+                    document.getElementById('modal-member-phone').value = '';
+                    delete document.getElementById('addMemberModal').dataset.editingId;
+                } else if (modalId === 'addFundModal') {
+                    document.getElementById('fund-name').value = '';
+                    document.getElementById('fund-amount').value = '';
+                    document.getElementById('fund-description').value = '';
+                    document.getElementById('fund-category').value = 'general';
+                } else if (modalId === 'transactionModal') {
+                    document.getElementById('transaction-type').value = 'income';
+                    document.getElementById('transaction-amount').value = '';
+                    document.getElementById('transaction-date').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('transaction-description').value = '';
+                    document.getElementById('transaction-category').value = 'contribution';
+                    document.getElementById('transaction-member').value = '';
+                }
+            };
+    
+            window.openAddFundModal = function() {
+                document.getElementById('addFundModal').classList.add('active');
+                document.getElementById('fund-name').focus();
+            };
+    
+            window.openTransactionModal = function() {
+                document.getElementById('transactionModal').classList.add('active');
+                document.getElementById('transaction-date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('transaction-amount').focus();
+            };
+    
+            // Member functions
+            window.addMemberFromModal = async function() {
+                const memberId = document.getElementById('modal-member-id').value;
+                const amount = parseInt(document.getElementById('modal-contribution-amount').value) || 0;
+                const period = document.getElementById('modal-contribution-period').value;
+                const email = document.getElementById('modal-member-email').value.trim();
+                const phone = document.getElementById('modal-member-phone').value.trim();
+    
+                if (!memberId || amount <= 0) {
+                    alert('Vui lòng chọn thành viên và nhập số tiền hợp lệ!');
                     return;
                 }
-
-                fund.members.push({
-                    name: memberName,
-                    amount: amount,
-                    period: period,
-                    paid: false,
-                    lastPaid: null
+    
+                const editingId = document.getElementById('addMemberModal').dataset.editingId;
+                if (editingId) {
+                    // Update existing contribution
+                    await apiRequest(`/contributions/${editingId}`, 'PUT', {
+                        amount,
+                        period,
+                        email: email || null,
+                        phone: phone || null,
+                        paid: false
+                    });
+                    delete document.getElementById('addMemberModal').dataset.editingId;
+                } else {
+                    // Add new contribution
+                    await apiRequest('/contributions', 'POST', {
+                        member_id: parseInt(memberId),
+                        fund_id: FUND_ID,
+                        amount,
+                        period,
+                        email: email || null,
+                        phone: phone || null
+                    });
+                }
+    
+                closeModal('addMemberModal');
+                await renderFund();
+                await updateMemberDropdown();
+            };
+    
+            window.addMember = async function() {
+                const memberId = document.getElementById('member-name').value; // Giả định đây là member_id
+                const amount = parseInt(document.getElementById('contribution-amount').value) || 0;
+                const period = document.getElementById('contribution-period').value;
+    
+                if (!memberId || amount <= 0) {
+                    alert('Vui lòng chọn thành viên và nhập số tiền hợp lệ!');
+                    return;
+                }
+    
+                await apiRequest('/contributions', 'POST', {
+                    member_id: parseInt(memberId),
+                    fund_id: FUND_ID,
+                    amount,
+                    period
                 });
-
+    
                 document.getElementById('member-name').value = '';
                 document.getElementById('contribution-amount').value = '';
-
-                saveFund();
-                renderFund();
+    
+                await renderFund();
+                await updateMemberDropdown();
             };
-
-            window.confirmContribution = function(index) {
-                const member = fund.members[index];
-                fund.balance += member.amount;
-                member.paid = true;
-                member.lastPaid = new Date().toISOString();
-                
-                saveFund();
-                renderFund();
+    
+            window.editMember = async function(contributionId) {
+                const contributions = await apiRequest(`/contributions/${FUND_ID}`);
+                const member = contributions.find(c => c.id === contributionId);
+                if (!member) return;
+    
+                document.getElementById('modal-member-id').value = member.member_id;
+                document.getElementById('modal-contribution-amount').value = member.amount;
+                document.getElementById('modal-contribution-period').value = member.period;
+                document.getElementById('modal-member-email').value = member.email || '';
+                document.getElementById('modal-member-phone').value = member.phone || '';
+                document.getElementById('addMemberModal').dataset.editingId = contributionId;
+    
+                document.getElementById('addMemberModal').classList.add('active');
             };
-
-            window.sendReminder = function(index) {
-                const member = fund.members[index];
-                alert(`Đã gửi nhắc nhở đóng góp cho ${member.name}: ${member.amount.toLocaleString()} VNĐ`);
-                // In a real application, this would trigger an actual notification
+    
+            window.deleteMember = async function(contributionId) {
+                if (confirm('Bạn có chắc chắn muốn xóa đóng góp này?')) {
+                    await apiRequest(`/contributions/${contributionId}`, 'DELETE');
+                    await renderFund();
+                    await updateMemberDropdown();
+                }
             };
-
-            function checkContributionPeriod() {
-                const now = new Date();
-                fund.members.forEach((member, index) => {
-                    if (member.lastPaid) {
-                        const lastPaid = new Date(member.lastPaid);
-                        let shouldReset = false;
-
+    
+            window.confirmContribution = async function(contributionId) {
+                const contributions = await apiRequest(`/contributions/${FUND_ID}`);
+                const member = contributions.find(c => c.id === contributionId);
+                if (!member) return;
+    
+                const today = new Date().toISOString().split('T')[0];
+                await apiRequest(`/contributions/${contributionId}/confirm`, 'PUT', { last_paid: today });
+    
+                // Add transaction
+                await apiRequest('/transactions', 'POST', {
+                    fund_id: FUND_ID,
+                    member_id: member.member_id,
+                    type: 'income',
+                    amount: member.amount,
+                    date: today,
+                    description: `Đóng góp ${getPeriodText(member.period)} từ ${member.name}`,
+                    category: 'contribution'
+                });
+    
+                await renderFund();
+                await renderTransactions();
+            };
+    
+            window.sendReminder = async function(contributionId) {
+                const contributions = await apiRequest(`/contributions/${FUND_ID}`);
+                const member = contributions.find(c => c.id === contributionId);
+                if (!member) return;
+    
+                const status = getPaymentStatus(member);
+                const message = status === 'overdue'
+                    ? `NHẮC NHỞ: ${member.name} chưa đóng góp ${getPeriodText(member.period)}. Số tiền: ${member.amount.toLocaleString('vi-VN')} VNĐ (QUÁ HẠN)`
+                    : `Nhắc nhở: ${member.name} vui lòng đóng góp ${getPeriodText(member.period)}. Số tiền: ${member.amount.toLocaleString('vi-VN')} VNĐ`;
+    
+                await apiRequest('/notifications', 'POST', {
+                    group_id: GROUP_ID,
+                    member_id: member.member_id,
+                    title: 'Nhắc nhở đóng góp quỹ',
+                    message
+                });
+    
+                alert(message);
+                await updateNotificationCount();
+            };
+    
+            // Fund functions
+            window.addFund = async function() {
+                const name = document.getElementById('fund-name').value.trim();
+                const amount = parseInt(document.getElementById('fund-amount').value) || 0;
+                const description = document.getElementById('fund-description').value.trim();
+                const category = document.getElementById('fund-category').value;
+    
+                if (!name || amount <= 0) {
+                    alert('Vui lòng nhập tên quỹ và số tiền hợp lệ!');
+                    return;
+                }
+    
+                await apiRequest('/funds', 'POST', {
+                    group_id: GROUP_ID,
+                    name,
+                    amount,
+                    description,
+                    category
+                });
+    
+                closeModal('addFundModal');
+                await renderFund();
+            };
+    
+            // Transaction functions
+            window.addTransaction = async function() {
+                const type = document.getElementById('transaction-type').value;
+                const amount = parseInt(document.getElementById('transaction-amount').value) || 0;
+                const date = document.getElementById('transaction-date').value;
+                const description = document.getElementById('transaction-description').value.trim();
+                const category = document.getElementById('transaction-category').value;
+                const memberId = document.getElementById('transaction-member').value || null;
+    
+                if (!date || amount <= 0 || !description) {
+                    alert('Vui lòng nhập đầy đủ thông tin giao dịch!');
+                    return;
+                }
+    
+                await apiRequest('/transactions', 'POST', {
+                    fund_id: FUND_ID,
+                    member_id: memberId ? parseInt(memberId) : null,
+                    type,
+                    amount,
+                    date,
+                    description,
+                    category
+                });
+    
+                closeModal('transactionModal');
+                await renderFund();
+                await renderTransactions();
+            };
+    
+            window.deleteTransaction = async function(transactionId) {
+                if (confirm('Bạn có chắc chắn muốn xóa giao dịch này?')) {
+                    await apiRequest(`/transactions/${transactionId}`, 'DELETE');
+                    await renderFund();
+                    await renderTransactions();
+                }
+            };
+    
+            // Notification functions
+            async function updateNotificationCount() {
+                const notifications = await apiRequest(`/notifications/${GROUP_ID}`);
+                const unreadCount = notifications.filter(n => !n.is_read).length;
+                document.getElementById('notification-count').textContent = unreadCount;
+            }
+    
+            // Export function (Placeholder)
+            window.exportToExcel = function() {
+                alert('Chức năng xuất Excel sẽ được thực hiện ở phiên bản sau!');
+            };
+    
+            // Check for overdue contributions
+            async function checkOverdueContributions() {
+                const contributions = await apiRequest(`/contributions/${FUND_ID}`);
+                let hasOverdue = false;
+    
+                contributions.forEach(member => {
+                    if (!member.paid && member.last_paid) {
+                        const lastPaidDate = new Date(member.last_paid);
+                        const now = new Date();
+                        let isOverdue = false;
+    
                         if (member.period === 'weekly') {
-                            const diffDays = (now - lastPaid) / (1000 * 60 * 60 * 24);
-                            shouldReset = diffDays >= 7;
+                            const diffDays = (now - lastPaidDate) / (1000 * 60 * 60 * 24);
+                            isOverdue = diffDays > 7;
                         } else if (member.period === 'monthly') {
-                            shouldReset = now.getMonth() !== lastPaid.getMonth() || 
-                                        now.getFullYear() !== lastPaid.getFullYear();
-                        }
+                            isOverdue = now.getMonth() !== lastPaidDate.getMonth() ||
+                                        now.getFullYear() !== lastPaidDate.getFullYear();
+                        } else if (member.period === 'quarterly') {
+                            const monthsPassed = (now.getFullYear() - lastPaidDate.getFullYear()) * 12 +
+                                                (now.getMonth() - lastPaidDate.getMonth());
+                            isOverdue = monthsPassed >= 3;
+                        } else if (member.period === 'yearly') {
+    isOverdue = now.getFullYear() !== lastPaidDate.getFullYear();
+}
 
-                        if (shouldReset && member.paid) {
-                            member.paid = false;
-                            sendReminder(index);
+    
+                        if (isOverdue) {
+                            hasOverdue = true;
                         }
-                    } else if (!member.paid) {
-                        sendReminder(index);
                     }
                 });
-
-                saveFund();
-                renderFund();
+    
+                if (hasOverdue) {
+                    await renderFund();
+                }
             }
-
+    
             // Initialize
-            renderFund();
-            
-            // Check contributions daily
-            checkContributionPeriod();
-            setInterval(checkContributionPeriod, 24 * 60 * 60 * 1000);
-        });
-    </script>
+            document.addEventListener('DOMContentLoaded', async () => {
+                await renderFund();
+                await renderTransactions();
+                await updateMemberDropdown();
+                await updateNotificationCount();
+                checkOverdueContributions();
+                setInterval(checkOverdueContributions, 24 * 60 * 60 * 1000);
+            });
+        </script>
+    
+<!-- js chung -->
+<script src="../static/js/app.js"></script>
 </body>
 </html>

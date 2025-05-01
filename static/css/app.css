@@ -173,7 +173,12 @@ body {
     filter: brightness(0) invert(1); /* Chuyển logo sang màu trắng */
 }
 
-
+.sidebar-logo a, .sidebar-logo img {
+    pointer-events: auto !important;
+    z-index: 9999 !important;
+    position: relative;
+  }
+  
 .sidebar-title {
     font-size: 1.25rem;
     font-weight: 700;
@@ -187,8 +192,6 @@ body {
     margin-top: 0.25rem;
     font-weight: 500;
 }
-
-
 
 @keyframes pulse {
     0% {

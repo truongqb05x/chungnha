@@ -6,385 +6,10 @@
     <title>Bếp Chung - Quản lý thực đơn</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- css chung -->
     <link rel="stylesheet" href="../static/css/app.css">
-
-    <style>
-        /* Menu page styles */
-        .menu-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .menu-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-            border: none;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .search-filter {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .search-input {
-            flex: 1;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            background-color: var(--card-bg);
-            color: var(--text);
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(255, 109, 40, 0.1);
-        }
-
-        .filter-select {
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            background-color: var(--card-bg);
-            color: var(--text);
-        }
-
-        .menu-table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: var(--card-bg);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .menu-table th,
-        .menu-table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .menu-table th {
-            background-color: rgba(255, 109, 40, 0.05);
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .status-preparing {
-            background-color: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-        }
-
-        .status-completed {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
-            color: var(--text-light);
-            cursor: pointer;
-            font-size: 1.1rem;
-            margin-right: 0.5rem;
-            transition: var(--transition);
-        }
-
-        .action-btn:hover {
-            color: var(--primary);
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 2rem;
-        }
-
-        .pagination-btn {
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            background-color: var(--card-bg);
-            color: var(--text);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .pagination-btn:hover {
-            background-color: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .pagination-btn.active {
-            background-color: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .pagination-btn:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        /* Calendar view */
-        .calendar-container {
-            background-color: var(--card-bg);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 2rem;
-        }
-
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .calendar-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .calendar-nav {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0.5rem;
-        }
-
-        .calendar-day {
-            padding: 0.75rem;
-            border-radius: var(--radius-sm);
-            background-color: rgba(255, 109, 40, 0.05);
-            text-align: center;
-            font-size: 0.9rem;
-            color: var(--text);
-        }
-
-        .calendar-day-header {
-            font-weight: 600;
-            background-color: transparent;
-        }
-
-        .calendar-day.has-menu {
-            background-color: var(--primary-light);
-            color: white;
-            cursor: pointer;
-        }
-
-        .calendar-day.has-menu:hover {
-            background-color: var(--primary);
-        }
-
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background-color: var(--card-bg);
-            border-radius: var(--radius-md);
-            padding: 2rem;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.25rem;
-            color: var(--text-light);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .modal-close:hover {
-            color: var(--primary);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: var(--text);
-            margin-bottom: 0.5rem;
-        }
-
-        .form-input,
-        .form-select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            background-color: var(--card-bg);
-            color: var(--text);
-        }
-
-        .form-input:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(255, 109, 40, 0.1);
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .app-container {
-                grid-template-columns: 240px 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
-            }
-
-            .header {
-                grid-column: 1 / 2;
-                padding: 1rem;
-            }
-
-            .sidebar {
-                grid-column: 1 / 2;
-                grid-row: 2 / 3;
-                height: auto;
-                position: static;
-                display: none;
-            }
-
-            .sidebar.active {
-                display: flex;
-            }
-
-            .main-content {
-                grid-column: 1 / 2;
-                grid-row: 3 / 4;
-                padding: 1.5rem;
-            }
-
-            .menu-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-
-            .search-filter {
-                flex-direction: column;
-            }
-
-            .menu-table {
-                display: block;
-                overflow-x: auto;
-            }
-
-            .calendar-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header-title {
-                font-size: 1.25rem;
-            }
-
-            .header-actions {
-                gap: 1rem;
-            }
-
-            .menu-title {
-                font-size: 1.5rem;
-            }
-
-            .calendar-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-    </style>
+    <!-- css riêng -->
+    <link rel="stylesheet" href="../static/css/thucdon.css">
 </head>
 <body>
     <div class="app-container">
@@ -485,75 +110,171 @@
         <main class="main-content">
             <div class="menu-header">
                 <h1 class="menu-title">Quản lý thực đơn</h1>
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="calendar"><i class="fas fa-calendar-alt"></i></button>
+                    <button class="view-btn" data-view="table"><i class="fas fa-table"></i></button>
+                    <button class="view-btn" data-view="cards"><i class="fas fa-th-large"></i></button>
+                </div>
                 <button class="btn btn-primary" id="addMenuBtn">
                     <i class="fas fa-plus"></i> Thêm thực đơn
                 </button>
             </div>
 
             <!-- Calendar view -->
-            <div class="calendar-container">
-                <div class="calendar-header">
-                    <h2 class="calendar-title" id="calendarTitle">Tháng 4, 2025</h2>
-                    <div class="calendar-nav">
-                        <button class="btn" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
-                        <button class="btn" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+            <div class="view-section" id="calendarView">
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <h2 class="calendar-title" id="calendarTitle">Tháng 4, 2025</h2>
+                        <div class="calendar-nav">
+                            <button class="btn btn-outline" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                            <button class="btn btn-outline" id="todayBtn">Hôm nay</button>
+                            <button class="btn btn-outline" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Calendar will be populated by JavaScript -->
                     </div>
                 </div>
-                <div class="calendar-grid" id="calendarGrid">
-                    <!-- Calendar will be populated by JavaScript -->
+
+                <div class="search-filter">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm món ăn, người nấu...">
+                    <select class="filter-select" id="statusFilter">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Preparing">Đang chuẩn bị</option>
+                        <option value="Completed">Hoàn thành</option>
+                    </select>
+                    <select class="filter-select" id="dateFilter">
+                        <option value="">Tất cả ngày</option>
+                        <option value="today">Hôm nay</option>
+                        <option value="week">Tuần này</option>
+                        <option value="month">Tháng này</option>
+                        <option value="upcoming">Sắp tới</option>
+                        <option value="past">Đã qua</option>
+                    </select>
+                </div>
+
+                <div class="menu-table-container">
+                    <table class="menu-table">
+                        <thead>
+                            <tr>
+                                <th>Ngày</th>
+                                <th>Món ăn</th>
+                                <th>Người nấu</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="menuTableBody">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <i class="fas fa-utensils"></i>
+                    <h3>Không có thực đơn nào</h3>
+                    <p>Bạn chưa tạo thực đơn nào cho khoảng thời gian này</p>
+                    <button class="btn btn-primary" id="addMenuEmptyBtn">
+                        <i class="fas fa-plus"></i> Thêm thực đơn mới
+                    </button>
+                </div>
+
+                <div class="pagination">
+                    <button class="btn btn-outline" id="prevPage" disabled><i class="fas fa-chevron-left"></i> Trước</button>
+                    <div id="pageNumbers"></div>
+                    <button class="btn btn-outline" id="nextPage">Sau <i class="fas fa-chevron-right"></i></button>
                 </div>
             </div>
 
-            <div class="search-filter">
-                <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm món ăn...">
-                <select class="filter-select" id="statusFilter">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="Preparing">Đang chuẩn bị</option>
-                    <option value="Completed">Hoàn thành</option>
-                </select>
+            <!-- Table view -->
+            <div class="view-section" id="tableView" style="display: none;">
+                <div class="search-filter">
+                    <input type="text" class="search-input" id="searchInputTable" placeholder="Tìm kiếm món ăn, người nấu...">
+                    <select class="filter-select" id="statusFilterTable">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Preparing">Đang chuẩn bị</option>
+                        <option value="Completed">Hoàn thành</option>
+                    </select>
+                    <select class="filter-select" id="dateFilterTable">
+                        <option value="">Tất cả ngày</option>
+                        <option value="today">Hôm nay</option>
+                        <option value="week">Tuần này</option>
+                        <option value="month">Tháng này</option>
+                        <option value="upcoming">Sắp tới</option>
+                        <option value="past">Đã qua</option>
+                    </select>
+                </div>
+
+                <div class="menu-table-container">
+                    <table class="menu-table">
+                        <thead>
+                            <tr>
+                                <th>Ngày <i class="fas fa-sort"></i></th>
+                                <th>Món ăn <i class="fas fa-sort"></i></th>
+                                <th>Người nấu <i class="fas fa-sort"></i></th>
+                                <th>Trạng thái <i class="fas fa-sort"></i></th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="menuTableBodyTable">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" id="emptyStateTable" style="display: none;">
+                    <i class="fas fa-utensils"></i>
+                    <h3>Không có thực đơn nào</h3>
+                    <p>Bạn chưa tạo thực đơn nào phù hợp với bộ lọc</p>
+                    <button class="btn btn-primary" id="addMenuEmptyBtnTable">
+                        <i class="fas fa-plus"></i> Thêm thực đơn mới
+                    </button>
+                </div>
+
+                <div class="pagination">
+                    <button class="btn btn-outline" id="prevPageTable" disabled><i class="fas fa-chevron-left"></i> Trước</button>
+                    <div id="pageNumbersTable"></div>
+                    <button class="btn btn-outline" id="nextPageTable">Sau <i class="fas fa-chevron-right"></i></button>
+                </div>
             </div>
 
-            <table class="menu-table">
-                <thead>
-                    <tr>
-                        <th>Ngày</th>
-                        <th>Món ăn</th>
-                        <th>Người nấu</th>
-                        <th>Trạng thái</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody id="menuTableBody">
-                    <!-- Sample data -->
-                    <tr>
-                        <td>15/04/2025</td>
-                        <td>Cơm gà xối mỡ, canh chua cá lóc, rau muống xào tỏi</td>
-                        <td>Nguyễn Minh, Trần Hương</td>
-                        <td><span class="status status-preparing">Đang chuẩn bị</span></td>
-                        <td>
-                            <button class="action-btn edit-btn" data-id="1"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn delete-btn" data-id="1"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>16/04/2025</td>
-                        <td>Thịt kho tàu, cá chiên, canh cải</td>
-                        <td>Lê Anh</td>
-                        <td><span class="status status-completed">Hoàn thành</span></td>
-                        <td>
-                            <button class="action-btn edit-btn" data-id="2"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn delete-btn" data-id="2"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- Cards view -->
+            <div class="view-section" id="cardsView" style="display: none;">
+                <div class="search-filter">
+                    <input type="text" class="search-input" id="searchInputCards" placeholder="Tìm kiếm món ăn, người nấu...">
+                    <select class="filter-select" id="statusFilterCards">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Preparing">Đang chuẩn bị</option>
+                        <option value="Completed">Hoàn thành</option>
+                    </select>
+                    <select class="filter-select" id="dateFilterCards">
+                        <option value="">Tất cả ngày</option>
+                        <option value="today">Hôm nay</option>
+                        <option value="week">Tuần này</option>
+                        <option value="month">Tháng này</option>
+                        <option value="upcoming">Sắp tới</option>
+                        <option value="past">Đã qua</option>
+                    </select>
+                </div>
 
-            <div class="pagination">
-                <button class="pagination-btn" id="prevPage" disabled>Trước</button>
-                <button class="pagination-btn active">1</button>
-                <button class="pagination-btn">2</button>
-                <button class="pagination-btn">3</button>
-                <button class="pagination-btn" id="nextPage">Sau</button>
+                <div class="cards-container" id="cardsContainer">
+                    <!-- Data will be populated by JavaScript -->
+                </div>
+
+                <div class="empty-state" id="emptyStateCards" style="display: none;">
+                    <i class="fas fa-utensils"></i>
+                    <h3>Không có thực đơn nào</h3>
+                    <p>Bạn chưa tạo thực đơn nào phù hợp với bộ lọc</p>
+                    <button class="btn btn-primary" id="addMenuEmptyBtnCards">
+                        <i class="fas fa-plus"></i> Thêm thực đơn mới
+                    </button>
+                </div>
+
+                <div class="pagination">
+                    <button class="btn btn-outline" id="prevPageCards" disabled><i class="fas fa-chevron-left"></i> Trước</button>
+                    <div id="pageNumbersCards"></div>
+                    <button class="btn btn-outline" id="nextPageCards">Sau <i class="fas fa-chevron-right"></i></button>
+                </div>
             </div>
 
             <!-- Modal for adding/editing menu -->
@@ -564,30 +285,54 @@
                         <button class="modal-close" id="closeModal"><i class="fas fa-times"></i></button>
                     </div>
                     <form id="menuForm">
-                        <div class="form-group">
-                            <label class="form-label" for="date">Ngày</label>
-                            <input type="date" class="form-input" id="date" required>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="date">Ngày</label>
+                                <input type="date" class="form-input" id="date" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="status">Trạng thái</label>
+                                <select class="form-select" id="status" required>
+                                    <option value="Preparing">Đang chuẩn bị</option>
+                                    <option value="Completed">Hoàn thành</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="dishes">Món ăn</label>
-                            <textarea class="form-input" id="dishes" rows="4" required placeholder="Nhập các món ăn, mỗi món một dòng"></textarea>
+                            <textarea class="form-textarea" id="dishes" rows="4" required placeholder="Nhập các món ăn, mỗi món một dòng"></textarea>
+                            <div class="form-hint">Nhấn Enter để xuống dòng cho mỗi món ăn</div>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="cooks">Người nấu</label>
                             <input type="text" class="form-input" id="cooks" required placeholder="Nhập tên người nấu, cách nhau bởi dấu phẩy">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="status">Trạng thái</label>
-                            <select class="form-select" id="status" required>
-                                <option value="Preparing">Đang chuẩn bị</option>
-                                <option value="Completed">Hoàn thành</option>
-                            </select>
+                            <label class="form-label" for="notes">Ghi chú</label>
+                            <textarea class="form-textarea" id="notes" rows="2" placeholder="Thêm ghi chú nếu cần"></textarea>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn" id="cancelBtn">Hủy</button>
-                            <button type="submit" class="btn btn-primary">Lưu</button>
+                            <button type="button" class="btn btn-outline" id="cancelBtn">Hủy</button>
+                            <button type="submit" class="btn btn-primary">Lưu thực đơn</button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Modal for confirmation -->
+            <div class="modal" id="confirmModal">
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Xác nhận</h2>
+                        <button class="modal-close" id="closeConfirmModal"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="confirmMessage">Bạn có chắc muốn xóa thực đơn này?</p>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="cancelConfirmBtn">Hủy</button>
+                        <button type="button" class="btn btn-primary" id="confirmBtn">Xác nhận</button>
+                    </div>
                 </div>
             </div>
         </main>
@@ -610,6 +355,7 @@
             const themeToggle = document.querySelector('.theme-toggle');
             const themeBtns = document.querySelectorAll('.theme-btn');
             const body = document.body;
+            const themeIcon = document.querySelector('.theme-icon i');
             
             themeBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -621,11 +367,11 @@
                     body.setAttribute('data-theme', theme);
                     localStorage.setItem('theme', theme);
                     
-                    const themeIcon = document.querySelector('.theme-icon i');
                     themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
                 });
             });
 
+            // Apply saved theme or default to light
             const savedTheme = localStorage.getItem('theme') || 'light';
             body.setAttribute('data-theme', savedTheme);
             
@@ -634,93 +380,476 @@
                 themeBtns.forEach(b => b.classList.remove('active'));
                 activeThemeBtn.classList.add('active');
                 
-                const themeIcon = document.querySelector('.theme-icon i');
                 themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
             }
 
-            // Menu page functionality
+            // View toggle
+            const viewBtns = document.querySelectorAll('.view-btn');
+            const viewSections = document.querySelectorAll('.view-section');
+            
+            viewBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const view = this.getAttribute('data-view');
+                    
+                    viewBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    viewSections.forEach(section => {
+                        section.style.display = 'none';
+                    });
+                    
+                    document.getElementById(`${view}View`).style.display = 'block';
+                    localStorage.setItem('preferredView', view);
+                    
+                    // Re-render the current view
+                    if (view === 'calendar') {
+                        renderCalendar();
+                    } else if (view === 'table') {
+                        renderTableView();
+                    } else if (view === 'cards') {
+                        renderCardsView();
+                    }
+                });
+            });
+
+            // Apply saved view or default to calendar
+            const savedView = localStorage.getItem('preferredView') || 'calendar';
+            const savedViewBtn = document.querySelector(`.view-btn[data-view="${savedView}"]`);
+            if (savedViewBtn) {
+                viewBtns.forEach(b => b.classList.remove('active'));
+                savedViewBtn.classList.add('active');
+                
+                viewSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                document.getElementById(`${savedView}View`).style.display = 'block';
+            }
+
+            // Menu data and functionality
             const addMenuBtn = document.getElementById('addMenuBtn');
             const menuModal = document.getElementById('menuModal');
             const closeModal = document.getElementById('closeModal');
             const cancelBtn = document.getElementById('cancelBtn');
             const menuForm = document.getElementById('menuForm');
-            const menuTableBody = document.getElementById('menuTableBody');
-            const searchInput = document.getElementById('searchInput');
-            const statusFilter = document.getElementById('statusFilter');
-            const prevPage = document.getElementById('prevPage');
-            const nextPage = document.getElementById('nextPage');
-            const calendarGrid = document.getElementById('calendarGrid');
-            const calendarTitle = document.getElementById('calendarTitle');
-            const prevMonth = document.getElementById('prevMonth');
-            const nextMonth = document.getElementById('nextMonth');
+            const confirmModal = document.getElementById('confirmModal');
+            const closeConfirmModal = document.getElementById('closeConfirmModal');
+            const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+            const confirmBtn = document.getElementById('confirmBtn');
+            const confirmMessage = document.getElementById('confirmMessage');
+            const todayBtn = document.getElementById('todayBtn');
 
-            let currentPage = 1;
-            const menusPerPage = 10;
-            let currentMonth = new Date(2025, 3); // April 2025
+            // Sample data with more entries
             let menus = [
-                { id: 1, date: '2025-04-15', dishes: 'Cơm gà xối mỡ, canh chua cá lóc, rau muống xào tỏi', cooks: 'Nguyễn Minh, Trần Hương', status: 'Preparing' },
-                { id: 2, date: '2025-04-16', dishes: 'Thịt kho tàu, cá chiên, canh cải', cooks: 'Lê Anh', status: 'Completed' },
-                // Thêm dữ liệu mẫu khác nếu cần
+                { 
+                    id: 1, 
+                    date: '2025-04-15', 
+                    dishes: 'Cơm gà xối mỡ\nCanh chua cá lóc\nRau muống xào tỏi', 
+                    cooks: 'Nguyễn Minh, Trần Hương', 
+                    status: 'Preparing',
+                    notes: 'Mua thêm rau muống và cá lóc'
+                },
+                { 
+                    id: 2, 
+                    date: '2025-04-16', 
+                    dishes: 'Thịt kho tàu\nCá chiên\nCanh cải', 
+                    cooks: 'Lê Anh', 
+                    status: 'Completed',
+                    notes: ''
+                },
+                { 
+                    id: 3, 
+                    date: '2025-04-17', 
+                    dishes: 'Bún bò Huế\nRau sống', 
+                    cooks: 'Phạm Quỳnh', 
+                    status: 'Completed',
+                    notes: 'Nấu thêm nước dùng'
+                },
+                { 
+                    id: 4, 
+                    date: '2025-04-18', 
+                    dishes: 'Cơm tấm sườn\nBì\nChả trứng', 
+                    cooks: 'Trần Hương, Vũ Long', 
+                    status: 'Preparing',
+                    notes: 'Chuẩn bị từ tối hôm trước'
+                },
+                { 
+                    id: 5, 
+                    date: '2025-04-20', 
+                    dishes: 'Phở bò\nQuẩy\nRau thơm', 
+                    cooks: 'Nguyễn Minh', 
+                    status: 'Preparing',
+                    notes: 'Mua bò về ướp từ tối hôm trước'
+                },
+                { 
+                    id: 6, 
+                    date: '2025-04-22', 
+                    dishes: 'Bánh xèo\nNem lụi\nRau sống', 
+                    cooks: 'Lê Anh, Phạm Quỳnh', 
+                    status: 'Preparing',
+                    notes: 'Chuẩn bị nhiều rau sống'
+                },
+                { 
+                    id: 7, 
+                    date: '2025-04-25', 
+                    dishes: 'Lẩu hải sản\nBún tươi\nRau nhúng', 
+                    cooks: 'Vũ Long', 
+                    status: 'Preparing',
+                    notes: 'Mua đủ các loại hải sản'
+                }
             ];
 
-            function renderMenus() {
-                const start = (currentPage - 1) * menusPerPage;
-                const end = start + menusPerPage;
-                const filteredMenus = filterMenus();
-                const paginatedMenus = filteredMenus.slice(start, end);
+            let currentMenuId = menus.length > 0 ? Math.max(...menus.map(m => m.id)) + 1 : 1;
+            let currentPage = 1;
+            const menusPerPage = 5;
+            let currentMonth = new Date();
+            let currentSort = { column: 'date', direction: 'asc' };
+            let confirmAction = null;
+            let confirmActionParams = null;
 
-                menuTableBody.innerHTML = '';
-                paginatedMenus.forEach(menu => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${formatDate(menu.date)}</td>
-                        <td>${menu.dishes}</td>
-                        <td>${menu.cooks}</td>
-                        <td><span class="status status-${menu.status.toLowerCase()}">${menu.status === 'Preparing' ? 'Đang chuẩn bị' : 'Hoàn thành'}</span></td>
-                        <td>
-                            <button class="action-btn edit-btn" data-id="${menu.id}"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn delete-btn" data-id="${menu.id}"><i class="fas fa-trash"></i></button>
-                        </td>
-                    `;
-                    menuTableBody.appendChild(row);
+            // Initialize the app
+            function initApp() {
+                renderCalendar();
+                renderTableView();
+                renderCardsView();
+                setupEventListeners();
+                setToday();
+            }
+
+            // Set today's date in the date picker
+            function setToday() {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+                document.getElementById('date').value = todayStr;
+            }
+
+            // Setup event listeners
+            function setupEventListeners() {
+                // Modal controls
+                addMenuBtn.addEventListener('click', () => {
+                    menuModal.classList.add('active');
+                    menuForm.reset();
+                    setToday();
+                    document.querySelector('.modal-title').textContent = 'Thêm thực đơn';
+                    document.getElementById('status').value = 'Preparing';
+                    menuForm.dataset.mode = 'add';
                 });
 
-                updatePagination(filteredMenus.length);
-            }
+                // Add from empty state buttons
+                document.getElementById('addMenuEmptyBtn')?.addEventListener('click', () => {
+                    menuModal.classList.add('active');
+                    menuForm.reset();
+                    setToday();
+                    document.querySelector('.modal-title').textContent = 'Thêm thực đơn';
+                    document.getElementById('status').value = 'Preparing';
+                    menuForm.dataset.mode = 'add';
+                });
 
-            function filterMenus() {
-                const searchTerm = searchInput.value.toLowerCase();
-                const selectedStatus = statusFilter.value;
+                document.getElementById('addMenuEmptyBtnTable')?.addEventListener('click', () => {
+                    menuModal.classList.add('active');
+                    menuForm.reset();
+                    setToday();
+                    document.querySelector('.modal-title').textContent = 'Thêm thực đơn';
+                    document.getElementById('status').value = 'Preparing';
+                    menuForm.dataset.mode = 'add';
+                });
 
-                return menus.filter(menu => 
-                    menu.dishes.toLowerCase().includes(searchTerm) &&
-                    (!selectedStatus || menu.status === selectedStatus)
-                );
-            }
+                document.getElementById('addMenuEmptyBtnCards')?.addEventListener('click', () => {
+                    menuModal.classList.add('active');
+                    menuForm.reset();
+                    setToday();
+                    document.querySelector('.modal-title').textContent = 'Thêm thực đơn';
+                    document.getElementById('status').value = 'Preparing';
+                    menuForm.dataset.mode = 'add';
+                });
 
-            function updatePagination(totalMenus) {
-                const totalPages = Math.ceil(totalMenus / menusPerPage);
-                prevPage.disabled = currentPage === 1;
-                nextPage.disabled = currentPage === totalPages;
+                closeModal.addEventListener('click', () => {
+                    menuModal.classList.remove('active');
+                });
 
-                const pagination = document.querySelector('.pagination');
-                const pageButtons = pagination.querySelectorAll('.pagination-btn:not(#prevPage):not(#nextPage)');
-                pageButtons.forEach(btn => btn.remove());
+                cancelBtn.addEventListener('click', () => {
+                    menuModal.classList.remove('active');
+                });
 
-                for (let i = 1; i <= totalPages; i++) {
-                    const btn = document.createElement('button');
-                    btn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
-                    btn.textContent = i;
-                    btn.addEventListener('click', () => {
-                        currentPage = i;
-                        renderMenus();
+                closeConfirmModal.addEventListener('click', () => {
+                    confirmModal.classList.remove('active');
+                });
+
+                cancelConfirmBtn.addEventListener('click', () => {
+                    confirmModal.classList.remove('active');
+                });
+
+                confirmBtn.addEventListener('click', () => {
+                    if (confirmAction) {
+                        confirmAction(...confirmActionParams);
+                    }
+                    confirmModal.classList.remove('active');
+                });
+
+                // Form submission
+                menuForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const date = document.getElementById('date').value;
+                    const dishes = document.getElementById('dishes').value;
+                    const cooks = document.getElementById('cooks').value;
+                    const status = document.getElementById('status').value;
+                    const notes = document.getElementById('notes').value;
+
+                    if (menuForm.dataset.mode === 'edit') {
+                        const id = parseInt(menuForm.dataset.id);
+                        const menuIndex = menus.findIndex(m => m.id === id);
+                        
+                        if (menuIndex !== -1) {
+                            menus[menuIndex] = {
+                                id,
+                                date,
+                                dishes,
+                                cooks,
+                                status,
+                                notes
+                            };
+                            
+                            showToast('Cập nhật thực đơn thành công');
+                        }
+                    } else {
+                        const newMenu = {
+                            id: currentMenuId++,
+                            date,
+                            dishes,
+                            cooks,
+                            status,
+                            notes
+                        };
+
+                        menus.push(newMenu);
+                        showToast('Thêm thực đơn thành công');
+                    }
+
+                    menuModal.classList.remove('active');
+                    renderCalendar();
+                    renderTableView();
+                    renderCardsView();
+                });
+
+                // Calendar navigation
+                document.getElementById('prevMonth').addEventListener('click', () => {
+                    currentMonth.setMonth(currentMonth.getMonth() - 1);
+                    renderCalendar();
+                });
+
+                document.getElementById('nextMonth').addEventListener('click', () => {
+                    currentMonth.setMonth(currentMonth.getMonth() + 1);
+                    renderCalendar();
+                });
+
+                todayBtn.addEventListener('click', () => {
+                    currentMonth = new Date();
+                    renderCalendar();
+                });
+
+                // Search and filter
+                document.getElementById('searchInput').addEventListener('input', () => {
+                    currentPage = 1;
+                    renderTableView();
+                    renderCardsView();
+                    updateCalendarHighlights();
+                });
+
+                document.getElementById('statusFilter').addEventListener('change', () => {
+                    currentPage = 1;
+                    renderTableView();
+                    renderCardsView();
+                    updateCalendarHighlights();
+                });
+
+                document.getElementById('dateFilter').addEventListener('change', () => {
+                    currentPage = 1;
+                    renderTableView();
+                    renderCardsView();
+                    updateCalendarHighlights();
+                });
+
+                // Table view search and filter
+                document.getElementById('searchInputTable').addEventListener('input', () => {
+                    currentPage = 1;
+                    renderTableView();
+                });
+
+                document.getElementById('statusFilterTable').addEventListener('change', () => {
+                    currentPage = 1;
+                    renderTableView();
+                });
+
+                document.getElementById('dateFilterTable').addEventListener('change', () => {
+                    currentPage = 1;
+                    renderTableView();
+                });
+
+                // Cards view search and filter
+                document.getElementById('searchInputCards').addEventListener('input', () => {
+                    currentPage = 1;
+                    renderCardsView();
+                });
+
+                document.getElementById('statusFilterCards').addEventListener('change', () => {
+                    currentPage = 1;
+                    renderCardsView();
+                });
+
+                document.getElementById('dateFilterCards').addEventListener('change', () => {
+                    currentPage = 1;
+                    renderCardsView();
+                });
+
+                // Pagination
+                document.getElementById('prevPage').addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderTableView();
+                        renderCardsView();
+                    }
+                });
+
+                document.getElementById('nextPage').addEventListener('click', () => {
+                    const filteredMenus = filterMenus();
+                    if (currentPage < Math.ceil(filteredMenus.length / menusPerPage)) {
+                        currentPage++;
+                        renderTableView();
+                        renderCardsView();
+                    }
+                });
+
+                document.getElementById('prevPageTable').addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderTableView();
+                    }
+                });
+
+                document.getElementById('nextPageTable').addEventListener('click', () => {
+                    const filteredMenus = filterMenus('table');
+                    if (currentPage < Math.ceil(filteredMenus.length / menusPerPage)) {
+                        currentPage++;
+                        renderTableView();
+                    }
+                });
+
+                document.getElementById('prevPageCards').addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderCardsView();
+                    }
+                });
+
+                document.getElementById('nextPageCards').addEventListener('click', () => {
+                    const filteredMenus = filterMenus('cards');
+                    if (currentPage < Math.ceil(filteredMenus.length / menusPerPage)) {
+                        currentPage++;
+                        renderCardsView();
+                    }
+                });
+
+                // Table sorting
+                document.querySelectorAll('.menu-table th i.fa-sort').forEach(icon => {
+                    icon.addEventListener('click', function() {
+                        const column = this.parentElement.textContent.trim();
+                        if (currentSort.column === column) {
+                            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                        } else {
+                            currentSort.column = column;
+                            currentSort.direction = 'asc';
+                        }
+                        renderTableView();
                     });
-                    nextPage.before(btn);
-                }
+                });
             }
 
+            // Filter menus based on search and filters
+            function filterMenus(view = 'all') {
+                let searchTerm = '';
+                let statusFilter = '';
+                let dateFilter = '';
+
+                if (view === 'all' || view === 'calendar') {
+                    searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                    statusFilter = document.getElementById('statusFilter').value;
+                    dateFilter = document.getElementById('dateFilter').value;
+                } else if (view === 'table') {
+                    searchTerm = document.getElementById('searchInputTable').value.toLowerCase();
+                    statusFilter = document.getElementById('statusFilterTable').value;
+                    dateFilter = document.getElementById('dateFilterTable').value;
+                } else if (view === 'cards') {
+                    searchTerm = document.getElementById('searchInputCards').value.toLowerCase();
+                    statusFilter = document.getElementById('statusFilterCards').value;
+                    dateFilter = document.getElementById('dateFilterCards').value;
+                }
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+                
+                const endOfWeek = new Date(today);
+                endOfWeek.setDate(today.getDate() - today.getDay() + 7); // Sunday
+                
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+                return menus.filter(menu => {
+                    const menuDate = new Date(menu.date);
+                    menuDate.setHours(0, 0, 0, 0);
+                    
+                    // Search term
+                    const matchesSearch = 
+                        menu.dishes.toLowerCase().includes(searchTerm) ||
+                        menu.cooks.toLowerCase().includes(searchTerm);
+                    
+                    // Status filter
+                    const matchesStatus = !statusFilter || menu.status === statusFilter;
+                    
+                    // Date filter
+                    let matchesDate = true;
+                    if (dateFilter === 'today') {
+                        matchesDate = menuDate.getTime() === today.getTime();
+                    } else if (dateFilter === 'week') {
+                        matchesDate = menuDate >= startOfWeek && menuDate <= endOfWeek;
+                    } else if (dateFilter === 'month') {
+                        matchesDate = menuDate >= startOfMonth && menuDate <= endOfMonth;
+                    } else if (dateFilter === 'upcoming') {
+                        matchesDate = menuDate > today;
+                    } else if (dateFilter === 'past') {
+                        matchesDate = menuDate < today;
+                    }
+                    
+                    return matchesSearch && matchesStatus && matchesDate;
+                });
+            }
+
+            // Sort menus
+            function sortMenus(menusToSort) {
+                return [...menusToSort].sort((a, b) => {
+                    let comparison = 0;
+                    
+                    if (currentSort.column === 'Ngày') {
+                        comparison = new Date(a.date) - new Date(b.date);
+                    } else if (currentSort.column === 'Món ăn') {
+                        comparison = a.dishes.localeCompare(b.dishes);
+                    } else if (currentSort.column === 'Người nấu') {
+                        comparison = a.cooks.localeCompare(b.cooks);
+                    } else if (currentSort.column === 'Trạng thái') {
+                        comparison = a.status.localeCompare(b.status);
+                    }
+                    
+                    return currentSort.direction === 'asc' ? comparison : -comparison;
+                });
+            }
+
+            // Render calendar
             function renderCalendar() {
+                const calendarGrid = document.getElementById('calendarGrid');
                 calendarGrid.innerHTML = '';
+                
                 const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
                 days.forEach(day => {
                     const dayHeader = document.createElement('div');
@@ -739,140 +868,345 @@
                     calendarGrid.appendChild(emptyDay);
                 }
 
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
                 for (let i = 1; i <= daysInMonth; i++) {
                     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i);
                     const dateStr = date.toISOString().split('T')[0];
-                    const hasMenu = menus.some(menu => menu.date === dateStr);
+                    const dayMenus = menus.filter(menu => menu.date === dateStr);
+                    const isToday = date.getTime() === today.getTime() && 
+                                    date.getMonth() === today.getMonth() && 
+                                    date.getFullYear() === today.getFullYear();
+
                     const day = document.createElement('div');
-                    day.className = `calendar-day ${hasMenu ? 'has-menu' : ''}`;
-                    day.textContent = i;
+                    day.className = `calendar-day ${dayMenus.length > 0 ? 'has-menu' : ''} ${isToday ? 'today' : ''}`;
+                    
+                    const dayNumber = document.createElement('div');
+                    dayNumber.className = 'calendar-day-number';
+                    dayNumber.textContent = i;
+                    day.appendChild(dayNumber);
+                    
+                    if (dayMenus.length > 0) {
+                        const dayMenu = document.createElement('div');
+                        dayMenu.className = 'calendar-day-menu';
+                        dayMenu.textContent = dayMenus[0].dishes.split('\n')[0];
+                        day.appendChild(dayMenu);
+                    }
+                    
                     day.dataset.date = dateStr;
                     day.addEventListener('click', () => {
-                        if (hasMenu) {
-                            searchInput.value = '';
-                            statusFilter.value = '';
+                        if (dayMenus.length > 0) {
+                            // Apply filter for this date
+                            document.getElementById('dateFilter').value = '';
+                            document.getElementById('dateFilterTable').value = '';
+                            document.getElementById('dateFilterCards').value = '';
+                            
+                            document.getElementById('searchInput').value = '';
+                            document.getElementById('searchInputTable').value = '';
+                            document.getElementById('searchInputCards').value = '';
+                            
+                            document.getElementById('statusFilter').value = '';
+                            document.getElementById('statusFilterTable').value = '';
+                            document.getElementById('statusFilterCards').value = '';
+                            
                             currentPage = 1;
-                            menus = menus.filter(menu => menu.date === dateStr);
-                            renderMenus();
+                            renderTableView();
+                            renderCardsView();
                         }
                     });
+                    
                     calendarGrid.appendChild(day);
                 }
 
                 calendarTitle.textContent = `${currentMonth.toLocaleString('vi', { month: 'long' })}, ${currentMonth.getFullYear()}`;
+                updateCalendarHighlights();
             }
 
+            // Update calendar highlights based on filters
+            function updateCalendarHighlights() {
+                const filteredMenus = filterMenus();
+                const dateSet = new Set(filteredMenus.map(menu => menu.date));
+                
+                document.querySelectorAll('.calendar-day').forEach(day => {
+                    if (day.dataset.date) {
+                        if (dateSet.has(day.dataset.date)) {
+                            day.classList.add('has-menu');
+                        } else {
+                            day.classList.remove('has-menu');
+                        }
+                    }
+                });
+            }
+
+            // Render table view
+            function renderTableView() {
+                const menuTableBody = document.getElementById('menuTableBodyTable');
+                const emptyState = document.getElementById('emptyStateTable');
+                const filteredMenus = filterMenus('table');
+                const sortedMenus = sortMenus(filteredMenus);
+                const paginatedMenus = sortedMenus.slice((currentPage - 1) * menusPerPage, currentPage * menusPerPage);
+
+                menuTableBody.innerHTML = '';
+                
+                if (paginatedMenus.length === 0) {
+                    emptyState.style.display = 'block';
+                } else {
+                    emptyState.style.display = 'none';
+                    
+                    paginatedMenus.forEach(menu => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${formatDate(menu.date)}</td>
+                            <td>${menu.dishes.replace(/\n/g, '<br>')}</td>
+                            <td>${menu.cooks}</td>
+                            <td><span class="status status-${menu.status.toLowerCase()}">
+                                <i class="fas fa-${menu.status === 'Preparing' ? 'clock' : 'check'}"></i>
+                                ${menu.status === 'Preparing' ? 'Đang chuẩn bị' : 'Hoàn thành'}
+                            </span></td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="action-btn edit-btn" data-id="${menu.id}" title="Chỉnh sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" data-id="${menu.id}" title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        menuTableBody.appendChild(row);
+                    });
+                }
+
+                updatePagination(filteredMenus.length, 'table');
+                setupTableActionListeners();
+            }
+
+            // Render cards view
+            function renderCardsView() {
+                const cardsContainer = document.getElementById('cardsContainer');
+                const emptyState = document.getElementById('emptyStateCards');
+                const filteredMenus = filterMenus('cards');
+                const paginatedMenus = filteredMenus.slice((currentPage - 1) * menusPerPage, currentPage * menusPerPage);
+
+                cardsContainer.innerHTML = '';
+                
+                if (paginatedMenus.length === 0) {
+                    emptyState.style.display = 'block';
+                } else {
+                    emptyState.style.display = 'none';
+                    
+                    paginatedMenus.forEach(menu => {
+                        const card = document.createElement('div');
+                        card.className = 'menu-card';
+                        card.innerHTML = `
+                            <div class="menu-card-header">
+                                <div class="menu-card-date">${formatDate(menu.date)}</div>
+                                <div class="menu-card-status status status-${menu.status.toLowerCase()}">
+                                    <i class="fas fa-${menu.status === 'Preparing' ? 'clock' : 'check'}"></i>
+                                    ${menu.status === 'Preparing' ? 'Đang chuẩn bị' : 'Hoàn thành'}
+                                </div>
+                            </div>
+                            <div class="menu-card-dishes">${menu.dishes.replace(/\n/g, '<br>')}</div>
+                            <div class="menu-card-cooks">
+                                <i class="fas fa-user"></i> ${menu.cooks}
+                            </div>
+                            ${menu.notes ? `<div class="menu-card-notes">${menu.notes}</div>` : ''}
+                            <div class="menu-card-actions">
+                                <button class="action-btn edit-btn" data-id="${menu.id}" title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete-btn" data-id="${menu.id}" title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        `;
+                        cardsContainer.appendChild(card);
+                    });
+                }
+
+                updatePagination(filteredMenus.length, 'cards');
+                setupCardsActionListeners();
+            }
+
+            // Setup action listeners for table view
+            function setupTableActionListeners() {
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        const menu = menus.find(m => m.id === id);
+                        
+                        if (menu) {
+                            menuModal.classList.add('active');
+                            document.querySelector('.modal-title').textContent = 'Chỉnh sửa thực đơn';
+                            document.getElementById('date').value = menu.date;
+                            document.getElementById('dishes').value = menu.dishes;
+                            document.getElementById('cooks').value = menu.cooks;
+                            document.getElementById('status').value = menu.status;
+                            document.getElementById('notes').value = menu.notes || '';
+                            menuForm.dataset.mode = 'edit';
+                            menuForm.dataset.id = id;
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        showConfirm(
+                            'Xác nhận xóa',
+                            'Bạn có chắc muốn xóa thực đơn này?',
+                            () => {
+                                menus = menus.filter(m => m.id !== id);
+                                renderCalendar();
+                                renderTableView();
+                                renderCardsView();
+                                showToast('Đã xóa thực đơn');
+                            }
+                        );
+                    });
+                });
+            }
+
+            // Setup action listeners for cards view
+            function setupCardsActionListeners() {
+                document.querySelectorAll('.menu-card .edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        const menu = menus.find(m => m.id === id);
+                        
+                        if (menu) {
+                            menuModal.classList.add('active');
+                            document.querySelector('.modal-title').textContent = 'Chỉnh sửa thực đơn';
+                            document.getElementById('date').value = menu.date;
+                            document.getElementById('dishes').value = menu.dishes;
+                            document.getElementById('cooks').value = menu.cooks;
+                            document.getElementById('status').value = menu.status;
+                            document.getElementById('notes').value = menu.notes || '';
+                            menuForm.dataset.mode = 'edit';
+                            menuForm.dataset.id = id;
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.menu-card .delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        showConfirm(
+                            'Xác nhận xóa',
+                            'Bạn có chắc muốn xóa thực đơn này?',
+                            () => {
+                                menus = menus.filter(m => m.id !== id);
+                                renderCalendar();
+                                renderTableView();
+                                renderCardsView();
+                                showToast('Đã xóa thực đơn');
+                            }
+                        );
+                    });
+                });
+            }
+
+            // Update pagination controls
+            function updatePagination(totalMenus, view = 'all') {
+                const totalPages = Math.ceil(totalMenus / menusPerPage);
+                
+                if (view === 'all' || view === 'calendar') {
+                    document.getElementById('prevPage').disabled = currentPage === 1;
+                    document.getElementById('nextPage').disabled = currentPage === totalPages || totalPages === 0;
+                    
+                    const pageNumbers = document.getElementById('pageNumbers');
+                    pageNumbers.innerHTML = '';
+                    
+                    for (let i = 1; i <= totalPages; i++) {
+                        const btn = document.createElement('button');
+                        btn.className = `btn ${i === currentPage ? 'btn-primary' : 'btn-outline'}`;
+                        btn.textContent = i;
+                        btn.addEventListener('click', () => {
+                            currentPage = i;
+                            renderTableView();
+                            renderCardsView();
+                        });
+                        pageNumbers.appendChild(btn);
+                    }
+                }
+                
+                if (view === 'table') {
+                    document.getElementById('prevPageTable').disabled = currentPage === 1;
+                    document.getElementById('nextPageTable').disabled = currentPage === totalPages || totalPages === 0;
+                    
+                    const pageNumbers = document.getElementById('pageNumbersTable');
+                    pageNumbers.innerHTML = '';
+                    
+                    for (let i = 1; i <= totalPages; i++) {
+                        const btn = document.createElement('button');
+                        btn.className = `btn ${i === currentPage ? 'btn-primary' : 'btn-outline'}`;
+                        btn.textContent = i;
+                        btn.addEventListener('click', () => {
+                            currentPage = i;
+                            renderTableView();
+                        });
+                        pageNumbers.appendChild(btn);
+                    }
+                }
+                
+                if (view === 'cards') {
+                    document.getElementById('prevPageCards').disabled = currentPage === 1;
+                    document.getElementById('nextPageCards').disabled = currentPage === totalPages || totalPages === 0;
+                    
+                    const pageNumbers = document.getElementById('pageNumbersCards');
+                    pageNumbers.innerHTML = '';
+                    
+                    for (let i = 1; i <= totalPages; i++) {
+                        const btn = document.createElement('button');
+                        btn.className = `btn ${i === currentPage ? 'btn-primary' : 'btn-outline'}`;
+                        btn.textContent = i;
+                        btn.addEventListener('click', () => {
+                            currentPage = i;
+                            renderCardsView();
+                        });
+                        pageNumbers.appendChild(btn);
+                    }
+                }
+            }
+
+            // Format date
             function formatDate(dateStr) {
                 const date = new Date(dateStr);
                 return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
             }
 
-            addMenuBtn.addEventListener('click', () => {
-                menuModal.classList.add('active');
-                menuForm.reset();
-                document.querySelector('.modal-title').textContent = 'Thêm thực đơn';
-            });
+            // Show confirmation dialog
+            function showConfirm(title, message, action, ...params) {
+                confirmMessage.textContent = message;
+                document.querySelector('#confirmModal .modal-title').textContent = title;
+                confirmAction = action;
+                confirmActionParams = params;
+                confirmModal.classList.add('active');
+            }
 
-            closeModal.addEventListener('click', () => {
-                menuModal.classList.remove('active');
-            });
+            // Show toast notification
+            function showToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 10);
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 300);
+                }, 3000);
+            }
 
-            cancelBtn.addEventListener('click', () => {
-                menuModal.classList.remove('active');
-            });
-
-            menuForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const date = document.getElementById('date').value;
-                const dishes = document.getElementById('dishes').value;
-                const cooks = document.getElementById('cooks').value;
-                const status = document.getElementById('status').value;
-
-                const newMenu = {
-                    id: menus.length + 1,
-                    date,
-                    dishes,
-                    cooks,
-                    status
-                };
-
-                menus.push(newMenu);
-                menuModal.classList.remove('active');
-                renderMenus();
-                renderCalendar();
-            });
-
-            menuTableBody.addEventListener('click', (e) => {
-                if (e.target.closest('.edit-btn')) {
-                    const id = e.target.closest('.edit-btn').dataset.id;
-                    const menu = menus.find(m => m.id == id);
-                    menuModal.classList.add('active');
-                    document.querySelector('.modal-title').textContent = 'Chỉnh sửa thực đơn';
-                    document.getElementById('date').value = menu.date;
-                    document.getElementById('dishes').value = menu.dishes;
-                    document.getElementById('cooks').value = menu.cooks;
-                    document.getElementById('status').value = menu.status;
-
-                    menuForm.onsubmit = (e) => {
-                        e.preventDefault();
-                        menu.date = document.getElementById('date').value;
-                        menu.dishes = document.getElementById('dishes').value;
-                        menu.cooks = document.getElementById('cooks').value;
-                        menu.status = document.getElementById('status').value;
-                        menuModal.classList.remove('active');
-                        renderMenus();
-                        renderCalendar();
-                        menuForm.onsubmit = null;
-                    };
-                }
-
-                if (e.target.closest('.delete-btn')) {
-                    const id = e.target.closest('.delete-btn').dataset.id;
-                    if (confirm('Bạn có chắc muốn xóa thực đơn này?')) {
-                        menus = menus.filter(m => m.id != id);
-                        renderMenus();
-                        renderCalendar();
-                    }
-                }
-            });
-
-            searchInput.addEventListener('input', () => {
-                currentPage = 1;
-                renderMenus();
-            });
-
-            statusFilter.addEventListener('change', () => {
-                currentPage = 1;
-                renderMenus();
-            });
-
-            prevPage.addEventListener('click', () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    renderMenus();
-                }
-            });
-
-            nextPage.addEventListener('click', () => {
-                const totalMenus = filterMenus().length;
-                if (currentPage < Math.ceil(totalMenus / menusPerPage)) {
-                    currentPage++;
-                    renderMenus();
-                }
-            });
-
-            prevMonth.addEventListener('click', () => {
-                currentMonth.setMonth(currentMonth.getMonth() - 1);
-                renderCalendar();
-            });
-
-            nextMonth.addEventListener('click', () => {
-                currentMonth.setMonth(currentMonth.getMonth() + 1);
-                renderCalendar();
-            });
-
-            renderMenus();
-            renderCalendar();
+            // Initialize the app
+            initApp();
         });
     </script>
 </body>

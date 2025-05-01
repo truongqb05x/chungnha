@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
-<body>
+<body data-group-id="1" data-member-id="2">
     <div class="app-container">
         <!-- Header -->
         <header class="header">
@@ -50,7 +50,7 @@
             </div>
         
             <div class="sidebar-nav">
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item active">
                     <div class="nav-icon">
                         <i class="fas fa-home"></i>
                     </div>
@@ -128,11 +128,11 @@
                     </div>
                     <div class="nav-text">Trò chuyện</div>
                 </a>
-                <a href="#" class="nav-item active">
+                <a href="#" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-vote-yea"></i>
                     </div>
-                    <div class="nav-text">Bỏ phiếu</div>
+                    <div class="nav-text">Bình chọn</div>
                 </a>
             </div>
         
@@ -149,37 +149,32 @@
         </nav>
 
         <!-- Main content -->
-        <main class="main-content">
-            <div class="voting-section">
-                <div class="section-header">
-                    <h2>Danh sách lựa chọn</h2>
-                    <div class="member-count">
-                        <i class="fas fa-users"></i>
-                        <span id="total-members">5</span> thành viên
-                    </div>
-                </div>
-                <div id="vote-list">
-                    <!-- Vote items will be populated by JavaScript -->
-                </div>
-
-                <div class="add-vote-form">
-                    <input type="text" id="vote-name" placeholder="Tên món ăn/hoạt động">
-                    <select id="vote-type">
-                        <option value="food">Món ăn</option>
-                        <option value="activity">Hoạt động</option>
-                    </select>
-                    <input type="date" id="vote-date" placeholder="Ngày">
-                    <button onclick="addVoteItem()">Thêm lựa chọn</button>
-                </div>
-            </div>
-
-            <div class="results-section">
-                <h2>Kết Quả Bỏ Phiếu</h2>
-                <div id="results-list">
-                    <!-- Results will be populated by JavaScript -->
-                </div>
-            </div>
-        </main>
+    <main class="main-content">
+        <div class="voting-section">
+          <div class="section-header">
+            <h2>Danh sách lựa chọn</h2>
+            <div class="member-count"><i class="fas fa-users"></i> <span id="total-members"></span> thành viên</div>
+          </div>
+  
+          <div id="vote-list"></div>
+  
+          <div class="add-vote-form">
+            <input type="text" id="vote-name" placeholder="Tên món ăn/hoạt động">
+            <select id="vote-type">
+              <option value="food">Món ăn</option>
+              <option value="activity">Hoạt động</option>
+            </select>
+            <input type="date" id="vote-date">
+            <button id="add-vote-btn">Thêm lựa chọn</button>
+          </div>
+        </div>
+  
+        <div class="results-section">
+          <h2>Kết Quả Bỏ Phiếu</h2>
+          <div id="results-list"></div>
+        </div>
+      </main>
+  
         
     </div>
     <!-- JavaScript dùng chung cho toàn bộ giao diện (template chính) -->
