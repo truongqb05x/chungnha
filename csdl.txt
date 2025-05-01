@@ -1,0 +1,91 @@
+-- 1. Bảng users: lưu tài khoản
+CREATE TABLE `users` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `full_name` VARCHAR(255) NOT NULL COMMENT 'Họ và tên người dùng',
+  `email` VARCHAR(255) NOT NULL UNIQUE COMMENT 'Email dùng để đăng nhập',
+  `password_hash` VARCHAR(255) NOT NULL COMMENT 'Mật khẩu đã băm',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '0 = bị khóa, 1 = đang hoạt động',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. Bảng groups: thông tin nhóm
+CREATE TABLE `groups` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `group_name` VARCHAR(255) NOT NULL COMMENT 'Tên nhóm',
+    `group_code` VARCHAR(255) NOT NULL UNIQUE COMMENT 'Mã QR nhóm (hoặc mã nhóm)',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 3. Bảng login_attempts: ghi lại các lần đăng nhập
+CREATE TABLE `login_attempts` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT UNSIGNED NULL COMMENT 'NULL nếu email không tồn tại',
+  `email_attempted` VARCHAR(255) NOT NULL COMMENT 'Email đã nhập',
+  `ip_address` VARCHAR(45) NOT NULL COMMENT 'IP của client',
+  `success` TINYINT(1) NOT NULL COMMENT '1 = đăng nhập thành công, 0 = thất bại',
+  `attempted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE `members` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT UNSIGNED NOT NULL,
+    `group_id` INT UNSIGNED NOT NULL,
+    `role` ENUM('Admin', 'Member', 'Chef') NOT NULL DEFAULT 'Member',
+    `status` ENUM('Active', 'Inactive', 'Pending') NOT NULL DEFAULT 'Pending',
+    `join_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `leave_date` TIMESTAMP NULL,
+    `avatar` VARCHAR(255) NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_group_id` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS `group_rules` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `group_id` INT UNSIGNED NOT NULL COMMENT 'FK → groups.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'FK → members.id (tác giả)',
+  `title` VARCHAR(255) NOT NULL COMMENT 'Tiêu đề nội quy',
+  `content` TEXT NOT NULL COMMENT 'Nội dung chi tiết',
+  `privacy` ENUM('public','private') NOT NULL DEFAULT 'public' COMMENT 'Công khai hoặc riêng tư',
+  `like_count` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Tổng số lượt thích',
+  `comment_count` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Tổng số bình luận',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_group_rules_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_group_rules_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `group_rule_comments` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `rule_id` INT UNSIGNED NOT NULL,
+  `member_id` INT UNSIGNED NOT NULL,
+  `content` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`rule_id`) REFERENCES `group_rules`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `group_rule_comment_likes` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `comment_id` INT UNSIGNED NOT NULL,
+  `member_id` INT UNSIGNED NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `ux_comment_member` (`comment_id`,`member_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `group_rule_comment_likes` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `comment_id` INT UNSIGNED NOT NULL COMMENT 'FK → group_rule_comments.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'FK → members.id (người like bình luận)',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_rule_comment_likes_comment` FOREIGN KEY (`comment_id`) REFERENCES `group_rule_comments`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_rule_comment_likes_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `ux_comment_member` (`comment_id`,`member_id`)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;

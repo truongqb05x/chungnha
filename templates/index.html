@@ -3,877 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bếp Chung - Quản lý bữa ăn nhóm</title>
+    <title>Bếp Chung - Đăng nhập / Đăng ký</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #FF6D28;
-            --primary-light: #FF9A3C;
-            --primary-dark: #E05D20;
-            --secondary: #3A98B9;
-            --accent: #FFB830;
-            --text: #333333;
-            --text-light: #6B7280;
-            --text-lighter: #9CA3AF;
-            --bg: #F8FAFC;
-            --card-bg: #FFFFFF;
-            --border: #E5E7EB;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --error: #EF4444;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --transition: all 0.2s ease;
-        }
-
-        /* Dark mode variables */
-        [data-theme="dark"] {
-            --primary: #FF8C42;
-            --primary-light: #FFA566;
-            --primary-dark: #E57339;
-            --secondary: #4AB1D1;
-            --accent: #FFC154;
-            --text: #F3F4F6;
-            --text-light: #D1D5DB;
-            --text-lighter: #9CA3AF;
-            --bg: #1F2937;
-            --card-bg: #374151;
-            --border: #4B5563;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            transition: var(--transition);
-            line-height: 1.5;
-        }
-
-        /* Layout */
-        .app-container {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            grid-template-rows: 80px 1fr;
-            min-height: 100vh;
-        }
-
-        /* Header */
-        .header {
-            grid-column: 2 / 3;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2rem;
-            background-color: var(--card-bg);
-            box-shadow: var(--shadow-sm);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .header-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .header-icon {
-            font-size: 1.25rem;
-            color: var(--text-light);
-            cursor: pointer;
-            transition: var(--transition);
-            position: relative;
-        }
-
-        .header-icon:hover {
-            color: var(--primary);
-        }
-
-        .badge {
-            position: absolute;
-            top: -6px;
-            right: -8px;
-            background-color: var(--error);
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .user-avatar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 0 3px rgba(255, 109, 40, 0.2);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            grid-column: 1 / 2;
-            grid-row: 1 / 3;
-            background-color: var(--card-bg);
-            border-right: 1px solid var(--border);
-            padding: 1.5rem 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            position: sticky;
-            top: 0;
-        }
-
-        .sidebar-header {
-            padding: 0 1.5rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 1.5rem;
-        }
-
-        .sidebar-logo {
-            font-size: 1.75rem;
-            color: var(--primary);
-        }
-
-        .sidebar-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .sidebar-group {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            margin-top: 0.25rem;
-        }
-
-        .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0 1rem;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            border-radius: var(--radius-sm);
-            margin-bottom: 0.5rem;
-            color: var(--text-light);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-
-        .nav-item:hover {
-            background-color: rgba(255, 109, 40, 0.1);
-            color: var(--primary);
-        }
-
-        .nav-item.active {
-            background-color: rgba(255, 109, 40, 0.1);
-            color: var(--primary);
-            font-weight: 500;
-        }
-
-        .nav-icon {
-            font-size: 1.1rem;
-            margin-right: 0.75rem;
-            width: 24px;
-            text-align: center;
-        }
-
-        .nav-text {
-            font-size: 0.95rem;
-        }
-
-        .sidebar-footer {
-            padding: 1.5rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .theme-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: rgba(0, 0, 0, 0.05);
-            border-radius: 50px;
-            padding: 0.25rem;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        [data-theme="dark"] .theme-toggle {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .theme-btn {
-            width: 50%;
-            padding: 0.5rem;
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            transition: var(--transition);
-        }
-
-        .theme-btn.active {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        /* Main content */
-        .main-content {
-            grid-column: 2 / 3;
-            padding: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .welcome-section {
-            margin-bottom: 2.5rem;
-        }
-
-        .welcome-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--text);
-        }
-
-        .welcome-subtitle {
-            font-size: 1rem;
-            color: var(--text-light);
-            max-width: 700px;
-        }
-
-        .highlight {
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        /* Dashboard grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        /* Cards */
-        .card {
-            background-color: var(--card-bg);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition);
-            border: 1px solid var(--border);
-        }
-
-        .card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-3px);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.25rem;
-        }
-
-        .card-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--radius-sm);
-            background-color: rgba(255, 109, 40, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-            color: var(--primary);
-            font-size: 1.25rem;
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 0.25rem;
-        }
-
-        .card-subtitle {
-            font-size: 0.85rem;
-            color: var(--text-light);
-        }
-
-        .card-content {
-            margin-bottom: 1.5rem;
-            color: var(--text-light);
-            font-size: 0.95rem;
-        }
-
-        .card-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-link {
-            color: var(--primary);
-            font-weight: 500;
-            font-size: 0.9rem;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            transition: var(--transition);
-        }
-
-        .card-link:hover {
-            color: var(--primary-dark);
-        }
-
-        .card-link i {
-            margin-left: 0.5rem;
-            font-size: 0.8rem;
-            transition: var(--transition);
-        }
-
-        .card-link:hover i {
-            transform: translateX(3px);
-        }
-
-        .card-badge {
-            background-color: var(--primary-light);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        /* Today's menu special card */
-        .today-menu {
-            grid-column: span 2;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .today-menu::before {
-            content: '';
-            position: absolute;
-            top: -50px;
-            right: -50px;
-            width: 200px;
-            height: 200px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-        }
-
-        .today-menu::after {
-            content: '';
-            position: absolute;
-            bottom: -80px;
-            right: -30px;
-            width: 150px;
-            height: 150px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-        }
-
-        .today-menu .card-header {
-            position: relative;
-            z-index: 1;
-        }
-
-        .today-menu .card-icon {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-
-        .today-menu .card-title,
-        .today-menu .card-subtitle,
-        .today-menu .card-content {
-            color: white;
-            position: relative;
-            z-index: 1;
-        }
-
-        .today-menu .card-link {
-            color: white;
-            position: relative;
-            z-index: 1;
-        }
-
-        .today-menu .card-link:hover {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        /* Voting card */
-        .voting-card {
-            border-left: 4px solid var(--secondary);
-        }
-
-        /* Rules card */
-        .rules-card {
-            border-left: 4px solid var(--success);
-        }
-
-        /* Task card */
-        .task-card {
-            border-left: 4px solid var(--accent);
-        }
-
-        /* Fund card */
-        .fund-card {
-            border-left: 4px solid var(--warning);
-        }
-
-        /* Stats card */
-        .stats-card {
-            border-left: 4px solid var(--primary);
-        }
-
-        /* Menu card */
-        .menu-card {
-            border-left: 4px solid #9C27B0;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .app-container {
-                grid-template-columns: 240px 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
-            }
-
-            .header {
-                grid-column: 1 / 2;
-                padding: 1rem;
-            }
-
-            .sidebar {
-                grid-column: 1 / 2;
-                grid-row: 2 / 3;
-                height: auto;
-                position: static;
-                display: none;
-            }
-
-            .sidebar.active {
-                display: flex;
-            }
-
-            .main-content {
-                grid-column: 1 / 2;
-                grid-row: 3 / 4;
-                padding: 1.5rem;
-            }
-
-            .today-menu {
-                grid-column: span 1;
-            }
-
-            .mobile-menu-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
-                border-radius: var(--radius-sm);
-                background-color: rgba(255, 109, 40, 0.1);
-                color: var(--primary);
-                font-size: 1.25rem;
-                cursor: pointer;
-                transition: var(--transition);
-            }
-
-            .mobile-menu-btn:hover {
-                background-color: rgba(255, 109, 40, 0.2);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .welcome-title {
-                font-size: 1.5rem;
-            }
-
-            .header-title {
-                font-size: 1.25rem;
-            }
-
-            .header-actions {
-                gap: 1rem;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .card {
-            animation: fadeIn 0.4s ease forwards;
-        }
-
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
-        .card:nth-child(4) { animation-delay: 0.4s; }
-        .card:nth-child(5) { animation-delay: 0.5s; }
-        .card:nth-child(6) { animation-delay: 0.6s; }
-    </style>
+    <link rel="shortcut icon" href="../static/img/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="../static/css/login.css">
 </head>
-<body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="header">
-            <!-- <div class="mobile-menu-btn">
-                <i class="fas fa-bars"></i>
-            </div> -->
-            <h1 class="header-title">Dashboard</h1>
-            <div class="header-actions">
-                <div class="header-icon">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge">3</span>
-                </div>
-                <div class="header-icon theme-icon">
-                    <i class="fas fa-moon"></i>
-                </div>
-                <div class="user-avatar">NM</div>
-            </div>
-        </header>
-
-        <!-- Sidebar -->
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <i class="fas fa-utensils"></i>
-                </div>
-                <div>
-                    <div class="sidebar-title">Bếp Chung</div>
-                    <div class="sidebar-group">Nhóm: Nhà Mình A2</div>
-                </div>
-            </div>
-
-            <div class="sidebar-nav">
-                <a href="#" class="nav-item active">
-                    <div class="nav-icon">
-                        <i class="fas fa-home"></i>
-                    </div>
-                    <div class="nav-text">Trang chủ</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="nav-text">Thành viên</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <div class="nav-text">Thực đơn</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="nav-text">Đi chợ</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="nav-text">Chi phí</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <div class="nav-text">Lịch nấu ăn</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div class="nav-text">Thống kê</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-comments"></i>
-                    </div>
-                    <div class="nav-text">Trò chuyện</div>
-                </a>
-            </div>
-
-            <div class="sidebar-footer">
-                <div class="theme-toggle">
-                    <div class="theme-btn active" data-theme="light">
-                        <i class="fas fa-sun"></i>
-                    </div>
-                    <div class="theme-btn" data-theme="dark">
-                        <i class="fas fa-moon"></i>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Main content -->
-        <main class="main-content">
-            <section class="welcome-section">
-                <h1 class="welcome-title">Chào mừng trở lại, <span class="highlight">Nhà Mình A2</span>!</h1>
-                <p class="welcome-subtitle">
-                    Cùng nhau quản lý bữa ăn, chia sẻ chi phí và lên kế hoạch nấu nướng thật dễ dàng. 
-                    Hôm nay nhóm bạn có <span class="highlight">3 hoạt động</span> cần quan tâm.
-                </p>
-            </section>
-
-            <div class="dashboard-grid">
-                <!-- Today's Menu - Special Card -->
-                <div class="card today-menu">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-utensils"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title">Thực đơn hôm nay</h3>
-                            <p class="card-subtitle">Thứ 5, 15 tháng 6</p>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <p>Bữa tối: Cơm gà xối mỡ, canh chua cá lóc, rau muống xào tỏi</p>
-                        <p>Người nấu: Minh &amp; Hương</p>
-                    </div>
-                    <div class="card-actions">
-                        <a href="#" class="card-link">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
-                        <span class="card-badge">Đang chuẩn bị</span>
-                    </div>
-                </div>
-
-                <!-- Bình chọn hoạt động -->
-                <div class="card voting-card">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-vote-yea"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title">Bình chọn hoạt động</h3>
-                            <p class="card-subtitle">Đang mở: 2 cuộc bình chọn</p>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <p>1. Chọn món ăn cuối tuần<br>2. Địa điểm đi chơi tháng 7</p>
-                    </div>
-                    <div class="card-actions">
-                        <a href="#" class="card-link">Tham gia bình chọn <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <!-- Nội quy nhóm -->
-                <div class="card rules-card">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-clipboard-list"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title">Nội quy nhóm</h3>
-                            <p class="card-subtitle">Cập nhật: 10/6/2023</p>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <p>Xem lại các quy định về phân chia công việc, đóng góp và sinh hoạt chung của nhóm.</p>
-                    </div>
-                    <div class="card-actions">
-                        <a href="#" class="card-link">Xem nội quy <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <!-- Phân chia công việc -->
-                <div class="card task-card">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-tasks"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title">Phân chia công việc</h3>
-                            <p class="card-subtitle">Tuần này</p>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <p>2 công việc chưa có người nhận: Dọn bếp thứ 4, Đi chợ sáng thứ 7</p>
-                    </div>
-                    <div class="card-actions">
-                        <a href="#" class="card-link">Xem phân công <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <!-- Quỹ nhóm -->
-                <div class="card fund-card">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-piggy-bank"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title">Quỹ nhóm</h3>
-                            <p class="card-subtitle">Số dư: 1,250,000đ</p>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <p>3 thành viên chưa đóng quỹ tháng này. Chi tiết các khoản thu chi trong tháng.</p>
-                    </div>
-                    <div class="card-actions">
-                        <a href="#" class="card-link">Quản lý quỹ <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <!-- Thống kê -->
-                <div class="card stats-card">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title">Thống kê</h3>
-                            <p class="card-subtitle">Tháng 6/2023</p>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <p>Chi tiêu ăn uống: 4,500,000đ<br>Lần đi chợ trung bình: 3.2 lần/tuần</p>
-                    </div>
-                    <div class="card-actions">
-                        <a href="#" class="card-link">Xem báo cáo <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <!-- Thực đơn -->
-                <div class="card menu-card">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-book-open"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title">Thực đơn</h3>
-                            <p class="card-subtitle">15 món đã lên kế hoạch</p>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <p>Xem và chỉnh sửa thực đơn trong tuần. Đề xuất món mới cho nhóm.</p>
-                    </div>
-                    <div class="card-actions">
-                        <a href="#" class="card-link">Quản lý thực đơn <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-            </div>
-        </main>
+<body data-theme="light">
+    <div class="theme-toggle">
+        <button class="theme-btn active" data-theme="light" aria-label="Chế độ sáng">
+            <i class="fas fa-sun"></i>
+        </button>
+        <button class="theme-btn" data-theme="dark" aria-label="Chế độ tối">
+            <i class="fas fa-moon"></i>
+        </button>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mobile menu toggle
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            const sidebar = document.querySelector('.sidebar');
-            
-            mobileMenuBtn?.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-                mobileMenuBtn.innerHTML = sidebar.classList.contains('active') 
-                    ? '<i class="fas fa-times"></i>' 
-                    : '<i class="fas fa-bars"></i>';
-            });
+    <main class="auth-container">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <img src="../static/img/logo.png" alt="Bếp Chung Logo">
+            </div>
+            <h1 class="auth-title">Nhà Chung</h1>
+            <p class="auth-subtitle">Kết nối yêu thương từ mọi người</p>
+        </div>
 
-            // Theme toggle
-            const themeToggle = document.querySelector('.theme-toggle');
-            const themeBtns = document.querySelectorAll('.theme-btn');
-            const body = document.body;
-            
-            themeBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const theme = this.getAttribute('data-theme');
-                    
-                    // Update active state
-                    themeBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Set theme
-                    body.setAttribute('data-theme', theme);
-                    localStorage.setItem('theme', theme);
-                    
-                    // Update icon in header
-                    const themeIcon = document.querySelector('.theme-icon i');
-                    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-                });
-            });
+        <!-- Login Form -->
+        <div class="auth-form" id="login-form">
+            <div class="form-group">
+                <label for="login-email" class="form-label">Email</label>
+                <div class="input-wrapper">
+                    <input type="email" id="login-email" class="form-input" placeholder="nhap@email.com" required autocomplete="username">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="login-password" class="form-label">Mật khẩu</label>
+                <div class="input-wrapper">
+                    <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+                    <button class="password-toggle" onclick="togglePassword('login-password')" type="button">
+                        <i class="far fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <button class="form-button" onclick="handleLogin()" id="login-button">
+                <span>Đăng nhập</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
 
-            // Check for saved theme preference
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            body.setAttribute('data-theme', savedTheme);
-            
-            // Set active theme button
-            const activeThemeBtn = document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`);
-            if (activeThemeBtn) {
-                themeBtns.forEach(b => b.classList.remove('active'));
-                activeThemeBtn.classList.add('active');
-                
-                // Update icon in header
-                const themeIcon = document.querySelector('.theme-icon i');
-                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            }
+            <div class="divider">hoặc</div>
 
-            // Animation for cards
-            const cards = document.querySelectorAll('.card');
-            cards.forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-            });
-        });
-    </script>
-</body>
+            <div class="social-login">
+                <button class="social-btn" aria-label="Đăng nhập bằng Google">
+                    <i class="fab fa-google"></i>
+                </button>
+                <button class="social-btn" aria-label="Đăng nhập bằng Facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </button>
+                <button class="social-btn" aria-label="Đăng nhập bằng Apple">
+                    <i class="fab fa-apple"></i>
+                </button>
+            </div>
+
+            <div class="form-toggle">
+                Chưa có tài khoản? <a href="#" onclick="toggleForm('register')">Đăng ký ngay</a>
+            </div>
+        </div>
+
+        <!-- Register Form -->
+        <div class="auth-form" id="register-form" style="display: none;">
+            <div class="form-group">
+                <label for="register-name" class="form-label">Họ và tên</label>
+                <div class="input-wrapper">
+                    <input type="text" id="register-name" class="form-input" placeholder="Nguyễn Văn A" required autocomplete="name">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="register-email" class="form-label">Email</label>
+                <div class="input-wrapper">
+                    <input type="email" id="register-email" class="form-input" placeholder="nhap@email.com" required autocomplete="email">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="register-password" class="form-label">Mật khẩu</label>
+                <div class="input-wrapper">
+                    <input type="password" id="register-password" class="form-input" placeholder="••••••••" required autocomplete="new-password">
+                    <button class="password-toggle" onclick="togglePassword('register-password')" type="button">
+                        <i class="far fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="register-confirm-password" class="form-label">Xác nhận mật khẩu</label>
+                <div class="input-wrapper">
+                    <input type="password" id="register-confirm-password" class="form-input" placeholder="••••••••" required autocomplete="new-password">
+                    <button class="password-toggle" onclick="togglePassword('register-confirm-password')" type="button">
+                        <i class="far fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <button class="form-button" onclick="handleRegister()" id="register-button">
+                <span>Đăng ký</span>
+                <i class="fas fa-user-plus"></i>
+            </button>
+
+            <div class="form-toggle">
+                Đã có tài khoản? <a href="#" onclick="toggleForm('login')">Đăng nhập</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="../static/js/login.js"></script>
+    </body>
 </html>

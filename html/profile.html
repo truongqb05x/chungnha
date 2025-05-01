@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Cá Nhân</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+    <link rel="stylesheet" href="../static/css/app.css">
+
+    <style>
+        .profile-section {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .profile-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 600;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .avatar-upload {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background-color: var(--primary);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .avatar-upload input {
+            display: none;
+        }
+
+        .profile-info h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-info p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .profile-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .profile-form input {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+        }
+
+        .profile-form button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            align-self: flex-start;
+        }
+
+        .profile-form button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .group-section {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .group-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .group-item:last-child {
+            border-bottom: none;
+        }
+
+        .group-info {
+            flex: 1;
+        }
+
+        .group-info h3 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .group-info p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .group-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .action-btn.qr {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .action-btn.qr:hover {
+            background-color: #2a7b96;
+        }
+
+        .action-btn.scan {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .action-btn.scan:hover {
+            background-color: #0a8f66;
+        }
+
+        .create-group-form {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .create-group-form input {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        .create-group-form button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .create-group-form button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .qr-code {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .qr-code img {
+            max-width: 200px;
+        }
+
+        .qr-scanner {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .qr-scanner video {
+            max-width: 100%;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .qr-scanner-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 240px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr;
+            }
+
+            .header {
+                grid-column: 1 / 2;
+                padding: 1rem;
+            }
+
+            .sidebar {
+                grid-column: 1 / 2;
+                grid-row: 2 / 3;
+                height: auto;
+                position: static;
+                display: none;
+            }
+
+            .sidebar.active {
+                display: flex;
+            }
+
+            .main-content {
+                grid-column: 1 / 2;
+                grid-row: 3 / 4;
+                padding: 1.5rem;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: var(--radius-sm);
+                background-color: rgba(255, 109, 40, 0.1);
+                color: var(--primary);
+                font-size: 1.25rem;
+                cursor: pointer;
+                transition: var(--transition);
+            }
+
+            .mobile-menu-btn:hover {
+                background-color: rgba(255, 109, 40, 0.2);
+            }
+
+            .profile-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-title {
+                font-size: 1.25rem;
+            }
+
+            .header-actions {
+                gap: 1rem;
+            }
+
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 1.5rem;
+            }
+
+            .create-group-form {
+                flex-direction: column;
+            }
+
+            .create-group-form input,
+            .create-group-form button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </div>
+            <h1 class="header-title">Trang Cá Nhân</h1>
+            <div class="header-actions">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </div>
+                <div class="header-icon theme-icon">
+                    <i class="fas fa-moon"></i>
+                </div>
+                <div class="user-avatar" id="header-avatar">NM</div>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <div class="sidebar-title">Trang Cá Nhân</div>
+                    <div class="sidebar-group">Nhóm: Nhà Mình A equipping</div>
+                </div>
+            </div>
+
+            <div class="sidebar-nav">
+                <a href="#" class="nav-item active">
+                    <div class="nav-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="nav-text">Trang chủ</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="nav-text">Hồ sơ</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="nav-text">Nhóm</div>
+                </a>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <div class="nav-text">Đăng xuất</div>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="theme-toggle">
+                    <div class="theme-btn active" data-theme="light">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="theme-btn" data-theme="dark">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="main-content">
+            <div class="profile-section">
+                <h2>Hồ Sơ Cá Nhân</h2>
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profile-avatar">
+                        <span id="avatar-text">NM</span>
+                        <img id="avatar-image" style="display: none;">
+                        <label class="avatar-upload">
+                            <i class="fas fa-camera"></i>
+                            <input type="file" accept="image/*" onchange="uploadAvatar(event)">
+                        </label>
+                    </div>
+                    <div class="profile-info">
+                        <h3 id="profile-name">Nguyễn Minh</h3>
+                        <p>Thành viên nhóm: Nhà Mình A2</p>
+                    </div>
+                </div>
+                <div class="profile-form">
+                    <input type="text" id="full-name" placeholder="Họ và tên">
+                    <button onclick="updateProfile()">Cập nhật hồ sơ</button>
+                </div>
+            </div>
+
+            <div class="group-section">
+                <h2>Quản Lý Nhóm</h2>
+                <div id="group-list">
+                    <!-- Groups will be populated by JavaScript -->
+                </div>
+                <div class="create-group-form">
+                    <input type="text" id="group-name" placeholder="Tên nhóm">
+                    <button onclick="createGroup()">Tạo nhóm</button>
+                </div>
+                <div class="qr-scanner">
+                    <button class="action-btn scan" onclick="startQRScanner()">Quét mã QR để tham gia</button>
+                    <div id="scanner-container" style="display: none;">
+                        <video id="qr-video" width="300" height="300"></video>
+                        <div class="qr-scanner-controls">
+                            <button class="action-btn" onclick="stopQRScanner()">Dừng quét</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const sidebar = document.querySelector('.sidebar');
+            
+            mobileMenuBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                mobileMenuBtn.innerHTML = sidebar.classList.contains('active') 
+                    ? '<i class="fas fa-times"></i>' 
+                    : '<i class="fas fa-bars"></i>';
+            });
+
+            // Theme toggle
+            const themeToggle = document.querySelector('.theme-toggle');
+            const themeBtns = document.querySelectorAll('.theme-btn');
+            const body = document.body;
+            
+            themeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const theme = this.getAttribute('data-theme');
+                    
+                    themeBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    body.setAttribute('data-theme', theme);
+                    localStorage.setItem('theme', theme);
+                    
+                    const themeIcon = document.querySelector('.theme-icon i');
+                    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                });
+            });
+
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            body.setAttribute('data-theme', savedTheme);
+            
+            const activeThemeBtn = document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`);
+            if (activeThemeBtn) {
+                themeBtns.forEach(b => b.classList.remove('active'));
+                activeThemeBtn.classList.add('active');
+                
+                const themeIcon = document.querySelector('.theme-icon i');
+                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            // Profile and group management
+            let profile = JSON.parse(localStorage.getItem('profile')) || {
+                fullName: 'Nguyễn Minh',
+                avatar: null,
+                initials: 'NM'
+            };
+
+            let groups = JSON.parse(localStorage.getItem('groups')) || [
+                { id: 1, name: 'Nhà Mình A2', qrCode: 'group_a2', members: ['Nguyễn Minh', 'A', 'B'] }
+            ];
+
+            let videoStream = null;
+
+            function saveProfile() {
+                localStorage.setItem('profile', JSON.stringify(profile));
+            }
+
+            function saveGroups() {
+                localStorage.setItem('groups', JSON.stringify(groups));
+            }
+
+            function renderProfile() {
+                document.getElementById('profile-name').textContent = profile.fullName;
+                document.getElementById('header-avatar').textContent = profile.initials;
+                const avatarText = document.getElementById('avatar-text');
+                const avatarImage = document.getElementById('avatar-image');
+                
+                if (profile.avatar) {
+                    avatarText.style.display = 'none';
+                    avatarImage.src = profile.avatar;
+                    avatarImage.style.display = 'block';
+                } else {
+                    avatarText.textContent = profile.initials;
+                    avatarText.style.display = 'block';
+                    avatarImage.style.display = 'none';
+                }
+            }
+
+            function renderGroups() {
+                const groupList = document.getElementById('group-list');
+                groupList.innerHTML = '';
+
+                groups.forEach(group => {
+                    const groupItem = document.createElement('div');
+                    groupItem.className = 'group-item';
+                    groupItem.innerHTML = `
+                        <div class="group-info">
+                            <h3>${group.name}</h3>
+                            <p>${group.members.length} thành viên</p>
+                        </div>
+                        <div class="group-actions">
+                            <button class="action-btn qr" onclick="showQRCode(${group.id})">Xem mã QR</button>
+                        </div>
+                        <div class="qr-code" id="qr-${group.id}" style="display: none;">
+                            <p>Mã QR: ${group.qrCode}</p>
+                        </div>
+                    `;
+                    groupList.appendChild(groupItem);
+                });
+            }
+
+            window.uploadAvatar = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profile.avatar = e.target.result;
+                        saveProfile();
+                        renderProfile();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            window.updateProfile = function() {
+                const fullName = document.getElementById('full-name').value.trim();
+                if (!fullName) {
+                    alert('Vui lòng nhập họ và tên!');
+                    return;
+                }
+
+                profile.fullName = fullName;
+                profile.initials = fullName.split(' ').map(word => word[0]).join('').toUpperCase();
+                document.getElementById('full-name').value = '';
+                saveProfile();
+                renderProfile();
+            };
+
+            window.createGroup = function() {
+                const groupName = document.getElementById('group-name').value.trim();
+                if (!groupName) {
+                    alert('Vui lòng nhập tên nhóm!');
+                    return;
+                }
+
+                const newId = groups.length > 0 ? Math.max(...groups.map(g => g.id)) + 1 : 1;
+                groups.push({
+                    id: newId,
+                    name: groupName,
+                    qrCode: `group_${newId}`, // Simulated QR code identifier
+                    members: [profile.fullName]
+                });
+
+                document.getElementById('group-name').value = '';
+                saveGroups();
+                renderGroups();
+            };
+
+            window.showQRCode = function(groupId) {
+                const qrElement = document.getElementById(`qr-${groupId}`);
+                qrElement.style.display = qrElement.style.display === 'none' ? 'block' : 'none';
+            };
+
+            window.startQRScanner = async function() {
+                const video = document.getElementById('qr-video');
+                const scannerContainer = document.getElementById('scanner-container');
+                scannerContainer.style.display = 'block';
+
+                try {
+                    videoStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment' }
+                    });
+                    video.srcObject = videoStream;
+                    video.play();
+                    scanQRCode();
+                } catch (err) {
+                    alert('Không thể truy cập camera: ' + err.message);
+                    scannerContainer.style.display = 'none';
+                }
+            };
+
+            window.stopQRScanner = function() {
+                if (videoStream) {
+                    videoStream.getTracks().forEach(track => track.stop());
+                    videoStream = null;
+                }
+                document.getElementById('scanner-container').style.display = 'none';
+            };
+
+            function scanQRCode() {
+                const video = document.getElementById('qr-video');
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+
+                function tick() {
+                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                        canvas.height = video.videoHeight;
+                        canvas.width = video.videoWidth;
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: 'dontInvert'
+                        });
+
+                        if (code) {
+                            joinGroupByQRCode(code.data);
+                            stopQRScanner();
+                            return;
+                        }
+                    }
+                    requestAnimationFrame(tick);
+                }
+
+                tick();
+            }
+
+            function joinGroupByQRCode(qrCode) {
+                const group = groups.find(g => g.qrCode === qrCode);
+                if (group) {
+                    if (!group.members.includes(profile.fullName)) {
+                        group.members.push(profile.fullName);
+                        saveGroups();
+                        renderGroups();
+                        alert(`Đã tham gia nhóm ${group.name}!`);
+                    } else {
+                        alert('Bạn đã là thành viên của nhóm này!');
+                    }
+                } else {
+                    alert('Mã QR không hợp lệ hoặc nhóm không tồn tại!');
+                }
+            }
+
+            // Initialize
+            renderProfile();
+            renderGroups();
+        });
+    </script>
+</body>
+</html>
