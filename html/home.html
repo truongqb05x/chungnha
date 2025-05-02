@@ -76,12 +76,6 @@
                     </div>
                     <div class="nav-text">Phân công việc</div>
                 </a>
-                <a href="/trach-nhiem" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <div class="nav-text">Trách nhiệm thành viên</div>
-                </a>
                 <a href="/thuc-don" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-book"></i>
@@ -146,7 +140,7 @@
         <!-- Main content -->
         <main class="main-content">
             <section class="welcome-section">
-                <h1 class="welcome-title">Chào mừng trở lại, <span class="highlight">Nhà Mình A2</span>!</h1>
+                <h1 class="welcome-title">Chào mừng trở lại, <span class="highlight">Chưa tham gia</span>!</h1>
                 <p class="welcome-subtitle">
                     Cùng nhau quản lý bữa ăn, chia sẻ chi phí và lên kế hoạch nấu nướng thật dễ dàng.
                     Hôm nay nhóm bạn có <span class="highlight">3 hoạt động</span> cần quan tâm.
@@ -312,46 +306,195 @@
         // Animation cho các thẻ
         const cards = document.querySelectorAll('.card');
         cards.forEach((card, index) => {
-            card.style.animationDelay = `${index * 0.1}s`;
+          card.style.animationDelay = `${index * 0.1}s`;
         });
+      
+        // Tạo và chèn CSS cho modal
+        const style = document.createElement('style');
+        style.textContent = `
+          .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+          .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 500px; width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideUp 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+            position: relative; overflow: hidden;
+          }
+          @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0);  opacity: 1; }
+          }
+          .modal-header { margin-bottom: 20px; position: relative; }
+          .modal-icon { width:80px; height:80px; margin:0 auto 15px;
+            display:flex; align-items:center; justify-content:center;
+            background: linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);
+            border-radius:50%; color:white; font-size:40px;
+          }
+          .modal-content h2 {
+            margin:0 0 10px; font-size:28px; font-weight:700; color:#2d3748;
+          }
+          .modal-content p {
+            margin:0 0 30px; color:#4a5568; font-size:16px; line-height:1.6;
+          }
+          .modal-actions { display:flex; gap:15px; justify-content:center; }
+          .btn {
+            padding:12px 30px; border-radius:8px; font-size:16px;
+            font-weight:600; cursor:pointer; transition:all .3s; border:none;
+          }
+          .btn-primary {
+            background: linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);
+            color:white; box-shadow:0 4px 15px rgba(79,172,254,.3);
+          }
+          .btn-primary:hover {
+            transform:translateY(-2px); box-shadow:0 6px 20px rgba(79,172,254,.4);
+          }
+          .btn-secondary {
+            background:#f7fafc; color:#4a5568; border:1px solid #e2e8f0;
+          }
+          .btn-secondary:hover { background:#edf2f7; }
+          .close-btn {
+            position:absolute; top:15px; right:15px; width:36px; height:36px;
+            border-radius:50%; background:#f7fafc; border:none;
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; transition:all .2s;
+          }
+          .close-btn:hover { background:#edf2f7; }
+          .benefits-list {
+            text-align:left; margin:0 auto 25px; max-width:350px;
+          }
+          .benefit-item {
+            display:flex; align-items:center; margin-bottom:12px; color:#4a5568;
+          }
+          .benefit-item svg { margin-right:10px; color:#48bb78; min-width:20px; }
+          @media (max-width:480px) {
+            .modal-content { padding:25px; }
+            .modal-content h2 { font-size:24px; }
+            .modal-actions { flex-direction:column; gap:10px; }
+            .btn { width:100%; }
+          }
+        `;
+        document.head.appendChild(style);
+      
+        // Tạo và chèn HTML cho modal
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.innerHTML = `
+          <div class="modal-content">
+            <button class="close-btn" aria-label="Đóng">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M12 4L4 12" stroke="#4A5568" stroke-width="2"/>
+                <path d="M4 4L12 12" stroke="#4A5568" stroke-width="2"/>
+              </svg>
+            </button>
+            <div class="modal-header">
+              <div class="modal-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                  <!-- icon người -->
+                  <path d="M17 21V19C17 17.94 16.58 16.92 15.83 16.17C15.08 15.42 14.06 15 13 15H5C3.94 15 2.92 15.42 2.17 16.17C1.42 16.92 1 17.94 1 19V21" stroke="white" stroke-width="2"/>
+                  <path d="M9 11C11.21 11 13 9.21 13 7C13 4.79 11.21 3 9 3C6.79 3 5 4.79 5 7C5 9.21 6.79 11 9 11Z" stroke="white" stroke-width="2"/>
+                </svg>
+              </div>
+              <h2>Bạn chưa có nhóm</h2>
+<div class="modal-header">
+  <p>Kết nối với những người chung nhà</p>
+</div>
+<div class="benefits-list">
+  <div class="benefit-item">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M16.67 5L7.5 14.17L3.33 10" stroke="#48BB78" stroke-width="2"/>
+    </svg>
+    <span>Kết nối tức thì</span>
+  </div>
+  <div class="benefit-item">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M16.67 5L7.5 14.17L3.33 10" stroke="#48BB78" stroke-width="2"/>
+    </svg>
+    <span>Thao tác mượt mà</span>
+  </div>
+  <div class="benefit-item">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M16.67 5L7.5 14.17L3.33 10" stroke="#48BB78" stroke-width="2"/>
+    </svg>
+    <span>Cộng đồng bền chặt</span>
+  </div>
+</div>
+
+            <div class="modal-actions">
+              <button class="btn btn-primary">Tham gia ngay</button>
+              <button class="btn btn-secondary">Tìm hiểu thêm</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modalOverlay);
+      
+        // Lấy các nút
+        const closeBtn     = modalOverlay.querySelector('.close-btn');
+        const joinBtn      = modalOverlay.querySelector('.btn-primary');
+        const learnMoreBtn = modalOverlay.querySelector('.btn-secondary');
+      
+        // Đóng modal
+        closeBtn.addEventListener('click', () => {
+          modalOverlay.style.display = 'none';
+        });
+        modalOverlay.addEventListener('click', e => {
+          if (e.target === modalOverlay) modalOverlay.style.display = 'none';
+        });
+      
+        // Nhấn Tham gia ngay → chuyển /trang-ca-nhan
+        joinBtn.addEventListener('click', () => {
+          window.location.href = '/tao-nhom';
+        });
+      
+        // Nhấn Tìm hiểu thêm → chỉ đóng modal
+        learnMoreBtn.addEventListener('click', () => {
+          modalOverlay.style.display = 'none';
+        });
+      
+        // Hàm kiểm tra và hiển thị modal nếu cần
         async function displayGroupName() {
-    try {
-        // Kiểm tra session và lấy user_id
-        const userId = await checkSession();
-
-        if (userId) {
-            // Gọi API để lấy tên nhóm của người dùng
-            const response = await fetch(`/api/user_group?user_id=${userId}`);
-            const data = await response.json();
-
-            if (response.ok) {
-                const groupName = data.group;
-
-                // Cập nhật tên nhóm vào phần tử <span class="highlight">
-                const groupNameElement = document.querySelector('.highlight');
-                if (groupNameElement) {
-                    groupNameElement.textContent = groupName;  // Cập nhật tên nhóm vào đây
-                }
-            } else {
-                // Xử lý khi không tìm thấy nhóm
-                console.error(data.message || 'Không tìm thấy nhóm');
+          try {
+            const userId = await checkSession();
+            if (!userId) {
+              console.log('Người dùng chưa đăng nhập');
+              return;
             }
-        } else {
-            console.log('Người dùng chưa đăng nhập');
+            const resp = await fetch(`/api/user_group?user_id=${userId}`);
+            const data = await resp.json();
+      
+            if (resp.ok && data.group) {
+              const el = document.querySelector('.highlight');
+              if (el) el.textContent = data.group;
+            } else {
+              // Chưa tham gia hoặc chưa có nhóm → mở modal
+              modalOverlay.style.display = 'flex';
+            }
+          } catch (err) {
+            console.error('Lỗi khi hiển thị tên nhóm:', err);
+            alert('Đã có lỗi xảy ra. Vui lòng thử lại.');
+          }
         }
-    } catch (error) {
-        console.error('Lỗi khi hiển thị tên nhóm:', error);
-        alert('Đã có lỗi xảy ra. Vui lòng thử lại.');
-    }
-}
-
-// Gọi hàm khi trang tải xong
-document.addEventListener('DOMContentLoaded', function() {
-    displayGroupName();
-});
-
-    </script>
-    <!-- JavaScript dùng chung cho toàn bộ giao diện (template chính) -->
+      
+        document.addEventListener('DOMContentLoaded', displayGroupName);
+      </script>
+            <!-- JavaScript dùng chung cho toàn bộ giao diện (template chính) -->
     <script src="../static/js/app.js"></script>
 <script>
     

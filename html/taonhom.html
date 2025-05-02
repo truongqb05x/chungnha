@@ -6,543 +6,284 @@
     <title>Bếp Chung - Quản lý bữa ăn nhóm</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/app.css">
     <style>
+        /* Root variables (tuỳ chỉnh theme tại đây) */
         :root {
-            --primary: #FF6D28;
-            --primary-light: #FF9A3C;
-            --primary-dark: #E05D20;
-            --secondary: #3A98B9;
-            --accent: #FFB830;
-            --text: #333333;
-            --text-light: #6B7280;
-            --text-lighter: #9CA3AF;
-            --bg: #F8FAFC;
-            --card-bg: #FFFFFF;
-            --border: #E5E7EB;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --error: #EF4444;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --transition: all 0.2s ease;
+          --overlay-bg: rgba(0, 0, 0, 0.6);
+          --card-bg: #fff;
+          --radius-sm: 4px;
+          --radius-md: 8px;
+          --radius-lg: 10px;
+          --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.1);
+          --border: #ddd;
+          --primary: #FF6D28;
+          --primary-dark: #e65a20;
+          --primary-light: #ffc09a;
+          --text: #333;
+          --text-light: #666;
+          --text-lighter: #999;
+          --bg: #f9f9f9;
+          --success: #28a745;
+          --transition: 0.3s ease-in-out;
+          --font-family: 'Inter', sans-serif;
         }
-
-        [data-theme="dark"] {
-            --primary: #FF8C42;
-            --primary-light: #FFA566;
-            --primary-dark: #E57339;
-            --secondary: #4AB1D1;
-            --accent: #FFC154;
-            --text: #F3F4F6;
-            --text-light: #D1D5DB;
-            --text-lighter: #9CA3AF;
-            --bg: #1F2937;
-            --card-bg: #374151;
-            --border: #4B5563;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            transition: var(--transition);
-            line-height: 1.5;
-        }
-
-        .app-container {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            grid-template-rows: 80px 1fr;
-            min-height: 100vh;
-        }
-
-        .header {
-            grid-column: 2 / 3;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2rem;
-            background-color: var(--card-bg);
-            box-shadow: var(--shadow-sm);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .header-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .header-icon {
-            font-size: 1.25rem;
-            color: var(--text-light);
-            cursor: pointer;
-            transition: var(--transition);
-            position: relative;
-        }
-
-        .header-icon:hover {
-            color: var(--primary);
-        }
-
-        .badge {
-            position: absolute;
-            top: -6px;
-            right: -8px;
-            background-color: var(--error);
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .user-avatar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 0 3px rgba(255, 109, 40, 0.2);
-        }
-
-        .sidebar {
-            grid-column: 1 / 2;
-            grid-row: 1 / 3;
-            background-color: var(--card-bg);
-            border-right: 1px solid var(--border);
-            padding: 1.5rem 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            position: sticky;
-            top: 0;
-        }
-
-        .sidebar-header {
-            padding: 1.5rem 1.5rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 1.5rem;
-        }
-
-        .sidebar-logo {
-            font-size: 1.75rem;
-            color: var(--primary);
-        }
-
-        .sidebar-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .sidebar-group {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            margin-top: 0.25rem;
-        }
-
-        .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0 1rem;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            border-radius: var(--radius-sm);
-            margin-bottom: 0.5rem;
-            color: var(--text-light);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-
-        .nav-item:hover {
-            background-color: rgba(255, 109, 40, 0.1);
-            color: var(--primary);
-        }
-
-        .nav-item.active {
-            background-color: rgba(255, 109, 40, 0.1);
-            color: var(--primary);
-            font-weight: 500;
-        }
-
-        .nav-icon {
-            font-size: 1.1rem;
-            margin-right: 0.75rem;
-            width: 24px;
-            text-align: center;
-        }
-
-        .nav-text {
-            font-size: 0.95rem;
-        }
-
-        .sidebar-footer {
-            padding: 1.5rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .theme-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: rgba(0, 0, 0, 0.05);
-            border-radius: 50px;
-            padding: 0.25rem;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        [data-theme="dark"] .theme-toggle {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .theme-btn {
-            width: 50%;
-            padding: 0.5rem;
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            transition: var(--transition);
-        }
-
-        .theme-btn.active {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .main-content {
-            grid-column: 2 / 3;
-            padding: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* Modal styles */
+      
+        /* Modal Overlay */
         #group-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            font-family: 'Inter', sans-serif;
-            animation: fadeIn 0.3s ease;
+          position: fixed;
+          inset: 0;
+          background-color: var(--overlay-bg);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+          box-sizing: border-box;
+          font-family: var(--font-family);
+          animation: fadeIn 0.3s ease;
+          z-index: 2000;
+          overflow: hidden;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
+      
+        /* Modal Box */
         .modal-content {
-            background-color: var(--card-bg);
-            padding: 30px;
-            border-radius: var(--radius-lg);
-            width: 380px;
-            max-width: 90%;
-            box-shadow: var(--shadow-lg);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+          background: var(--card-bg);
+          border-radius: var(--radius-lg);
+          width: 100%;
+          max-width: 500px;
+          max-height: 90vh;
+          padding: 30px;
+          box-shadow: var(--shadow-lg);
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          overflow-y: auto;
+          animation: modalSlideUp 0.4s cubic-bezier(0.22,1,0.36,1);
         }
-
+      
+        /* Animations */
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounceIn {
+          0%   { transform: scale(0.8); opacity: 0; }
+          50%  { transform: scale(1.1); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      
+        /* Header */
         .modal-header {
-            margin-bottom: 20px;
+          margin-bottom: 20px;
+          padding-right: 30px; /* space for close button */
+          position: relative;
         }
-
         .modal-title {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--primary);
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 24px;
+          font-weight: 700;
+          color: var(--primary);
+          margin-bottom: 8px;
         }
-
         .modal-subtitle {
-            font-size: 15px;
-            color: var(--text-light);
-            margin-bottom: 25px;
-            line-height: 1.5;
+          font-size: 15px;
+          color: var(--text-light);
+          line-height: 1.6;
+          margin-bottom: 25px;
         }
-
-        .qr-section {
-            margin: 0 auto 25px;
-            position: relative;
-            width: 180px;
-        }
-
-        .qr-code {
-            width: 180px;
-            height: 180px;
-            background-color: var(--bg);
-            border-radius: var(--radius-md);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: var(--text-lighter);
-            margin: 0 auto;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        .qr-code img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .qr-placeholder {
-            padding: 20px;
-            text-align: center;
-        }
-
-        .qr-placeholder-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
-            color: var(--border);
-        }
-
-        .qr-instruction {
-            font-size: 13px;
-            color: var(--text-light);
-            margin-top: 10px;
-        }
-
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .modal-btn {
-            padding: 14px;
-            border-radius: var(--radius-sm);
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-
-        .btn-outline {
-            background-color: transparent;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-        }
-
-        .btn-outline:hover {
-            background-color: rgba(255, 109, 40, 0.1);
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 20px 0;
-            color: var(--text-light);
-            font-size: 13px;
-        }
-
-        .divider::before, .divider::after {
-            content: "";
-            flex: 1;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .divider::before {
-            margin-right: 10px;
-        }
-
-        .divider::after {
-            margin-left: 10px;
-        }
-
+      
+        /* Close Button */
         .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-light);
-            padding: 5px;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+          position: absolute;
+          top: 15px;
+          right: 15px;
+          width: 34px; height: 34px;
+          background: none;
+          border: none;
+          border-radius: 50%;
+          color: var(--text-lighter);
+          font-size: 22px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: var(--transition);
         }
-
         .close-btn:hover {
-            background-color: var(--bg);
-            color: var(--text);
+          background-color: rgba(0,0,0,0.05);
+          color: var(--text);
         }
-
-        .btn-icon {
-            font-size: 18px;
+      
+        /* Body & Scrollbar */
+        .modal-body {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+          padding-top: 10px;
         }
-
-        /* Empty state in main content */
+        .modal-body::-webkit-scrollbar { width: 6px; }
+        .modal-body::-webkit-scrollbar-track {
+          background: var(--bg); border-radius: 3px;
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+          background: var(--primary-light); border-radius: 3px;
+        }
+      
+        /* QR Section */
+        .qr-section {
+          margin: 0 auto 25px;
+          width: 200px;
+          position: relative;
+          flex-shrink: 0;
+        }
+        .qr-code {
+          width: 100%; height: 100%;
+          background: var(--bg);
+          border: 1px dashed var(--border);
+          border-radius: var(--radius-md);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-lighter);
+          transition: var(--transition);
+          overflow: hidden;
+        }
+        .qr-code:hover { 
+          border-color: var(--primary-light);
+          box-shadow: 0 0 0 4px rgba(255,109,40,0.1);
+        }
+        .qr-code.active { border: 1px solid var(--primary); }
+        .qr-code img { width: 100%; height: 100%; object-fit: cover; }
+        .qr-placeholder { text-align: center; padding: 20px; }
+        .qr-placeholder-icon { font-size: 48px; margin-bottom: 15px; color: var(--border); }
+        .qr-instruction {
+          font-size: 14px; color: var(--text-light);
+          text-align: center; line-height: 1.5; margin-top: 15px;
+        }
+        .qr-instruction strong { color: var(--primary); font-weight: 600; }
+      
+        /* Action Buttons */
+        .action-buttons {
+          display: flex; flex-direction: column; gap: 12px; margin-bottom: 5px;
+        }
+        .modal-btn {
+          display: flex; align-items: center; justify-content: center;
+          gap: 10px; padding: 14px; font-size: 15px; font-weight: 600;
+          border-radius: var(--radius-sm); border: none; cursor: pointer;
+          transition: var(--transition);
+        }
+        .btn-primary {
+          background: var(--primary); color: #fff;
+        }
+        .btn-primary:hover {
+          background: var(--primary-dark);
+          box-shadow: 0 4px 8px rgba(255,109,40,0.2);
+          transform: translateY(-1px);
+        }
+        .btn-outline {
+          background: transparent; color: var(--primary);
+          border: 1px solid var(--primary);
+        }
+        .btn-outline:hover {
+          background: rgba(255,109,40,0.1);
+          box-shadow: 0 2px 6px rgba(255,109,40,0.1);
+          transform: translateY(-1px);
+        }
+      
+        /* Divider */
+        .divider {
+          display: flex; align-items: center; margin: 20px 0;
+          color: var(--text-light); font-size: 13px; font-weight: 500;
+        }
+        .divider::before, .divider::after {
+          content: ""; flex: 1; border-bottom: 1px solid var(--border);
+        }
+        .divider::before { margin-right: 12px; }
+        .divider::after  { margin-left: 12px; }
+      
+        /* Success State */
+        .success-state {
+          text-align: center; padding: 10px 0;
+        }
+        .success-icon {
+          font-size: 60px; color: var(--success);
+          margin-bottom: 15px; animation: bounceIn 0.6s;
+        }
+      
+        /* Group Name Badge */
+        .group-name {
+          display: inline-block; padding: 8px 12px;
+          background: rgba(255,109,40,0.1);
+          border-radius: var(--radius-sm);
+          font-size: 18px; font-weight: 600; color: var(--primary);
+          margin: 10px 0;
+        }
+      
+        /* Form Inputs */
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+          display: block; margin-bottom: 8px;
+          font-size: 14px; font-weight: 500; color: var(--text);
+        }
+        .form-input {
+          width: 100%; padding: 12px 14px;
+          border: 1px solid var(--border);
+          border-radius: var(--radius-sm);
+          font-size: 15px; background: var(--bg); color: var(--text);
+          transition: var(--transition);
+        }
+        .form-input:focus {
+          outline: none; border-color: var(--primary);
+          box-shadow: 0 0 0 3px rgba(255,109,40,0.2);
+        }
+      
+        /* Loading Spinner */
+        .loading-spinner {
+          width: 20px; height: 20px;
+          border: 3px solid rgba(255,255,255,0.3);
+          border-top-color: #fff; border-radius: 50%;
+          animation: spin 1s ease-in-out infinite;
+        }
+      
+        /* Empty State */
         .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 60vh;
-            text-align: center;
-            padding: 2rem;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          height: 60vh; padding: 2rem; text-align: center;
         }
-
         .empty-icon {
-            font-size: 5rem;
-            color: var(--text-lighter);
-            margin-bottom: 1.5rem;
+          font-size: 5rem; color: var(--text-lighter);
+          margin-bottom: 1.5rem;
         }
-
         .empty-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            color: var(--text);
+          font-size: 1.5rem; font-weight: 600;
+          margin-bottom: .75rem; color: var(--text);
         }
-
         .empty-description {
-            color: var(--text-light);
-            max-width: 500px;
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
+          max-width: 500px; margin-bottom: 1.5rem;
+          line-height: 1.6; color: var(--text-light);
         }
-
-        /* Responsive styles */
-        @media (max-width: 1024px) {
-            .app-container {
-                grid-template-columns: 240px 1fr;
-            }
-        }
-
+      
+        /* Responsive */
         @media (max-width: 768px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
-            }
-
-            .header {
-                grid-column: 1 / 2;
-                padding: 1rem;
-            }
-
-            .sidebar {
-                grid-column: 1 / 2;
-                grid-row: 2 / 3;
-                height: auto;
-                position: static;
-                display: none;
-            }
-
-            .sidebar.active {
-                display: flex;
-            }
-
-            .main-content {
-                grid-column: 1 / 2;
-                grid-row: 3 / 4;
-                padding: 1.5rem;
-            }
-
-            .mobile-menu-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
-                border-radius: var(--radius-sm);
-                background-color: rgba(255, 109, 40, 0.1);
-                color: var(--primary);
-                font-size: 1.25rem;
-                cursor: pointer;
-                transition: var(--transition);
-            }
-
-            .mobile-menu-btn:hover {
-                background-color: rgba(255, 109, 40, 0.2);
-            }
+          #group-modal { padding: 10px; }
+          .modal-content { max-width: 90vw; max-height: 85vh; padding: 25px 20px; }
+          .modal-title { font-size: 22px; }
+          .qr-section { width: 180px; }
+          .qr-code { width: 180px; height: 180px; }
         }
-
-        @media (max-width: 480px) {
-            .header-title {
-                font-size: 1.25rem;
-            }
-
-            .header-actions {
-                gap: 1rem;
-            }
-        }
-    </style>
-</head>
+      </style>
+      </head>
 <body>
     <div class="app-container">
         <!-- Header -->
@@ -579,7 +320,7 @@
                 <a href="#" class="nav-item active">
                     <div class="nav-icon">
                         <i class="fas fa-home"></i>
-                    </div [
+                    </div >
                     <div class="nav-text">Trang chủ</div>
                 </a>
                 <a href="#" class="nav-item disabled">
@@ -659,20 +400,25 @@
     <!-- Group Modal -->
     <div id="group-modal" style="display: none;">
         <div class="modal-content">
-            <button class="close-btn" id="close-modal-btn">×</button>
+            <button class="close-btn" id="close-modal-btn" aria-label="Đóng">
+                <i class="fas fa-times"></i>
+            </button>
             
             <div class="modal-header">
-                <div class="modal-title">Tham gia nhóm</div>
+                <div class="modal-title">
+                    <i class="fas fa-users modal-title-icon"></i>
+                    Tham gia nhóm
+                </div>
                 <div class="modal-subtitle">
-                    Bạn chưa tham gia nhóm nào. Tải mã QR để tham gia nhóm hiện có hoặc tạo nhóm mới.
+                    Kết nối với bạn bè bằng cách quét mã QR nhóm hoặc tạo nhóm mới để bắt đầu quản lý bữa ăn cùng nhau.
                 </div>
             </div>
             
             <div class="qr-section">
-                <div class="qr-code">
+                <div class="qr-code" id="qr-code-container">
                     <div class="qr-placeholder">
                         <div class="qr-placeholder-icon">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M3 11H11V3H3V11ZM5 5H9V9H5V5Z" fill="currentColor"/>
                                 <path d="M3 21H11V13H3V21ZM5 15H9V19H5V15Z" fill="currentColor"/>
                                 <path d="M13 11H21V3H13V11ZM15 5H19V9H15V5Z" fill="currentColor"/>
@@ -683,7 +429,9 @@
                     </div>
                     <img id="qr-image" src="" alt="QR Code" style="display: none;">
                 </div>
-                <div class="qr-instruction">Tải lên mã QR để tham gia nhóm</div>
+                <div class="qr-instruction">
+                    <strong>Hướng dẫn:</strong> Tải lên mã QR từ nhóm hiện có<br>hoặc nhấn vào khung để chụp ảnh trực tiếp
+                </div>
             </div>
             
             <div class="action-buttons">
@@ -695,10 +443,12 @@
                             <path d="M8 11L12 15L16 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </span>
-                    Tải mã QR
+                    Tải lên mã QR
                 </label>
-                <input type="file" id="upload-qr-input" accept="image/*" style="display: none;">
+                <input type="file" id="upload-qr-input" accept="image/*" capture="environment" style="display: none;">
+                
                 <div class="divider">hoặc</div>
+                
                 <button class="modal-btn btn-outline" id="create-group-btn">
                     <span class="btn-icon">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -713,223 +463,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // User state
-            const userState = {
-                isLoggedIn: true,
-                hasJoinedGroup: false,
-                currentGroup: null
-            };
-
-            // DOM elements
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            const sidebar = document.querySelector('.sidebar');
-            const themeToggle = document.querySelector('.theme-toggle');
-            const themeBtns = document.querySelectorAll('.theme-btn');
-            const body = document.body;
-            const currentGroupEl = document.getElementById('current-group');
-            const openModalBtn = document.getElementById('open-group-modal-btn');
-            const groupModal = document.getElementById('group-modal');
-            const closeModalBtn = document.getElementById('close-modal-btn');
-            const uploadQrInput = document.getElementById('upload-qr-input');
-            const createGroupBtn = document.getElementById('create-group-btn');
-            const navItems = document.querySelectorAll('.nav-item');
-            const qrImage = document.getElementById('qr-image');
-            const qrPlaceholder = document.querySelector('.qr-placeholder');
-
-            // Mobile menu toggle
-            mobileMenuBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-                mobileMenuBtn.innerHTML = sidebar.classList.contains('active') 
-                    ? '<i class="fas fa-times"></i>' 
-                    : '<i class="fas fa-bars"></i>';
-            });
-
-            // Theme toggle
-            themeBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const theme = this.getAttribute('data-theme');
-                    
-                    themeBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    body.setAttribute('data-theme', theme);
-                    localStorage.setItem('theme', theme);
-                    
-                    const themeIcon = document.querySelector('.theme-icon i');
-                    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-                });
-            });
-
-            // Apply saved theme
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            body.setAttribute('data-theme', savedTheme);
-            
-            const activeThemeBtn = document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`);
-            if (activeThemeBtn) {
-                themeBtns.forEach(b => b.classList.remove('active'));
-                activeThemeBtn.classList.add('active');
-                
-                const themeIcon = document.querySelector('.theme-icon i');
-                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            }
-
-            // Group modal functions
-            function openGroupModal() {
-                groupModal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            }
-
-            function closeGroupModal() {
-                groupModal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-                qrImage.style.display = 'none';
-                qrPlaceholder.style.display = 'block';
-                qrImage.src = '';
-                uploadQrInput.value = '';
-            }
-
-            function joinGroup(groupName) {
-                userState.hasJoinedGroup = true;
-                userState.currentGroup = groupName;
-                
-                // Update UI
-                currentGroupEl.textContent = `Nhóm: ${groupName}`;
-                
-                // Enable nav items
-                navItems.forEach(item => {
-                    if (item.classList.contains('disabled')) {
-                        item.classList.remove('disabled');
-                    }
-                });
-                
-                // Hide empty state and show actual content
-                document.querySelector('.main-content').innerHTML = `
-                    <h2>Chào mừng đến với nhóm ${groupName}</h2>
-                    <p>Bắt đầu quản lý bữa ăn cùng mọi người nào!</p>
-                `;
-            }
-
-            // Event listeners
-            openModalBtn.addEventListener('click', openGroupModal);
-            closeModalBtn.addEventListener('click', closeGroupModal);
-
-            uploadQrInput.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        qrImage.src = e.target.result;
-                        qrImage.style.display = 'block';
-                        qrPlaceholder.style.display = 'none';
-
-                        // Use qr-scanner to decode QR code
-                        QrScanner.scanImage(qrImage)
-                            .then(result => {
-                                // Simulate successful QR code scan
-                                const modalContent = document.querySelector('.modal-content');
-                                modalContent.innerHTML = `
-                                    <button class="close-btn" id="close-modal-btn">×</button>
-                                    
-                                    <div class="modal-header">
-                                        <div class="modal-title">Thành công!</div>
-                                        <div class="modal-subtitle">
-                                            Bạn đã tham gia nhóm "Nhà Mình A2" thành công.
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="qr-section" style="margin-bottom: 15px;">
-                                        <div class="qr-code" style="background-color: #E8F5E9; border-color: #C8E6C9;">
-                                            <i class="fas fa-check-circle" style="font-size: 60px; color: var(--success);"></i>
-                                        </div>
-                                    </div>
-                                    
-                                    <button class="modal-btn btn-primary" id="confirm-join-btn" style="width: 100%;">
-                                        <i class="fas fa-users"></i> Vào nhóm ngay
-                                    </button>
-                                `;
-                                
-                                // Add event listener for the new button
-                                document.getElementById('confirm-join-btn').addEventListener('click', function() {
-                                    joinGroup("Nhà Mình A2");
-                                    closeGroupModal();
-                                });
-                                
-                                // Re-add close button listener
-                                document.getElementById('close-modal-btn').addEventListener('click', closeGroupModal);
-                            })
-                            .catch(err => {
-                                alert('Không thể đọc mã QR. Vui lòng thử lại với hình ảnh rõ nét hơn.');
-                                qrImage.style.display = 'none';
-                                qrPlaceholder.style.display = 'block';
-                                qrImage.src = '';
-                                uploadQrInput.value = '';
-                            });
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-
-            createGroupBtn.addEventListener('click', function() {
-                const modalContent = document.querySelector('.modal-content');
-                modalContent.innerHTML = `
-                    <button class="close-btn" id="close-modal-btn">×</button>
-                    
-                    <div class="modal-header">
-                        <div class="modal-title">Tạo nhóm mới</div>
-                        <div class="modal-subtitle">
-                            Đặt tên cho nhóm của bạn
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <input type="text" id="group-name-input" placeholder="Ví dụ: Nhà Mình A2" style="
-                            width: 100%;
-                            padding: 12px;
-                            border: 1px solid var(--border);
-                            border-radius: var(--radius-sm);
-                            font-size: 15px;
-                            background-color: var(--bg);
-                            color: var(--text);
-                        ">
-                    </div>
-                    
-                    <div class="action-buttons">
-                        <button class="modal-btn btn-primary" id="confirm-create-btn">
-                            <i class="fas fa-plus"></i> Tạo nhóm
-                        </button>
-                    </div>
-                `;
-                
-                // Add event listeners
-                document.getElementById('confirm-create-btn').addEventListener('click', function() {
-                    const groupName = document.getElementById('group-name-input').value.trim();
-                    if (groupName) {
-                        joinGroup(groupName);
-                        closeGroupModal();
-                    } else {
-                        alert('Vui lòng nhập tên nhóm');
-                    }
-                });
-                
-                document.getElementById('close-modal-btn').addEventListener('click', closeGroupModal);
-            });
-
-            // Disable nav items if not in a group
-            if (!userState.hasJoinedGroup) {
-                navItems.forEach((item, index) => {
-                    if (index > 0) { // Keep Home enabled
-                        item.classList.add('disabled');
-                    }
-                });
-            }
-
-            // Show modal automatically if not in a group
-            if (!userState.hasJoinedGroup) {
-                setTimeout(openGroupModal, 1000);
-            }
-        });
-    </script>
-</body>
+    <script src="../static/js/taonhom.js"></script>
+    <script src="../static/js/app.js"></script>
+    </body>
 </html>

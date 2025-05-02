@@ -139,9 +139,7 @@ function checkSession() {
         .then(data => {
             if (data.id && data.full_name) {
                 window.location.href = '/home'; // Chuyển hướng nếu người dùng đã đăng nhập
-            } else {
-                alert('Chưa đăng nhập'); // Thông báo nếu chưa đăng nhập
-            }
+            } 
         })
         .catch(error => {
             console.error('Lỗi khi kiểm tra session:', error);

@@ -65,12 +65,15 @@ function checkLoginStatus() {
     })
     .then(response => response.json())
     .then(data => {
+        // Nếu không có id hoặc full_name, coi như chưa đăng nhập
         if (!data.id || !data.full_name) {
-            window.location.href = '/';  // Chuyển hướng nếu chưa đăng nhập
+            // Chuyển hướng về trang cá nhân
+            window.location.href = '/trang-ca-nhan';
         }
     })
     .catch(error => console.error('Lỗi khi kiểm tra session:', error));
 }
+
 
 // Gọi hàm kiểm tra đăng nhập mỗi khi cần
 checkLoginStatus();
@@ -78,19 +81,28 @@ checkLoginStatus();
 // Hàm để lấy nhóm của người dùng
 async function fetchUserGroup(userId) {
     try {
-        const response = await fetch(`/api/user_group?user_id=${userId}`);
-        const data = await response.json();
-
-        if (response.ok && data.group) {
-            document.querySelector('.sidebar-group').textContent = `Nhóm: ${data.group}`;
-        } else {
-            alert(data.message || 'Lỗi khi lấy tên nhóm');
-        }
+      const response = await fetch(`/api/user_group?user_id=${userId}`);
+      const data = await response.json();
+  
+      const sidebarGroup = document.querySelector('.sidebar-group');
+      if (!sidebarGroup) return;
+  
+      if (response.ok && data.group) {
+        // Đã có nhóm
+        sidebarGroup.textContent = `Nhóm: ${data.group}`;
+      } else {
+        // Chưa tham gia hoặc chưa có nhóm
+        sidebarGroup.textContent = 'Chưa có nhóm';
+      }
     } catch (error) {
-        console.error('Lỗi khi gọi API fetchUserGroup:', error);
-        alert('Đã có lỗi xảy ra. Vui lòng thử lại.');
+      console.error('Lỗi khi gọi API fetchUserGroup:', error);
+      const sidebarGroup = document.querySelector('.sidebar-group');
+      if (sidebarGroup) {
+        sidebarGroup.textContent = 'Không thể tải thông tin nhóm';
+      }
     }
-}
+  }
+  
 
 // Hàm kiểm tra session và lấy user_id
 async function checkSession() {
