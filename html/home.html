@@ -88,7 +88,7 @@
                     </div>
                     <div class="nav-text">Thực đơn</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="/lich-nau-an" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-calendar-alt"></i>
                     </div>
@@ -231,7 +231,24 @@
                         <a href="/phan-cong-viec" class="card-link">Xem phân công <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>
-
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        fetch("/api/unassigned-tasks")
+                            .then(response => response.json())
+                            .then(data => {
+                                const contentEl = document.querySelector(".task-card .card-content p");
+                                if (data.message) {
+                                    contentEl.textContent = data.message;
+                                } else {
+                                    contentEl.textContent = "Không thể tải dữ liệu công việc.";
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Lỗi khi gọi API:", error);
+                            });
+                    });
+                    </script>
+                    
                 <!-- Quỹ nhóm -->
                 <div class="card fund-card">
                     <div class="card-header">

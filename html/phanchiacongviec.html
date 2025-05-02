@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phân Chia Công Việc Chung</title>
+    <title>Chung Nhà - Phân Chia Công Việc Chung</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="shortcut icon" href="../static/img/logo.png" type="image/x-icon">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- css chung -->
     <link rel="stylesheet" href="../static/css/app.css">
     <!-- css riêng -->
@@ -19,7 +20,7 @@
             <div class="mobile-menu-btn">
                 <i class="fas fa-bars"></i>
             </div>
-            <h1 class="header-title">Dashboard</h1>
+            <h1 class="header-title" style="text-align: left;">Dashboard</h1>
             <div class="header-actions">
                 <div class="header-icon">
                     <a href="/thong-bao" class="btn" style="color: inherit;">
@@ -34,7 +35,6 @@
             </div>
         </header>
 
-        <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
@@ -79,13 +79,13 @@
                     </div>
                     <div class="nav-text">Trách nhiệm thành viên</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="/thuc-don" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-book"></i>
                     </div>
                     <div class="nav-text">Thực đơn</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="/lich-nau-an" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-calendar-alt"></i>
                     </div>
@@ -233,62 +233,108 @@
         </main>
     </div>
 
-    <!-- Add/Edit Task Modal -->
-    <div class="modal" id="task-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="modal-title">Thêm công việc mới</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form class="modal-form" id="task-form">
-                    <input type="hidden" id="task-id">
+ <!-- Add/Edit Task Modal -->
+ <div class="modern-modal" id="task-modal">
+    <div class="modal-overlay" onclick="closeModal()"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modal-title">Thêm công việc mới</h2>
+            <button class="modal-close-btn" onclick="closeModal()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <form id="task-form" class="modal-form">
+                <input type="hidden" id="task-id">
+                
+                <div class="form-row">
                     <div class="form-group">
-                        <label for="modal-task-type">Loại công việc</label>
-                        <select id="modal-task-type" required>
-                            <option value="">Chọn loại công việc</option>
-                            <option value="Dọn phòng">Dọn phòng</option>
-                            <option value="Rửa bát">Rửa bát</option>
-                            <option value="Đổ rác">Đổ rác</option>
-                            <option value="Giặt khăn">Giặt khăn</option>
-                            <option value="Nấu ăn">Nấu ăn</option>
-                            <option value="Mua đồ">Mua đồ</option>
-                            <option value="Khác">Khác</option>
+                        <label for="modal-task-type" class="form-label">Loại công việc</label>
+                        <div class="select-wrapper">
+                            <select id="modal-task-type" class="form-select" required>
+                                <option value="" disabled selected>Chọn loại công việc</option>
+                                <option value="Dọn phòng">Dọn phòng</option>
+                                <option value="Rửa bát">Rửa bát</option>
+                                <option value="Đổ rác">Đổ rác</option>
+                                <option value="Giặt khăn">Giặt khăn</option>
+                                <option value="Nấu ăn">Nấu ăn</option>
+                                <option value="Mua đồ">Mua đồ</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                            <div class="select-arrow"></div>
+                        </div>
+                        <div class="error-message" id="task-type-error">Vui lòng chọn loại công việc</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="modal-task-priority" class="form-label">Mức độ ưu tiên</label>
+                        <div class="priority-buttons">
+                            <label class="priority-option">
+                                <input type="radio" name="priority" value="low" checked>
+                                <span class="priority-tag low">Thấp</span>
+                            </label>
+                            <label class="priority-option">
+                                <input type="radio" name="priority" value="medium">
+                                <span class="priority-tag medium">Trung bình</span>
+                            </label>
+                            <label class="priority-option">
+                                <input type="radio" name="priority" value="high">
+                                <span class="priority-tag high">Cao</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="modal-task-desc" class="form-label">Mô tả công việc</label>
+                    <textarea id="modal-task-desc" class="form-textarea" placeholder="Nhập mô tả chi tiết..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                      <label for="modal-task-assignee" class="form-label">Người phụ trách</label>
+                      <div class="select-wrapper">
+                        <select id="modal-task-assignee" class="form-select" required>
+                          <option value="" disabled selected>Chọn người phụ trách</option>
+                          <option value="1">Người A</option>
+                          <option value="2">Người B</option>
+                          <option value="3">Người C</option>
                         </select>
+                        <div class="select-arrow"></div>
+                      </div>
+                      <div class="error-message" id="task-assignee-error">Vui lòng chọn người phụ trách</div>
                     </div>
+                  
                     <div class="form-group">
-                        <label for="modal-task-desc">Mô tả (tùy chọn)</label>
-                        <textarea id="modal-task-desc" placeholder="Thêm chi tiết về công việc..."></textarea>
+                      <label for="modal-task-date" class="form-label">Ngày thực hiện</label>
+                      <div class="date-input-wrapper">
+                        <input type="date" id="modal-task-date" class="form-date" required>
+                        <div class="date-icon">
+                          <!-- SVG icon -->
+                        </div>
+                      </div>
+                      <div class="error-message" id="task-date-error">Vui lòng chọn ngày thực hiện</div>
                     </div>
-                    <div class="form-group">
-                        <label for="modal-task-assignee">Người phụ trách</label>
-                        <select id="modal-task-assignee" required>
-                            <option value="">Chọn người phụ trách</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="modal-task-date">Ngày thực hiện</label>
-                        <input type="date" id="modal-task-date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="modal-task-priority">Mức độ ưu tiên</label>
-                        <select id="modal-task-priority">
-                            <option value="low">Thấp</option>
-                            <option value="medium" selected>Trung bình</option>
-                            <option value="high">Cao</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="task-btn" onclick="closeModal()">Hủy</button>
-                <button class="task-btn primary" id="modal-save-btn" onclick="saveTask()">Lưu</button>
-            </div>
+                  </div>
+                  
+            </form>
+        </div>
+        
+        <div class="modal-footer">
+            <button type="button" class="modal-btn secondary" onclick="closeModal()">Hủy bỏ</button>
+            <button type="button" class="modal-btn primary" id="modal-save-btn" onclick="saveTask()">
+                <span>Lưu công việc</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
         </div>
     </div>
+</div>
     <!-- js riêng -->
      <script src="../static/js/phanchiacongviec.js"></script>
     <!-- js chung -->

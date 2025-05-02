@@ -310,6 +310,7 @@ CREATE TABLE `tasks` (
   CONSTRAINT `fk_task_assignee` FOREIGN KEY (`assignee_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Quản lý công việc chung của nhóm';
+ALTER TABLE tasks MODIFY assignee_id INT UNSIGNED NULL;
 
 -- =============================================================================
 -- NHÓM 8: QUẢN LÝ TÀI CHÍNH
@@ -410,27 +411,41 @@ CREATE TABLE `cooking_schedules` (
   INDEX `idx_schedule_status` (`status`) COMMENT 'Chỉ mục để tìm kiếm theo trạng thái'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Quản lý lịch nấu ăn của nhóm';
+2
+CREATE TABLE `cooking_schedules` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `schedule_name` VARCHAR(255) NOT NULL COMMENT 'Tên lịch nấu',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo lịch nấu',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật lịch nấu'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT 'Quản lý lịch nấu';
 
 -- =============================================================================
 -- NHÓM 10: THỰC ĐƠN
 -- Mô tả: Quản lý thực đơn và món ăn trong thực đơn.
 -- =============================================================================
+-- =============================================================================
+-- NHÓM 10: QUẢN LÝ THỰC ĐƠN
+-- Mô tả: Quản lý thực đơn, món ăn trong thực đơn, và người nấu.
+--        Các bảng này hỗ trợ chức năng quản lý thực đơn từ mã JavaScript.
+-- =============================================================================
 
 -- Bảng: menus
--- Mô tả: Lưu thông tin thực đơn của nhóm.
+-- Mô tả: Lưu thông tin thực đơn của nhóm, bao gồm ngày, trạng thái và ghi chú.
 CREATE TABLE `menus` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `group_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu groups.id',
-  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người tạo)',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người tạo thực đơn)',
   `cooking_schedule_id` INT UNSIGNED NULL COMMENT 'Tham chiếu cooking_schedules.id (liên quan đến lịch nấu, nếu có)',
   `menu_date` DATE NOT NULL COMMENT 'Ngày áp dụng thực đơn',
-  `description` TEXT NULL COMMENT 'Mô tả hoặc ghi chú về thực đơn',
+  `status` ENUM('Preparing', 'Completed') NOT NULL DEFAULT 'Preparing' COMMENT 'Trạng thái: Đang chuẩn bị, Hoàn thành',
+  `notes` TEXT NULL COMMENT 'Ghi chú về thực đơn (nếu có)',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo thực đơn',
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật thực đơn',
   CONSTRAINT `fk_menu_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_menu_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_menu_schedule` FOREIGN KEY (`cooking_schedule_id`) REFERENCES `cooking_schedules`(`id`) ON DELETE SET NULL,
-  INDEX `idx_menu_date` (`menu_date`) COMMENT 'Chỉ mục để tìm kiếm theo ngày'
+  INDEX `idx_menu_date` (`menu_date`) COMMENT 'Chỉ mục để tìm kiếm và sắp xếp theo ngày',
+  INDEX `idx_menu_status` (`status`) COMMENT 'Chỉ mục để lọc theo trạng thái'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Quản lý thực đơn của nhóm';
 
@@ -442,9 +457,24 @@ CREATE TABLE `menu_dishes` (
   `dish_name` VARCHAR(255) NOT NULL COMMENT 'Tên món ăn',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo món ăn',
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật món ăn',
-  CONSTRAINT `fk_dish_menu` FOREIGN KEY (`menu_id`) REFERENCES `menus`(`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_dish_menu` FOREIGN KEY (`menu_id`) REFERENCES `menus`(`id`) ON DELETE CASCADE,
+  INDEX `idx_dish_name` (`dish_name`) COMMENT 'Chỉ mục để tìm kiếm theo tên món ăn'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Lưu danh sách món ăn trong thực đơn';
+
+-- Bảng: menu_cooks
+-- Mô tả: Lưu danh sách người nấu cho mỗi thực đơn.
+CREATE TABLE `menu_cooks` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `menu_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu menus.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người nấu)',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi',
+  CONSTRAINT `fk_cook_menu` FOREIGN KEY (`menu_id`) REFERENCES `menus`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_cook_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `ux_menu_member` (`menu_id`, `member_id`) COMMENT 'Đảm bảo mỗi thành viên chỉ được gán một lần cho mỗi thực đơn'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT 'Quản lý danh sách người nấu cho thực đơn';
 
 -- =============================================================================
 -- NHÓM 11: THÔNG BÁO VÀ THÔNG BÁO NHÓM

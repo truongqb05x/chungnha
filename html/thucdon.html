@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bếp Chung - Quản lý thực đơn</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="../static/img/logo.png" type="image/x-icon">
     <!-- css chung -->
     <link rel="stylesheet" href="../static/css/app.css">
     <!-- css riêng -->
     <link rel="stylesheet" href="../static/css/thucdon.css">
 </head>
+
 <body>
     <div class="app-container">
         <!-- Header -->
@@ -18,43 +21,63 @@
             <div class="mobile-menu-btn">
                 <i class="fas fa-bars"></i>
             </div>
-            <h1 class="header-title">Thực đơn</h1>
+            <h1 class="header-title" style="text-align: left">Quản lý thực đơn</h1>
             <div class="header-actions">
                 <div class="header-icon">
-                    <i class="fas fa-bell"></i>
+                    <a href="/thong-bao" class="btn" style="color: inherit;">
+                        <i class="fas fa-bell"></i>
+                    </a>
                     <span class="badge">3</span>
                 </div>
                 <div class="header-icon theme-icon">
                     <i class="fas fa-moon"></i>
                 </div>
-                <div class="user-avatar">NM</div>
+                <a href="/trang-ca-nhan" class="user-avatar" style="text-decoration: none;">NM</a>
             </div>
         </header>
-
-        <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <i class="fas fa-utensils"></i>
+                    <a href="/trang-ca-nhan">
+                        <img src="../static/img/logo.png" alt="Logo">
+                    </a>
                 </div>
                 <div>
-                    <div class="sidebar-title">Bếp Chung</div>
+                    <div class="sidebar-title">Chung Nhà</div>
                     <div class="sidebar-group">Nhóm: Nhà Mình A2</div>
                 </div>
             </div>
 
             <div class="sidebar-nav">
-                <a href="#" class="nav-item">
+                <a href="/home" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-home"></i>
                     </div>
                     <div class="nav-text">Trang chủ</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="/thanh-vien" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="nav-text">Thành viên</div>
+                </a>
+                <a href="/noi-quy" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="nav-text">Nội quy</div>
+                </a>
+                <a href="/phan-cong-viec" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="nav-text">Phân công việc</div>
+                </a>
+                <a href="/trach-nhiem" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="nav-text">Trách nhiệm thành viên</div>
                 </a>
                 <a href="#" class="nav-item active">
                     <div class="nav-icon">
@@ -62,35 +85,47 @@
                     </div>
                     <div class="nav-text">Thực đơn</div>
                 </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="nav-text">Đi chợ</div>
-                </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="nav-text">Chi phí</div>
-                </a>
-                <a href="#" class="nav-item">
+                <a href="/lich-nau-an" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-calendar-alt"></i>
                     </div>
                     <div class="nav-text">Lịch nấu ăn</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="/quan-ly-do-dung" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <div class="nav-text">Quản lý đồ dùng</div>
+                </a>
+                <a href="/chi-phi" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="nav-text">Chi phí</div>
+                </a>
+                <a href="/quy-nhom" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-piggy-bank"></i>
+                    </div>
+                    <div class="nav-text">Quỹ nhóm</div>
+                </a>
+                <a href="/thong-ke" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-chart-bar"></i>
                     </div>
                     <div class="nav-text">Thống kê</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="/tro-chuyen" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-comments"></i>
                     </div>
                     <div class="nav-text">Trò chuyện</div>
+                </a>
+                <a href="/binh-chon" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-vote-yea"></i>
+                    </div>
+                    <div class="nav-text">Bình chọn</div>
                 </a>
             </div>
 
@@ -109,7 +144,7 @@
         <!-- Main content -->
         <main class="main-content">
             <div class="menu-header">
-                <h1 class="menu-title">Quản lý thực đơn</h1>
+                <!-- <h1 class="menu-title">Quản lý thực đơn</h1> -->
                 <div class="view-toggle">
                     <button class="view-btn active" data-view="calendar"><i class="fas fa-calendar-alt"></i></button>
                     <button class="view-btn" data-view="table"><i class="fas fa-table"></i></button>
@@ -137,7 +172,8 @@
                 </div>
 
                 <div class="search-filter">
-                    <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm món ăn, người nấu...">
+                    <input type="text" class="search-input" id="searchInput"
+                        placeholder="Tìm kiếm món ăn, người nấu...">
                     <select class="filter-select" id="statusFilter">
                         <option value="">Tất cả trạng thái</option>
                         <option value="Preparing">Đang chuẩn bị</option>
@@ -179,8 +215,10 @@
                     </button>
                 </div>
 
-                <div class="pagination">
-                    <button class="btn btn-outline" id="prevPage" disabled><i class="fas fa-chevron-left"></i> Trước</button>
+                <!-- Calendar view pagination (hidden by default) -->
+                <div class="pagination calendar-pagination" style="display: none;">
+                    <button class="btn btn-outline" id="prevPage" disabled><i class="fas fa-chevron-left"></i>
+                        Trước</button>
                     <div id="pageNumbers"></div>
                     <button class="btn btn-outline" id="nextPage">Sau <i class="fas fa-chevron-right"></i></button>
                 </div>
@@ -189,7 +227,8 @@
             <!-- Table view -->
             <div class="view-section" id="tableView" style="display: none;">
                 <div class="search-filter">
-                    <input type="text" class="search-input" id="searchInputTable" placeholder="Tìm kiếm món ăn, người nấu...">
+                    <input type="text" class="search-input" id="searchInputTable"
+                        placeholder="Tìm kiếm món ăn, người nấu...">
                     <select class="filter-select" id="statusFilterTable">
                         <option value="">Tất cả trạng thái</option>
                         <option value="Preparing">Đang chuẩn bị</option>
@@ -232,7 +271,8 @@
                 </div>
 
                 <div class="pagination">
-                    <button class="btn btn-outline" id="prevPageTable" disabled><i class="fas fa-chevron-left"></i> Trước</button>
+                    <button class="btn btn-outline" id="prevPageTable" disabled><i class="fas fa-chevron-left"></i>
+                        Trước</button>
                     <div id="pageNumbersTable"></div>
                     <button class="btn btn-outline" id="nextPageTable">Sau <i class="fas fa-chevron-right"></i></button>
                 </div>
@@ -241,7 +281,8 @@
             <!-- Cards view -->
             <div class="view-section" id="cardsView" style="display: none;">
                 <div class="search-filter">
-                    <input type="text" class="search-input" id="searchInputCards" placeholder="Tìm kiếm món ăn, người nấu...">
+                    <input type="text" class="search-input" id="searchInputCards"
+                        placeholder="Tìm kiếm món ăn, người nấu...">
                     <select class="filter-select" id="statusFilterCards">
                         <option value="">Tất cả trạng thái</option>
                         <option value="Preparing">Đang chuẩn bị</option>
@@ -271,943 +312,170 @@
                 </div>
 
                 <div class="pagination">
-                    <button class="btn btn-outline" id="prevPageCards" disabled><i class="fas fa-chevron-left"></i> Trước</button>
+                    <button class="btn btn-outline" id="prevPageCards" disabled><i class="fas fa-chevron-left"></i>
+                        Trước</button>
                     <div id="pageNumbersCards"></div>
                     <button class="btn btn-outline" id="nextPageCards">Sau <i class="fas fa-chevron-right"></i></button>
                 </div>
             </div>
 
-            <!-- Modal for adding/editing menu -->
-            <div class="modal" id="menuModal">
-                <div class="modal-content">
+            <!-- Modern Modal for adding/editing menu -->
+            <div class="modal-overlay" id="menuModal">
+                <div class="modal-container animate-slide-down">
                     <div class="modal-header">
-                        <h2 class="modal-title">Thêm thực đơn</h2>
-                        <button class="modal-close" id="closeModal"><i class="fas fa-times"></i></button>
+                        <div class="modal-header-content">
+                            <h2 class="modal-title" id="modalDynamicTitle">Thêm thực đơn</h2>
+                            <p class="modal-subtitle">Nhập thông tin thực đơn hàng ngày</p>
+                        </div>
+                        <button class="modal-close" id="closeModal" aria-label="Đóng">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
-                    <form id="menuForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" for="date">Ngày</label>
-                                <input type="date" class="form-input" id="date" required>
+
+                    <form id="menuForm" class="modal-form">
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label class="form-label" for="date">
+                                    <span>Ngày</span>
+                                    <span class="required-indicator">*</span>
+                                </label>
+                                <div class="input-with-icon">
+                                    <input type="date" class="form-input" id="date" required>
+                                    <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" for="status">Trạng thái</label>
-                                <select class="form-select" id="status" required>
-                                    <option value="Preparing">Đang chuẩn bị</option>
-                                    <option value="Completed">Hoàn thành</option>
-                                </select>
+
+                            <div class="form-field">
+                                <label class="form-label" for="status">
+                                    <span>Trạng thái</span>
+                                    <span class="required-indicator">*</span>
+                                </label>
+                                <div class="select-wrapper">
+                                    <select class="form-select" id="status" required>
+                                        <option value="" disabled selected>Chọn trạng thái</option>
+                                        <option value="Preparing">Đang chuẩn bị</option>
+                                        <option value="Completed">Hoàn thành</option>
+                                    </select>
+                                    <svg class="select-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="dishes">Món ăn</label>
-                            <textarea class="form-textarea" id="dishes" rows="4" required placeholder="Nhập các món ăn, mỗi món một dòng"></textarea>
-                            <div class="form-hint">Nhấn Enter để xuống dòng cho mỗi món ăn</div>
+
+                        <div class="form-field">
+                            <label class="form-label" for="dishes">
+                                <span>Món ăn</span>
+                                <span class="required-indicator">*</span>
+                            </label>
+                            <div class="textarea-container">
+                                <textarea class="form-textarea" id="dishes" rows="4" required
+                                    placeholder="Nhập các món ăn, mỗi món một dòng&#10;Ví dụ:&#10;- Cơm trắng&#10;- Canh rau&#10;- Thịt kho"></textarea>
+                                <div class="form-hint">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Nhấn Enter để xuống dòng cho mỗi món ăn
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="cooks">Người nấu</label>
-                            <input type="text" class="form-input" id="cooks" required placeholder="Nhập tên người nấu, cách nhau bởi dấu phẩy">
+
+                        <div class="form-field">
+                            <label class="form-label" for="cooks">
+                                <span>Người nấu</span>
+                                <span class="required-indicator">*</span>
+                            </label>
+                            <div class="input-with-icon">
+                                <input type="text" class="form-input" id="cooks" required
+                                    placeholder="Nhập tên người nấu, cách nhau bởi dấu phẩy">
+                                <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="notes">Ghi chú</label>
-                            <textarea class="form-textarea" id="notes" rows="2" placeholder="Thêm ghi chú nếu cần"></textarea>
+
+                        <div class="form-field">
+                            <label class="form-label" for="notes">Ghi chú (tùy chọn)</label>
+                            <textarea class="form-textarea" id="notes" rows="2"
+                                placeholder="Thêm ghi chú nếu cần"></textarea>
                         </div>
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-outline" id="cancelBtn">Hủy</button>
-                            <button type="submit" class="btn btn-primary">Lưu thực đơn</button>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">
+                                Hủy bỏ
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <span class="btn-loading hidden">
+                                    <svg class="animate-spin" width="20" height="20" viewBox="0 0 24 24">
+                                        <path fill="currentColor" d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
+                                    </svg>
+                                </span>
+                                <span class="btn-text">Lưu thực đơn</span>
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- Modal for confirmation -->
-            <div class="modal" id="confirmModal">
-                <div class="modal-content" style="max-width: 400px;">
+            <!-- Modern Confirmation Modal -->
+            <div class="modal-overlay" id="confirmModal">
+                <div class="modal-container modal-sm animate-fade-in">
                     <div class="modal-header">
-                        <h2 class="modal-title">Xác nhận</h2>
-                        <button class="modal-close" id="closeConfirmModal"><i class="fas fa-times"></i></button>
+                        <div class="modal-header-content">
+                            <h2 class="modal-title">Xác nhận hành động</h2>
+                        </div>
+                        <button class="modal-close" id="closeConfirmModal" aria-label="Đóng">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
+
                     <div class="modal-body">
-                        <p id="confirmMessage">Bạn có chắc muốn xóa thực đơn này?</p>
+                        <div class="confirmation-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <p class="confirmation-message" id="confirmMessage">Bạn có chắc muốn xóa thực đơn này?</p>
+                        <p class="confirmation-detail">Hành động này không thể hoàn tác.</p>
                     </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-outline" id="cancelConfirmBtn">Hủy</button>
-                        <button type="button" class="btn btn-primary" id="confirmBtn">Xác nhận</button>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-text" id="cancelConfirmBtn">
+                            Hủy bỏ
+                        </button>
+                        <button type="button" class="btn btn-danger" id="confirmBtn">
+                            <span class="btn-loading hidden">
+                                <svg class="animate-spin" width="20" height="20" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
+                                </svg>
+                            </span>
+                            <span class="btn-text">Xác nhận</span>
+                        </button>
                     </div>
                 </div>
             </div>
         </main>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mobile menu toggle
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            const sidebar = document.querySelector('.sidebar');
-            
-            mobileMenuBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-                mobileMenuBtn.innerHTML = sidebar.classList.contains('active') 
-                    ? '<i class="fas fa-times"></i>' 
-                    : '<i class="fas fa-bars"></i>';
-            });
-
-            // Theme toggle
-            const themeToggle = document.querySelector('.theme-toggle');
-            const themeBtns = document.querySelectorAll('.theme-btn');
-            const body = document.body;
-            const themeIcon = document.querySelector('.theme-icon i');
-            
-            themeBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const theme = this.getAttribute('data-theme');
-                    
-                    themeBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    body.setAttribute('data-theme', theme);
-                    localStorage.setItem('theme', theme);
-                    
-                    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-                });
-            });
-
-            // Apply saved theme or default to light
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            body.setAttribute('data-theme', savedTheme);
-            
-            const activeThemeBtn = document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`);
-            if (activeThemeBtn) {
-                themeBtns.forEach(b => b.classList.remove('active'));
-                activeThemeBtn.classList.add('active');
-                
-                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            }
-
-            // View toggle
-            const viewBtns = document.querySelectorAll('.view-btn');
-            const viewSections = document.querySelectorAll('.view-section');
-            
-            viewBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const view = this.getAttribute('data-view');
-                    
-                    viewBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    viewSections.forEach(section => {
-                        section.style.display = 'none';
-                    });
-                    
-                    document.getElementById(`${view}View`).style.display = 'block';
-                    localStorage.setItem('preferredView', view);
-                    
-                    // Re-render the current view
-                    if (view === 'calendar') {
-                        renderCalendar();
-                    } else if (view === 'table') {
-                        renderTableView();
-                    } else if (view === 'cards') {
-                        renderCardsView();
-                    }
-                });
-            });
-
-            // Apply saved view or default to calendar
-            const savedView = localStorage.getItem('preferredView') || 'calendar';
-            const savedViewBtn = document.querySelector(`.view-btn[data-view="${savedView}"]`);
-            if (savedViewBtn) {
-                viewBtns.forEach(b => b.classList.remove('active'));
-                savedViewBtn.classList.add('active');
-                
-                viewSections.forEach(section => {
-                    section.style.display = 'none';
-                });
-                
-                document.getElementById(`${savedView}View`).style.display = 'block';
-            }
-
-            // Menu data and functionality
-            const addMenuBtn = document.getElementById('addMenuBtn');
-            const menuModal = document.getElementById('menuModal');
-            const closeModal = document.getElementById('closeModal');
-            const cancelBtn = document.getElementById('cancelBtn');
-            const menuForm = document.getElementById('menuForm');
-            const confirmModal = document.getElementById('confirmModal');
-            const closeConfirmModal = document.getElementById('closeConfirmModal');
-            const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
-            const confirmBtn = document.getElementById('confirmBtn');
-            const confirmMessage = document.getElementById('confirmMessage');
-            const todayBtn = document.getElementById('todayBtn');
-
-            // Sample data with more entries
-            let menus = [
-                { 
-                    id: 1, 
-                    date: '2025-04-15', 
-                    dishes: 'Cơm gà xối mỡ\nCanh chua cá lóc\nRau muống xào tỏi', 
-                    cooks: 'Nguyễn Minh, Trần Hương', 
-                    status: 'Preparing',
-                    notes: 'Mua thêm rau muống và cá lóc'
-                },
-                { 
-                    id: 2, 
-                    date: '2025-04-16', 
-                    dishes: 'Thịt kho tàu\nCá chiên\nCanh cải', 
-                    cooks: 'Lê Anh', 
-                    status: 'Completed',
-                    notes: ''
-                },
-                { 
-                    id: 3, 
-                    date: '2025-04-17', 
-                    dishes: 'Bún bò Huế\nRau sống', 
-                    cooks: 'Phạm Quỳnh', 
-                    status: 'Completed',
-                    notes: 'Nấu thêm nước dùng'
-                },
-                { 
-                    id: 4, 
-                    date: '2025-04-18', 
-                    dishes: 'Cơm tấm sườn\nBì\nChả trứng', 
-                    cooks: 'Trần Hương, Vũ Long', 
-                    status: 'Preparing',
-                    notes: 'Chuẩn bị từ tối hôm trước'
-                },
-                { 
-                    id: 5, 
-                    date: '2025-04-20', 
-                    dishes: 'Phở bò\nQuẩy\nRau thơm', 
-                    cooks: 'Nguyễn Minh', 
-                    status: 'Preparing',
-                    notes: 'Mua bò về ướp từ tối hôm trước'
-                },
-                { 
-                    id: 6, 
-                    date: '2025-04-22', 
-                    dishes: 'Bánh xèo\nNem lụi\nRau sống', 
-                    cooks: 'Lê Anh, Phạm Quỳnh', 
-                    status: 'Preparing',
-                    notes: 'Chuẩn bị nhiều rau sống'
-                },
-                { 
-                    id: 7, 
-                    date: '2025-04-25', 
-                    dishes: 'Lẩu hải sản\nBún tươi\nRau nhúng', 
-                    cooks: 'Vũ Long', 
-                    status: 'Preparing',
-                    notes: 'Mua đủ các loại hải sản'
-                }
-            ];
-
-            let currentMenuId = menus.length > 0 ? Math.max(...menus.map(m => m.id)) + 1 : 1;
-            let currentPage = 1;
-            const menusPerPage = 5;
-            let currentMonth = new Date();
-            let currentSort = { column: 'date', direction: 'asc' };
-            let confirmAction = null;
-            let confirmActionParams = null;
-
-            // Initialize the app
-            function initApp() {
-                renderCalendar();
-                renderTableView();
-                renderCardsView();
-                setupEventListeners();
-                setToday();
-            }
-
-            // Set today's date in the date picker
-            function setToday() {
-                const today = new Date();
-                const todayStr = today.toISOString().split('T')[0];
-                document.getElementById('date').value = todayStr;
-            }
-
-            // Setup event listeners
-            function setupEventListeners() {
-                // Modal controls
-                addMenuBtn.addEventListener('click', () => {
-                    menuModal.classList.add('active');
-                    menuForm.reset();
-                    setToday();
-                    document.querySelector('.modal-title').textContent = 'Thêm thực đơn';
-                    document.getElementById('status').value = 'Preparing';
-                    menuForm.dataset.mode = 'add';
-                });
-
-                // Add from empty state buttons
-                document.getElementById('addMenuEmptyBtn')?.addEventListener('click', () => {
-                    menuModal.classList.add('active');
-                    menuForm.reset();
-                    setToday();
-                    document.querySelector('.modal-title').textContent = 'Thêm thực đơn';
-                    document.getElementById('status').value = 'Preparing';
-                    menuForm.dataset.mode = 'add';
-                });
-
-                document.getElementById('addMenuEmptyBtnTable')?.addEventListener('click', () => {
-                    menuModal.classList.add('active');
-                    menuForm.reset();
-                    setToday();
-                    document.querySelector('.modal-title').textContent = 'Thêm thực đơn';
-                    document.getElementById('status').value = 'Preparing';
-                    menuForm.dataset.mode = 'add';
-                });
-
-                document.getElementById('addMenuEmptyBtnCards')?.addEventListener('click', () => {
-                    menuModal.classList.add('active');
-                    menuForm.reset();
-                    setToday();
-                    document.querySelector('.modal-title').textContent = 'Thêm thực đơn';
-                    document.getElementById('status').value = 'Preparing';
-                    menuForm.dataset.mode = 'add';
-                });
-
-                closeModal.addEventListener('click', () => {
-                    menuModal.classList.remove('active');
-                });
-
-                cancelBtn.addEventListener('click', () => {
-                    menuModal.classList.remove('active');
-                });
-
-                closeConfirmModal.addEventListener('click', () => {
-                    confirmModal.classList.remove('active');
-                });
-
-                cancelConfirmBtn.addEventListener('click', () => {
-                    confirmModal.classList.remove('active');
-                });
-
-                confirmBtn.addEventListener('click', () => {
-                    if (confirmAction) {
-                        confirmAction(...confirmActionParams);
-                    }
-                    confirmModal.classList.remove('active');
-                });
-
-                // Form submission
-                menuForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const date = document.getElementById('date').value;
-                    const dishes = document.getElementById('dishes').value;
-                    const cooks = document.getElementById('cooks').value;
-                    const status = document.getElementById('status').value;
-                    const notes = document.getElementById('notes').value;
-
-                    if (menuForm.dataset.mode === 'edit') {
-                        const id = parseInt(menuForm.dataset.id);
-                        const menuIndex = menus.findIndex(m => m.id === id);
-                        
-                        if (menuIndex !== -1) {
-                            menus[menuIndex] = {
-                                id,
-                                date,
-                                dishes,
-                                cooks,
-                                status,
-                                notes
-                            };
-                            
-                            showToast('Cập nhật thực đơn thành công');
-                        }
-                    } else {
-                        const newMenu = {
-                            id: currentMenuId++,
-                            date,
-                            dishes,
-                            cooks,
-                            status,
-                            notes
-                        };
-
-                        menus.push(newMenu);
-                        showToast('Thêm thực đơn thành công');
-                    }
-
-                    menuModal.classList.remove('active');
-                    renderCalendar();
-                    renderTableView();
-                    renderCardsView();
-                });
-
-                // Calendar navigation
-                document.getElementById('prevMonth').addEventListener('click', () => {
-                    currentMonth.setMonth(currentMonth.getMonth() - 1);
-                    renderCalendar();
-                });
-
-                document.getElementById('nextMonth').addEventListener('click', () => {
-                    currentMonth.setMonth(currentMonth.getMonth() + 1);
-                    renderCalendar();
-                });
-
-                todayBtn.addEventListener('click', () => {
-                    currentMonth = new Date();
-                    renderCalendar();
-                });
-
-                // Search and filter
-                document.getElementById('searchInput').addEventListener('input', () => {
-                    currentPage = 1;
-                    renderTableView();
-                    renderCardsView();
-                    updateCalendarHighlights();
-                });
-
-                document.getElementById('statusFilter').addEventListener('change', () => {
-                    currentPage = 1;
-                    renderTableView();
-                    renderCardsView();
-                    updateCalendarHighlights();
-                });
-
-                document.getElementById('dateFilter').addEventListener('change', () => {
-                    currentPage = 1;
-                    renderTableView();
-                    renderCardsView();
-                    updateCalendarHighlights();
-                });
-
-                // Table view search and filter
-                document.getElementById('searchInputTable').addEventListener('input', () => {
-                    currentPage = 1;
-                    renderTableView();
-                });
-
-                document.getElementById('statusFilterTable').addEventListener('change', () => {
-                    currentPage = 1;
-                    renderTableView();
-                });
-
-                document.getElementById('dateFilterTable').addEventListener('change', () => {
-                    currentPage = 1;
-                    renderTableView();
-                });
-
-                // Cards view search and filter
-                document.getElementById('searchInputCards').addEventListener('input', () => {
-                    currentPage = 1;
-                    renderCardsView();
-                });
-
-                document.getElementById('statusFilterCards').addEventListener('change', () => {
-                    currentPage = 1;
-                    renderCardsView();
-                });
-
-                document.getElementById('dateFilterCards').addEventListener('change', () => {
-                    currentPage = 1;
-                    renderCardsView();
-                });
-
-                // Pagination
-                document.getElementById('prevPage').addEventListener('click', () => {
-                    if (currentPage > 1) {
-                        currentPage--;
-                        renderTableView();
-                        renderCardsView();
-                    }
-                });
-
-                document.getElementById('nextPage').addEventListener('click', () => {
-                    const filteredMenus = filterMenus();
-                    if (currentPage < Math.ceil(filteredMenus.length / menusPerPage)) {
-                        currentPage++;
-                        renderTableView();
-                        renderCardsView();
-                    }
-                });
-
-                document.getElementById('prevPageTable').addEventListener('click', () => {
-                    if (currentPage > 1) {
-                        currentPage--;
-                        renderTableView();
-                    }
-                });
-
-                document.getElementById('nextPageTable').addEventListener('click', () => {
-                    const filteredMenus = filterMenus('table');
-                    if (currentPage < Math.ceil(filteredMenus.length / menusPerPage)) {
-                        currentPage++;
-                        renderTableView();
-                    }
-                });
-
-                document.getElementById('prevPageCards').addEventListener('click', () => {
-                    if (currentPage > 1) {
-                        currentPage--;
-                        renderCardsView();
-                    }
-                });
-
-                document.getElementById('nextPageCards').addEventListener('click', () => {
-                    const filteredMenus = filterMenus('cards');
-                    if (currentPage < Math.ceil(filteredMenus.length / menusPerPage)) {
-                        currentPage++;
-                        renderCardsView();
-                    }
-                });
-
-                // Table sorting
-                document.querySelectorAll('.menu-table th i.fa-sort').forEach(icon => {
-                    icon.addEventListener('click', function() {
-                        const column = this.parentElement.textContent.trim();
-                        if (currentSort.column === column) {
-                            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-                        } else {
-                            currentSort.column = column;
-                            currentSort.direction = 'asc';
-                        }
-                        renderTableView();
-                    });
-                });
-            }
-
-            // Filter menus based on search and filters
-            function filterMenus(view = 'all') {
-                let searchTerm = '';
-                let statusFilter = '';
-                let dateFilter = '';
-
-                if (view === 'all' || view === 'calendar') {
-                    searchTerm = document.getElementById('searchInput').value.toLowerCase();
-                    statusFilter = document.getElementById('statusFilter').value;
-                    dateFilter = document.getElementById('dateFilter').value;
-                } else if (view === 'table') {
-                    searchTerm = document.getElementById('searchInputTable').value.toLowerCase();
-                    statusFilter = document.getElementById('statusFilterTable').value;
-                    dateFilter = document.getElementById('dateFilterTable').value;
-                } else if (view === 'cards') {
-                    searchTerm = document.getElementById('searchInputCards').value.toLowerCase();
-                    statusFilter = document.getElementById('statusFilterCards').value;
-                    dateFilter = document.getElementById('dateFilterCards').value;
-                }
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                const startOfWeek = new Date(today);
-                startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
-                
-                const endOfWeek = new Date(today);
-                endOfWeek.setDate(today.getDate() - today.getDay() + 7); // Sunday
-                
-                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-                return menus.filter(menu => {
-                    const menuDate = new Date(menu.date);
-                    menuDate.setHours(0, 0, 0, 0);
-                    
-                    // Search term
-                    const matchesSearch = 
-                        menu.dishes.toLowerCase().includes(searchTerm) ||
-                        menu.cooks.toLowerCase().includes(searchTerm);
-                    
-                    // Status filter
-                    const matchesStatus = !statusFilter || menu.status === statusFilter;
-                    
-                    // Date filter
-                    let matchesDate = true;
-                    if (dateFilter === 'today') {
-                        matchesDate = menuDate.getTime() === today.getTime();
-                    } else if (dateFilter === 'week') {
-                        matchesDate = menuDate >= startOfWeek && menuDate <= endOfWeek;
-                    } else if (dateFilter === 'month') {
-                        matchesDate = menuDate >= startOfMonth && menuDate <= endOfMonth;
-                    } else if (dateFilter === 'upcoming') {
-                        matchesDate = menuDate > today;
-                    } else if (dateFilter === 'past') {
-                        matchesDate = menuDate < today;
-                    }
-                    
-                    return matchesSearch && matchesStatus && matchesDate;
-                });
-            }
-
-            // Sort menus
-            function sortMenus(menusToSort) {
-                return [...menusToSort].sort((a, b) => {
-                    let comparison = 0;
-                    
-                    if (currentSort.column === 'Ngày') {
-                        comparison = new Date(a.date) - new Date(b.date);
-                    } else if (currentSort.column === 'Món ăn') {
-                        comparison = a.dishes.localeCompare(b.dishes);
-                    } else if (currentSort.column === 'Người nấu') {
-                        comparison = a.cooks.localeCompare(b.cooks);
-                    } else if (currentSort.column === 'Trạng thái') {
-                        comparison = a.status.localeCompare(b.status);
-                    }
-                    
-                    return currentSort.direction === 'asc' ? comparison : -comparison;
-                });
-            }
-
-            // Render calendar
-            function renderCalendar() {
-                const calendarGrid = document.getElementById('calendarGrid');
-                calendarGrid.innerHTML = '';
-                
-                const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-                days.forEach(day => {
-                    const dayHeader = document.createElement('div');
-                    dayHeader.className = 'calendar-day calendar-day-header';
-                    dayHeader.textContent = day;
-                    calendarGrid.appendChild(dayHeader);
-                });
-
-                const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
-                const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
-                const offset = firstDay === 0 ? 6 : firstDay - 1;
-
-                for (let i = 0; i < offset; i++) {
-                    const emptyDay = document.createElement('div');
-                    emptyDay.className = 'calendar-day';
-                    calendarGrid.appendChild(emptyDay);
-                }
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                for (let i = 1; i <= daysInMonth; i++) {
-                    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i);
-                    const dateStr = date.toISOString().split('T')[0];
-                    const dayMenus = menus.filter(menu => menu.date === dateStr);
-                    const isToday = date.getTime() === today.getTime() && 
-                                    date.getMonth() === today.getMonth() && 
-                                    date.getFullYear() === today.getFullYear();
-
-                    const day = document.createElement('div');
-                    day.className = `calendar-day ${dayMenus.length > 0 ? 'has-menu' : ''} ${isToday ? 'today' : ''}`;
-                    
-                    const dayNumber = document.createElement('div');
-                    dayNumber.className = 'calendar-day-number';
-                    dayNumber.textContent = i;
-                    day.appendChild(dayNumber);
-                    
-                    if (dayMenus.length > 0) {
-                        const dayMenu = document.createElement('div');
-                        dayMenu.className = 'calendar-day-menu';
-                        dayMenu.textContent = dayMenus[0].dishes.split('\n')[0];
-                        day.appendChild(dayMenu);
-                    }
-                    
-                    day.dataset.date = dateStr;
-                    day.addEventListener('click', () => {
-                        if (dayMenus.length > 0) {
-                            // Apply filter for this date
-                            document.getElementById('dateFilter').value = '';
-                            document.getElementById('dateFilterTable').value = '';
-                            document.getElementById('dateFilterCards').value = '';
-                            
-                            document.getElementById('searchInput').value = '';
-                            document.getElementById('searchInputTable').value = '';
-                            document.getElementById('searchInputCards').value = '';
-                            
-                            document.getElementById('statusFilter').value = '';
-                            document.getElementById('statusFilterTable').value = '';
-                            document.getElementById('statusFilterCards').value = '';
-                            
-                            currentPage = 1;
-                            renderTableView();
-                            renderCardsView();
-                        }
-                    });
-                    
-                    calendarGrid.appendChild(day);
-                }
-
-                calendarTitle.textContent = `${currentMonth.toLocaleString('vi', { month: 'long' })}, ${currentMonth.getFullYear()}`;
-                updateCalendarHighlights();
-            }
-
-            // Update calendar highlights based on filters
-            function updateCalendarHighlights() {
-                const filteredMenus = filterMenus();
-                const dateSet = new Set(filteredMenus.map(menu => menu.date));
-                
-                document.querySelectorAll('.calendar-day').forEach(day => {
-                    if (day.dataset.date) {
-                        if (dateSet.has(day.dataset.date)) {
-                            day.classList.add('has-menu');
-                        } else {
-                            day.classList.remove('has-menu');
-                        }
-                    }
-                });
-            }
-
-            // Render table view
-            function renderTableView() {
-                const menuTableBody = document.getElementById('menuTableBodyTable');
-                const emptyState = document.getElementById('emptyStateTable');
-                const filteredMenus = filterMenus('table');
-                const sortedMenus = sortMenus(filteredMenus);
-                const paginatedMenus = sortedMenus.slice((currentPage - 1) * menusPerPage, currentPage * menusPerPage);
-
-                menuTableBody.innerHTML = '';
-                
-                if (paginatedMenus.length === 0) {
-                    emptyState.style.display = 'block';
-                } else {
-                    emptyState.style.display = 'none';
-                    
-                    paginatedMenus.forEach(menu => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${formatDate(menu.date)}</td>
-                            <td>${menu.dishes.replace(/\n/g, '<br>')}</td>
-                            <td>${menu.cooks}</td>
-                            <td><span class="status status-${menu.status.toLowerCase()}">
-                                <i class="fas fa-${menu.status === 'Preparing' ? 'clock' : 'check'}"></i>
-                                ${menu.status === 'Preparing' ? 'Đang chuẩn bị' : 'Hoàn thành'}
-                            </span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="action-btn edit-btn" data-id="${menu.id}" title="Chỉnh sửa">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="action-btn delete-btn" data-id="${menu.id}" title="Xóa">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        `;
-                        menuTableBody.appendChild(row);
-                    });
-                }
-
-                updatePagination(filteredMenus.length, 'table');
-                setupTableActionListeners();
-            }
-
-            // Render cards view
-            function renderCardsView() {
-                const cardsContainer = document.getElementById('cardsContainer');
-                const emptyState = document.getElementById('emptyStateCards');
-                const filteredMenus = filterMenus('cards');
-                const paginatedMenus = filteredMenus.slice((currentPage - 1) * menusPerPage, currentPage * menusPerPage);
-
-                cardsContainer.innerHTML = '';
-                
-                if (paginatedMenus.length === 0) {
-                    emptyState.style.display = 'block';
-                } else {
-                    emptyState.style.display = 'none';
-                    
-                    paginatedMenus.forEach(menu => {
-                        const card = document.createElement('div');
-                        card.className = 'menu-card';
-                        card.innerHTML = `
-                            <div class="menu-card-header">
-                                <div class="menu-card-date">${formatDate(menu.date)}</div>
-                                <div class="menu-card-status status status-${menu.status.toLowerCase()}">
-                                    <i class="fas fa-${menu.status === 'Preparing' ? 'clock' : 'check'}"></i>
-                                    ${menu.status === 'Preparing' ? 'Đang chuẩn bị' : 'Hoàn thành'}
-                                </div>
-                            </div>
-                            <div class="menu-card-dishes">${menu.dishes.replace(/\n/g, '<br>')}</div>
-                            <div class="menu-card-cooks">
-                                <i class="fas fa-user"></i> ${menu.cooks}
-                            </div>
-                            ${menu.notes ? `<div class="menu-card-notes">${menu.notes}</div>` : ''}
-                            <div class="menu-card-actions">
-                                <button class="action-btn edit-btn" data-id="${menu.id}" title="Chỉnh sửa">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="action-btn delete-btn" data-id="${menu.id}" title="Xóa">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        `;
-                        cardsContainer.appendChild(card);
-                    });
-                }
-
-                updatePagination(filteredMenus.length, 'cards');
-                setupCardsActionListeners();
-            }
-
-            // Setup action listeners for table view
-            function setupTableActionListeners() {
-                document.querySelectorAll('.edit-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const id = parseInt(this.getAttribute('data-id'));
-                        const menu = menus.find(m => m.id === id);
-                        
-                        if (menu) {
-                            menuModal.classList.add('active');
-                            document.querySelector('.modal-title').textContent = 'Chỉnh sửa thực đơn';
-                            document.getElementById('date').value = menu.date;
-                            document.getElementById('dishes').value = menu.dishes;
-                            document.getElementById('cooks').value = menu.cooks;
-                            document.getElementById('status').value = menu.status;
-                            document.getElementById('notes').value = menu.notes || '';
-                            menuForm.dataset.mode = 'edit';
-                            menuForm.dataset.id = id;
-                        }
-                    });
-                });
-
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const id = parseInt(this.getAttribute('data-id'));
-                        showConfirm(
-                            'Xác nhận xóa',
-                            'Bạn có chắc muốn xóa thực đơn này?',
-                            () => {
-                                menus = menus.filter(m => m.id !== id);
-                                renderCalendar();
-                                renderTableView();
-                                renderCardsView();
-                                showToast('Đã xóa thực đơn');
-                            }
-                        );
-                    });
-                });
-            }
-
-            // Setup action listeners for cards view
-            function setupCardsActionListeners() {
-                document.querySelectorAll('.menu-card .edit-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const id = parseInt(this.getAttribute('data-id'));
-                        const menu = menus.find(m => m.id === id);
-                        
-                        if (menu) {
-                            menuModal.classList.add('active');
-                            document.querySelector('.modal-title').textContent = 'Chỉnh sửa thực đơn';
-                            document.getElementById('date').value = menu.date;
-                            document.getElementById('dishes').value = menu.dishes;
-                            document.getElementById('cooks').value = menu.cooks;
-                            document.getElementById('status').value = menu.status;
-                            document.getElementById('notes').value = menu.notes || '';
-                            menuForm.dataset.mode = 'edit';
-                            menuForm.dataset.id = id;
-                        }
-                    });
-                });
-
-                document.querySelectorAll('.menu-card .delete-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const id = parseInt(this.getAttribute('data-id'));
-                        showConfirm(
-                            'Xác nhận xóa',
-                            'Bạn có chắc muốn xóa thực đơn này?',
-                            () => {
-                                menus = menus.filter(m => m.id !== id);
-                                renderCalendar();
-                                renderTableView();
-                                renderCardsView();
-                                showToast('Đã xóa thực đơn');
-                            }
-                        );
-                    });
-                });
-            }
-
-            // Update pagination controls
-            function updatePagination(totalMenus, view = 'all') {
-                const totalPages = Math.ceil(totalMenus / menusPerPage);
-                
-                if (view === 'all' || view === 'calendar') {
-                    document.getElementById('prevPage').disabled = currentPage === 1;
-                    document.getElementById('nextPage').disabled = currentPage === totalPages || totalPages === 0;
-                    
-                    const pageNumbers = document.getElementById('pageNumbers');
-                    pageNumbers.innerHTML = '';
-                    
-                    for (let i = 1; i <= totalPages; i++) {
-                        const btn = document.createElement('button');
-                        btn.className = `btn ${i === currentPage ? 'btn-primary' : 'btn-outline'}`;
-                        btn.textContent = i;
-                        btn.addEventListener('click', () => {
-                            currentPage = i;
-                            renderTableView();
-                            renderCardsView();
-                        });
-                        pageNumbers.appendChild(btn);
-                    }
-                }
-                
-                if (view === 'table') {
-                    document.getElementById('prevPageTable').disabled = currentPage === 1;
-                    document.getElementById('nextPageTable').disabled = currentPage === totalPages || totalPages === 0;
-                    
-                    const pageNumbers = document.getElementById('pageNumbersTable');
-                    pageNumbers.innerHTML = '';
-                    
-                    for (let i = 1; i <= totalPages; i++) {
-                        const btn = document.createElement('button');
-                        btn.className = `btn ${i === currentPage ? 'btn-primary' : 'btn-outline'}`;
-                        btn.textContent = i;
-                        btn.addEventListener('click', () => {
-                            currentPage = i;
-                            renderTableView();
-                        });
-                        pageNumbers.appendChild(btn);
-                    }
-                }
-                
-                if (view === 'cards') {
-                    document.getElementById('prevPageCards').disabled = currentPage === 1;
-                    document.getElementById('nextPageCards').disabled = currentPage === totalPages || totalPages === 0;
-                    
-                    const pageNumbers = document.getElementById('pageNumbersCards');
-                    pageNumbers.innerHTML = '';
-                    
-                    for (let i = 1; i <= totalPages; i++) {
-                        const btn = document.createElement('button');
-                        btn.className = `btn ${i === currentPage ? 'btn-primary' : 'btn-outline'}`;
-                        btn.textContent = i;
-                        btn.addEventListener('click', () => {
-                            currentPage = i;
-                            renderCardsView();
-                        });
-                        pageNumbers.appendChild(btn);
-                    }
-                }
-            }
-
-            // Format date
-            function formatDate(dateStr) {
-                const date = new Date(dateStr);
-                return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            }
-
-            // Show confirmation dialog
-            function showConfirm(title, message, action, ...params) {
-                confirmMessage.textContent = message;
-                document.querySelector('#confirmModal .modal-title').textContent = title;
-                confirmAction = action;
-                confirmActionParams = params;
-                confirmModal.classList.add('active');
-            }
-
-            // Show toast notification
-            function showToast(message) {
-                const toast = document.createElement('div');
-                toast.className = 'toast-notification';
-                toast.textContent = message;
-                document.body.appendChild(toast);
-                
-                setTimeout(() => {
-                    toast.classList.add('show');
-                }, 10);
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => {
-                        document.body.removeChild(toast);
-                    }, 300);
-                }, 3000);
-            }
-
-            // Initialize the app
-            initApp();
-        });
-    </script>
+    <!-- js chung -->
+    <script src="../static/js/app.js"></script>
+    <!-- js riêng -->
+     <script src="../static/js/thucdon.js"></script>
 </body>
+
 </html>

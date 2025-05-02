@@ -86,6 +86,10 @@ def thucdon():
 @app.route('/trang-ca-nhan')
 def profile():
     return render_template('profile.html')
+# Trang nấu ăn
+@app.route('/lich-nau-an')
+def lichnauan():
+    return render_template('lichnauan.html')
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -1133,125 +1137,276 @@ def create_low_stock_notification(item_id, item_name, quantity, threshold):
     cursor.close()
     conn.close()
 GROUP_ID = 1   # tạm lấy nhóm=1, bạn có thể lấy từ session hoặc param khác
-
-# --- Lấy danh sách tasks (có filter qua querystring nếu cần) ---
 @app.route('/api/tasks', methods=['GET'])
 def get_tasks():
-    status = request.args.get('status')      # 'completed', 'pending', 'overdue' hoặc None
-    assignee = request.args.get('assignee')  # 'A','B','C' hoặc None
-    from_date = request.args.get('from_date')
-    to_date = request.args.get('to_date')
+    try:
+        status = request.args.get('status')      # 'completed', 'pending', 'overdue' hoặc None
+        assignee = request.args.get('assignee')  # 'A','B','C' hoặc None
+        from_date = request.args.get('from_date')
+        to_date = request.args.get('to_date')
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+        # Validate input
+        valid_statuses = {'completed', 'pending', 'overdue', None}
+        if status not in valid_statuses:
+            return jsonify({"error": "Trạng thái không hợp lệ"}), 400
 
-    sql = "SELECT * FROM tasks WHERE group_id = %s"
-    params = [GROUP_ID]
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
-    # thêm điều kiện filter nếu có
-    today = date.today().isoformat()
-    if status == 'completed':
-        sql += " AND completed = 1"
-    elif status == 'pending':
-        sql += " AND completed = 0 AND due_date >= %s"
-        params.append(today)
-    elif status == 'overdue':
-        sql += " AND completed = 0 AND due_date < %s"
-        params.append(today)
+        sql = """
+            SELECT 
+                tasks.*, 
+                users.full_name AS assignee_name
+            FROM tasks
+            LEFT JOIN members ON tasks.assignee_id = members.id
+            LEFT JOIN users ON members.user_id = users.id
+            WHERE tasks.group_id = %s
+        """
+        params = [GROUP_ID]
 
-    if assignee and assignee != 'all':
-        sql += " AND assignee_id = (SELECT id FROM members WHERE initial = %s LIMIT 1)"
-        params.append(assignee)
+        today = date.today().isoformat()
+        if status == 'completed':
+            sql += " AND tasks.completed = 1"
+        elif status == 'pending':
+            sql += " AND tasks.completed = 0 AND tasks.due_date >= %s"
+            params.append(today)
+        elif status == 'overdue':
+            sql += " AND tasks.completed = 0 AND tasks.due_date < %s"
+            params.append(today)
 
-    if from_date:
-        sql += " AND due_date >= %s"
-        params.append(from_date)
-    if to_date:
-        sql += " AND due_date <= %s"
-        params.append(to_date)
+        if assignee and assignee != 'all':
+            sql += " AND tasks.assignee_id = (SELECT id FROM members WHERE initial = %s LIMIT 1)"
+            params.append(assignee)
 
-    cursor.execute(sql, params)
-    tasks = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return jsonify(tasks)
+        if from_date:
+            sql += " AND tasks.due_date >= %s"
+            params.append(from_date)
+        if to_date:
+            sql += " AND tasks.due_date <= %s"
+            params.append(to_date)
 
+        cursor.execute(sql, params)
+        tasks = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(tasks), 200
+    except mysql.connector.Error as e:
+        return jsonify({"error": f"Lỗi cơ sở dữ liệu: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Lỗi hệ thống: {str(e)}"}), 500
 
 # --- Tạo mới task ---
-@app.route('/api/tasks', methods=['POST'])
+@app.route('/api/creat_tasks', methods=['POST'])
 def create_task():
-    data = request.get_json()
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO tasks
-          (group_id, custom_type, description, assignee_id, due_date, priority, completed)
-        VALUES
-          (%s, %s, %s,
-           (SELECT id FROM members WHERE initial = %s LIMIT 1),
-           %s, %s, 0)
-        """,
-        (GROUP_ID,
-         data.get('type'),        # vì bạn lưu type trực tiếp vào custom_type
-         data.get('desc'),
-         data.get('assignee'),
-         data.get('date'),
-         data.get('priority'))
-    )
-    conn.commit()
-    new_id = cursor.lastrowid
-    cursor.close()
-    conn.close()
-    return jsonify({"id": new_id}), 201
+    try:
+        data = request.get_json()
+        # Bắt buộc có thêm group_id và assignee (dưới dạng ID số)
+        required_fields = ['group_id', 'type', 'assignee', 'date', 'priority']
+        if not data or not all(key in data for key in required_fields):
+            return jsonify({"error": "Thiếu thông tin bắt buộc"}), 400
 
+        # Validate priority
+        valid_priorities = ['low', 'medium', 'high']
+        if data['priority'] not in valid_priorities:
+            return jsonify({"error": "Mức độ ưu tiên không hợp lệ"}), 400
 
+        # Chuyển assignee thành số và validate tồn tại
+        try:
+            assignee_id = int(data['assignee'])
+        except (ValueError, TypeError):
+            return jsonify({"error": "Người phụ trách không hợp lệ"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM members WHERE id = %s LIMIT 1", (assignee_id,))
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Người phụ trách không tồn tại"}), 400
+
+        # Thực hiện INSERT
+        cursor.execute(
+            '''
+            INSERT INTO tasks
+                (group_id, custom_type, description, assignee_id, due_date, priority, completed)
+            VALUES
+                (%s, %s, %s, %s, %s, %s, 0)
+            ''',
+            (
+                data['group_id'],
+                data['type'],
+                data.get('desc'),
+                assignee_id,
+                data['date'],
+                data['priority']
+            )
+        )
+        conn.commit()
+        new_id = cursor.lastrowid
+        cursor.close()
+        conn.close()
+
+        return jsonify({"id": new_id, "message": "Tạo công việc thành công"}), 201
+
+    except mysql.connector.Error as e:
+        app.logger.error(f"DB Error: {e}")
+        return jsonify({"error": f"Lỗi cơ sở dữ liệu: {str(e)}"}), 500
+    except Exception as e:
+        app.logger.error(f"System Error: {e}")
+        return jsonify({"error": f"Lỗi hệ thống: {str(e)}"}), 500
 # --- Cập nhật task (edit + markComplete) ---
 @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
 def update_task(task_id):
-    data = request.get_json()
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        UPDATE tasks
-        SET
-          custom_type = %s,
-          description = %s,
-          assignee_id = (SELECT id FROM members WHERE initial = %s LIMIT 1),
-          due_date = %s,
-          priority = %s,
-          completed = %s
-        WHERE id = %s AND group_id = %s
-        """,
-        (data.get('type'),
-         data.get('desc'),
-         data.get('assignee'),
-         data.get('date'),
-         data.get('priority'),
-         1 if data.get('completed') else 0,
-         task_id,
-         GROUP_ID)
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return jsonify({"updated": True})
+    try:
+        data = request.get_json()
+        # 1. Yêu cầu các field giống bên create_task
+        required_fields = ['type', 'desc', 'assignee', 'date', 'priority']
+        if not data or not all(field in data for field in required_fields):
+            return jsonify({"error": "Thiếu thông tin bắt buộc"}), 400
 
+        # 2. Validate priority
+        valid_priorities = ['low', 'medium', 'high']
+        if data['priority'] not in valid_priorities:
+            return jsonify({"error": "Mức độ ưu tiên không hợp lệ"}), 400
+
+        # 3. Ép assignee thành số
+        try:
+            assignee_id = int(data['assignee'])
+        except (ValueError, TypeError):
+            return jsonify({"error": "Người phụ trách không hợp lệ"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # 4. Kiểm tra task tồn tại trong nhóm
+        cursor.execute(
+            "SELECT id FROM tasks WHERE id = %s AND group_id = %s",
+            (task_id, GROUP_ID)
+        )
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Công việc không tồn tại"}), 404
+
+        # 5. Kiểm tra assignee có thuộc nhóm hay không
+        cursor.execute(
+            "SELECT id FROM members WHERE id = %s AND group_id = %s LIMIT 1",
+            (assignee_id, GROUP_ID)
+        )
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Người phụ trách không tồn tại hoặc không thuộc nhóm"}), 400
+
+        # 6. Thực hiện UPDATE, ánh xạ payload sang cột DB
+        cursor.execute(
+            """
+            UPDATE tasks
+            SET
+                custom_type = %s,
+                description = %s,
+                assignee_id = %s,
+                due_date    = %s,
+                priority    = %s,
+                completed   = %s
+            WHERE id = %s AND group_id = %s
+            """,
+            (
+                data['type'],
+                data.get('desc'),
+                assignee_id,
+                data['date'],
+                data['priority'],
+                1 if data.get('completed') else 0,
+                task_id,
+                GROUP_ID
+            )
+        )
+
+        if cursor.rowcount == 0:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Không thể cập nhật công việc"}), 400
+
+        # 7. Lấy lại task vừa sửa để trả về, alias tránh dùng từ khóa SQL
+        cursor.execute(
+            """
+            SELECT
+                t.id,
+                t.custom_type    AS type,
+                t.description    AS description,
+                t.due_date       AS due_date,
+                t.priority,
+                t.completed,
+                u.full_name      AS assignee_name,
+                t.assignee_id
+            FROM tasks t
+            LEFT JOIN members m ON t.assignee_id = m.id
+            LEFT JOIN users u   ON m.user_id      = u.id
+            WHERE t.id = %s AND t.group_id = %s
+            """,
+            (task_id, GROUP_ID)
+        )
+        updated_task = cursor.fetchone()
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # 8. Map về keys front‑end cần và trả về
+        return jsonify({
+            "message": "Cập nhật công việc thành công",
+            "task": {
+                "id":            updated_task['id'],
+                "type":          updated_task['type'],
+                "desc":          updated_task['description'],
+                "date":          str(updated_task['due_date']),
+                "priority":      updated_task['priority'],
+                "completed":     bool(updated_task['completed']),
+                "assignee_id":   updated_task['assignee_id'],
+                "assignee_name": updated_task['assignee_name']
+            }
+        }), 200
+
+    except mysql.connector.Error as e:
+        app.logger.error(f"DB Error: {e}")
+        return jsonify({"error": f"Lỗi cơ sở dữ liệu: {str(e)}"}), 500
+    except Exception as e:
+        app.logger.error(f"System Error: {e}")
+        return jsonify({"error": f"Lỗi hệ thống: {str(e)}"}), 500
 
 # --- Xóa task ---
 @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "DELETE FROM tasks WHERE id = %s AND group_id = %s",
-        (task_id, GROUP_ID)
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return jsonify({"deleted": True})
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if task exists
+        cursor.execute("SELECT id FROM tasks WHERE id = %s AND group_id = %s", (task_id, GROUP_ID))
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Công việc không tồn tại"}), 404
+
+        cursor.execute(
+            "DELETE FROM tasks WHERE id = %s AND group_id = %s",
+            (task_id, GROUP_ID)
+        )
+        
+        if cursor.rowcount == 0:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Không thể xóa công việc"}), 400
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"message": "Xóa công việc thành công"}), 200
+    except mysql.connector.Error as e:
+        return jsonify({"error": f"Lỗi cơ sở dữ liệu: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Lỗi hệ thống: {str(e)}"}), 500
 
 
 # --- Đánh dấu hoàn thành nhanh (PATCH) ---
@@ -2125,6 +2280,302 @@ def get_user_initials():
     finally:
         cursor.close()
         conn.close()
+@app.route('/api/unassigned-tasks', methods=['GET'])
+def get_unassigned_tasks():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        sql = """
+            SELECT 
+                COALESCE(tt.name, t.custom_type) AS task_title
+            FROM tasks t
+            LEFT JOIN task_types tt ON t.type_id = tt.id
+            WHERE t.group_id = %s AND t.assignee_id IS NULL
+        """
+        cursor.execute(sql, (GROUP_ID,))
+        rows = cursor.fetchall()
+
+        count = len(rows)
+        task_titles = [row[0] for row in rows if row[0]]
+        task_list = ", ".join(task_titles)
+
+        if count == 0:
+            message = "Tất cả công việc đã được phân công"
+        else:
+            message = f"{count} công việc chưa có người nhận: {task_list}"
+
+        cursor.close()
+        conn.close()
+        return jsonify({"message": message}), 200
+
+    except mysql.connector.Error as e:
+        return jsonify({"error": f"Lỗi cơ sở dữ liệu: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Lỗi hệ thống: {str(e)}"}), 500
+# API: Lấy danh sách thực đơn
+@app.route('/menus_api', methods=['GET'])
+def get_menus_api():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        # Lấy tham số lọc và phân trang
+        status = request.args.get('status', '')
+        date = request.args.get('date', '')
+        search = request.args.get('search', '')
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 5))
+        sort_column = request.args.get('sort_column', 'menu_date')
+        sort_direction = request.args.get('sort_direction', 'asc')
+        
+        # Xây dựng truy vấn
+        query = """
+            SELECT 
+                m.id,
+                m.menu_date,
+                m.status,
+                m.notes,
+                GROUP_CONCAT(DISTINCT md.dish_name SEPARATOR '\n') AS dishes,
+                GROUP_CONCAT(DISTINCT u.full_name SEPARATOR ', ') AS cooks
+            FROM menus m
+            LEFT JOIN menu_dishes md ON m.id = md.menu_id
+            LEFT JOIN menu_cooks mc ON m.id = mc.menu_id
+            LEFT JOIN members me ON mc.member_id = me.id
+            LEFT JOIN users u ON me.user_id = u.id
+            WHERE m.group_id = %s
+        """
+        params = [1]  # Giả định group_id = 1, thay đổi theo thực tế
+        
+        # Áp dụng bộ lọc
+        if status:
+            query += " AND m.status = %s"
+            params.append(status)
+        if date:
+            query += " AND m.menu_date = %s"
+            params.append(date)
+        if search:
+            query += " AND (md.dish_name LIKE %s OR u.full_name LIKE %s)"
+            params.extend([f'%{search}%', f'%{search}%'])
+        
+        query += " GROUP BY m.id"
+        
+        # Áp dụng sắp xếp
+        if sort_column in ['menu_date', 'status']:
+            query += f" ORDER BY m.{sort_column} {sort_direction}"
+        elif sort_column == 'dishes':
+            query += f" ORDER BY dishes {sort_direction}"
+        elif sort_column == 'cooks':
+            query += f" ORDER BY cooks {sort_direction}"
+        
+        # Áp dụng phân trang
+        offset = (page - 1) * per_page
+        query += " LIMIT %s OFFSET %s"
+        params.extend([per_page, offset])
+        
+        cursor.execute(query, params)
+        menus = cursor.fetchall()
+        
+        # Đếm tổng số bản ghi để phân trang
+        count_query = """
+            SELECT COUNT(DISTINCT m.id)
+            FROM menus m
+            LEFT JOIN menu_dishes md ON m.id = md.menu_id
+            LEFT JOIN menu_cooks mc ON m.id = mc.menu_id
+            LEFT JOIN members me ON mc.member_id = me.id
+            LEFT JOIN users u ON me.user_id = u.id
+            WHERE m.group_id = %s
+        """
+        count_params = [1]
+        if status:
+            count_query += " AND m.status = %s"
+            count_params.append(status)
+        if date:
+            count_query += " AND m.menu_date = %s"
+            count_params.append(date)
+        if search:
+            count_query += " AND (md.dish_name LIKE %s OR u.full_name LIKE %s)"
+            count_params.extend([f'%{search}%', f'%{search}%'])
+        
+        cursor.execute(count_query, count_params)
+        total = cursor.fetchone()['COUNT(DISTINCT m.id)']
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'menus': menus,
+            'total': total,
+            'page': page,
+            'per_page': per_page
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API: Lấy chi tiết thực đơn
+@app.route('/menu_api/<int:id>', methods=['GET'])
+def get_menu_api(id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        # Lấy thông tin thực đơn
+        cursor.execute("""
+            SELECT 
+                m.id,
+                m.menu_date,
+                m.status,
+                m.notes,
+                GROUP_CONCAT(DISTINCT md.dish_name SEPARATOR '\n') AS dishes,
+                GROUP_CONCAT(DISTINCT u.full_name SEPARATOR ', ') AS cooks
+            FROM menus m
+            LEFT JOIN menu_dishes md ON m.id = md.menu_id
+            LEFT JOIN menu_cooks mc ON m.id = mc.menu_id
+            LEFT JOIN members me ON mc.member_id = me.id
+            LEFT JOIN users u ON me.user_id = u.id
+            WHERE m.id = %s AND m.group_id = %s
+            GROUP BY m.id
+        """, (id, 1))
+        menu = cursor.fetchone()
+        
+        cursor.close()
+        connection.close()
+        
+        if not menu:
+            return jsonify({'error': 'Menu not found'}), 404
+        
+        return jsonify(menu)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API: Thêm thực đơn
+@app.route('/menu_api', methods=['POST'])
+def add_menu_api():
+    try:
+        data = request.json
+        menu_date = data.get('menu_date')
+        dishes = data.get('dishes', '').split('\n')
+        cooks = data.get('cooks', '').split(', ')
+        status = data.get('status', 'Preparing')
+        notes = data.get('notes', '')
+        
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        # Thêm thực đơn
+        cursor.execute("""
+            INSERT INTO menus (group_id, member_id, menu_date, status, notes)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (1, 1, menu_date, status, notes))  # Giả định group_id = 1, member_id = 1
+        menu_id = cursor.lastrowid
+        
+        # Thêm món ăn
+        for dish in dishes:
+            if dish.strip():
+                cursor.execute("""
+                    INSERT INTO menu_dishes (menu_id, dish_name)
+                    VALUES (%s, %s)
+                """, (menu_id, dish.strip()))
+        
+        # Thêm người nấu
+        for cook in cooks:
+            if cook.strip():
+                cursor.execute("""
+                    INSERT INTO menu_cooks (menu_id, member_id)
+                    SELECT %s, m.id
+                    FROM members m
+                    JOIN users u ON m.user_id = u.id
+                    WHERE u.full_name = %s
+                """, (menu_id, cook.strip()))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({'message': 'Menu added successfully', 'id': menu_id}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API: Sửa thực đơn
+@app.route('/menu_api/<int:id>', methods=['PUT'])
+def update_menu_api(id):
+    try:
+        data = request.json
+        menu_date = data.get('menu_date')
+        dishes = data.get('dishes', '').split('\n')
+        cooks = data.get('cooks', '').split(', ')
+        status = data.get('status')
+        notes = data.get('notes', '')
+        
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        # Cập nhật thông tin thực đơn
+        cursor.execute("""
+            UPDATE menus
+            SET menu_date = %s, status = %s, notes = %s
+            WHERE id = %s AND group_id = %s
+        """, (menu_date, status, notes, id, 1))
+        
+        if cursor.rowcount == 0:
+            cursor.close()
+            connection.close()
+            return jsonify({'error': 'Menu not found'}), 404
+        
+        # Xóa món ăn cũ
+        cursor.execute("DELETE FROM menu_dishes WHERE menu_id = %s", (id,))
+        
+        # Thêm món ăn mới
+        for dish in dishes:
+            if dish.strip():
+                cursor.execute("""
+                    INSERT INTO menu_dishes (menu_id, dish_name)
+                    VALUES (%s, %s)
+                """, (id, dish.strip()))
+        
+        # Xóa người nấu cũ
+        cursor.execute("DELETE FROM menu_cooks WHERE menu_id = %s", (id,))
+        
+        # Thêm người nấu mới
+        for cook in cooks:
+            if cook.strip():
+                cursor.execute("""
+                    INSERT INTO menu_cooks (menu_id, member_id)
+                    SELECT %s, m.id
+                    FROM members m
+                    JOIN users u ON m.user_id = u.id
+                    WHERE u.full_name = %s
+                """, (id, cook.strip()))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({'message': 'Menu updated successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API: Xóa thực đơn
+@app.route('/menu_api/<int:id>', methods=['DELETE'])
+def delete_menu_api(id):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        
+        cursor.execute("DELETE FROM menus WHERE id = %s AND group_id = %s", (id, 1))
+        
+        if cursor.rowcount == 0:
+            cursor.close()
+            connection.close()
+            return jsonify({'error': 'Menu not found'}), 404
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({'message': 'Menu deleted successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

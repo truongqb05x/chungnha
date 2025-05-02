@@ -7,21 +7,325 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
-    <link rel="stylesheet" href="../static/css/app.css">
-
     <style>
+        :root {
+            --primary: #FF6D28;
+            --primary-dark: #e05a1a;
+            --primary-light: #ffece2;
+            --secondary: #3DA7C8;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+            
+            --text: #1F2937;
+            --text-light: #6B7280;
+            --text-lighter: #9CA3AF;
+            
+            --bg: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --border: #E5E7EB;
+            --border-light: #F3F4F6;
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --transition: all 0.2s ease;
+        }
+
+        [data-theme="dark"] {
+            --primary: #FF6D28;
+            --primary-dark: #e05a1a;
+            --primary-light: #3a2619;
+            --secondary: #3DA7C8;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+            
+            --text: #F9FAFB;
+            --text-light: #D1D5DB;
+            --text-lighter: #9CA3AF;
+            
+            --bg: #111827;
+            --card-bg: #1F2937;
+            --border: #374151;
+            --border-light: #4B5563;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            transition: var(--transition);
+            line-height: 1.5;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+        }
+
+        /* Header styles */
+        .header {
+            grid-column: 2 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 2rem;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-icon {
+            position: relative;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+
+        .header-icon:hover {
+            color: var(--primary);
+        }
+
+        .badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background-color: var(--danger);
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: 600;
+        }
+
+        .theme-icon {
+            font-size: 1.1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            grid-column: 1 / 2;
+            grid-row: 1 / 3;
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-sm);
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .sidebar-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+        }
+
+        .sidebar-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-group {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+
+        .nav-item:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .nav-icon {
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-text {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .theme-toggle {
+            display: flex;
+            background-color: var(--border-light);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+        }
+
+        .theme-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            border: none;
+            width: 100%;
+        }
+
+        .logout-btn:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Main content styles */
+        .main-content {
+            grid-column: 2 / 3;
+            padding: 2rem;
+            background-color: var(--bg);
+        }
+
+        /* Profile section styles */
         .profile-section {
             background-color: var(--card-bg);
             border-radius: var(--radius-md);
             padding: 1.5rem;
             margin-bottom: 2rem;
             box-shadow: var(--shadow-md);
+            transition: var(--transition);
         }
 
         .profile-section h2 {
             font-size: 1.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .profile-section h2 i {
+            font-size: 1.3rem;
         }
 
         .profile-header {
@@ -44,6 +348,12 @@
             font-weight: 600;
             position: relative;
             cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+        }
+
+        .profile-avatar:hover {
+            transform: scale(1.03);
         }
 
         .profile-avatar img {
@@ -66,6 +376,11 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .avatar-upload:hover {
+            transform: scale(1.1);
         }
 
         .avatar-upload input {
@@ -81,20 +396,52 @@
         .profile-info p {
             color: var(--text-light);
             font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .profile-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
         }
 
         .profile-form {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            margin-bottom: 2rem;
+            gap: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-light);
         }
 
         .profile-form input {
-            padding: 0.75rem;
+            padding: 0.75rem 1rem;
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            background-color: var(--bg);
+            color: var(--text);
+            transition: var(--transition);
+        }
+
+        .profile-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-light);
         }
 
         .profile-form button {
@@ -106,23 +453,142 @@
             cursor: pointer;
             transition: var(--transition);
             align-self: flex-start;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .profile-form button:hover {
             background-color: var(--primary-dark);
+            transform: translateY(-1px);
         }
 
+        .profile-form button i {
+            font-size: 0.9rem;
+        }
+
+        /* Security section styles */
+        .security-section {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+
+        .security-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .security-section h2 i {
+            font-size: 1.3rem;
+        }
+
+        .security-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .security-item:last-child {
+            border-bottom: none;
+        }
+
+        .security-info {
+            flex: 1;
+        }
+
+        .security-info h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .security-info p {
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        .security-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .security-btn {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .security-btn.change {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .security-btn.change:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .security-btn.toggle {
+            background-color: var(--border-light);
+            color: var(--text);
+        }
+
+        .security-btn.toggle:hover {
+            background-color: var(--border);
+        }
+
+        .security-btn i {
+            font-size: 0.8rem;
+        }
+
+        /* Group section styles */
         .group-section {
             background-color: var(--card-bg);
             border-radius: var(--radius-md);
             padding: 1.5rem;
             box-shadow: var(--shadow-md);
+            transition: var(--transition);
         }
 
         .group-section h2 {
             font-size: 1.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .group-section h2 i {
+            font-size: 1.3rem;
+        }
+
+        .group-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .group-item {
@@ -130,11 +596,14 @@
             justify-content: space-between;
             align-items: center;
             padding: 1rem;
-            border-bottom: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background-color: var(--bg);
+            transition: var(--transition);
         }
 
-        .group-item:last-child {
-            border-bottom: none;
+        .group-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
         }
 
         .group-info {
@@ -145,11 +614,26 @@
             font-size: 1.1rem;
             font-weight: 500;
             margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .group-info h3 i {
+            color: var(--primary);
+            font-size: 0.9rem;
         }
 
         .group-info p {
             color: var(--text-light);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .group-info p i {
+            font-size: 0.8rem;
         }
 
         .group-actions {
@@ -164,6 +648,14 @@
             cursor: pointer;
             transition: var(--transition);
             font-weight: 500;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn i {
+            font-size: 0.8rem;
         }
 
         .action-btn.qr {
@@ -173,6 +665,7 @@
 
         .action-btn.qr:hover {
             background-color: #2a7b96;
+            transform: translateY(-1px);
         }
 
         .action-btn.scan {
@@ -182,20 +675,40 @@
 
         .action-btn.scan:hover {
             background-color: #0a8f66;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.leave {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .action-btn.leave:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
         }
 
         .create-group-form {
             display: flex;
             gap: 1rem;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
         }
 
         .create-group-form input {
-            padding: 0.75rem;
+            padding: 0.75rem 1rem;
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             flex: 1;
+            background-color: var(--bg);
+            color: var(--text);
+            transition: var(--transition);
+        }
+
+        .create-group-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-light);
         }
 
         .create-group-form button {
@@ -206,23 +719,43 @@
             border-radius: var(--radius-sm);
             cursor: pointer;
             transition: var(--transition);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .create-group-form button:hover {
             background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .create-group-form button i {
+            font-size: 0.9rem;
         }
 
         .qr-code {
-            margin-top: 1rem;
+            margin-top: 1.5rem;
             text-align: center;
+            padding: 1.5rem;
+            background-color: var(--bg);
+            border-radius: var(--radius-sm);
         }
 
         .qr-code img {
             max-width: 200px;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .qr-code p {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
         }
 
         .qr-scanner {
-            margin-top: 1rem;
+            margin-top: 1.5rem;
             text-align: center;
         }
 
@@ -230,6 +763,7 @@
             max-width: 100%;
             border-radius: var(--radius-sm);
             border: 1px solid var(--border);
+            background-color: black;
         }
 
         .qr-scanner-controls {
@@ -239,6 +773,208 @@
             margin-top: 1rem;
         }
 
+        .no-groups {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-light);
+        }
+
+        .no-groups i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        /* Devices section styles */
+        .devices-section {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .devices-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .devices-section h2 i {
+            font-size: 1.3rem;
+        }
+
+        .device-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            background-color: var(--bg);
+            margin-bottom: 0.75rem;
+            transition: var(--transition);
+        }
+
+        .device-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .device-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .device-info {
+            flex: 1;
+        }
+
+        .device-info h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .device-info p {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .device-info p i {
+            font-size: 0.8rem;
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .device-btn {
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: transparent;
+            color: var(--text-light);
+        }
+
+        .device-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* Notification section styles */
+        .notification-section {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .notification-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .notification-section h2 i {
+            font-size: 1.3rem;
+        }
+
+        .notification-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-info {
+            flex: 1;
+        }
+
+        .notification-info h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .notification-info p {
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        .notification-toggle {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .notification-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .notification-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .notification-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .notification-toggle input:checked + .notification-slider {
+            background-color: var(--primary);
+        }
+
+        .notification-toggle input:checked + .notification-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Responsive styles */
         @media (max-width: 1024px) {
             .app-container {
                 grid-template-columns: 240px 1fr;
@@ -296,6 +1032,16 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+
+            .profile-avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 2rem;
+            }
+
+            .create-group-form {
+                flex-direction: column;
+            }
         }
 
         @media (max-width: 480px) {
@@ -313,13 +1059,26 @@
                 font-size: 1.5rem;
             }
 
-            .create-group-form {
+            .group-item {
                 flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
             }
 
-            .create-group-form input,
-            .create-group-form button {
+            .group-actions {
                 width: 100%;
+                justify-content: flex-end;
+            }
+
+            .security-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .security-actions {
+                width: 100%;
+                justify-content: flex-end;
             }
         }
     </style>
@@ -334,13 +1093,15 @@
             <h1 class="header-title">Trang Cá Nhân</h1>
             <div class="header-actions">
                 <div class="header-icon">
-                    <i class="fas fa-bell"></i>
+                    <a href="/thong-bao" class="btn" style="color: inherit;">
+                        <i class="fas fa-bell"></i>
+                    </a>
                     <span class="badge">3</span>
                 </div>
                 <div class="header-icon theme-icon">
                     <i class="fas fa-moon"></i>
                 </div>
-                <div class="user-avatar" id="header-avatar">NM</div>
+                <a href="/trang-ca-nhan" class="user-avatar" id="header-avatar" style="text-decoration: none;">NM</a>
             </div>
         </header>
 
@@ -348,41 +1109,97 @@
         <nav class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <i class="fas fa-user"></i>
+                    <a href="/trang-ca-nhan">
+                        <img src="../static/img/logo.png" alt="Logo">
+                    </a>
                 </div>
                 <div>
-                    <div class="sidebar-title">Trang Cá Nhân</div>
-                    <div class="sidebar-group">Nhóm: Nhà Mình A equipping</div>
+                    <div class="sidebar-title">Chung Nhà</div>
+                    <div class="sidebar-group">Nhóm: Nhà Mình A2</div>
                 </div>
             </div>
-
+        
             <div class="sidebar-nav">
-                <a href="#" class="nav-item active">
+                <a href="/home" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-home"></i>
                     </div>
                     <div class="nav-text">Trang chủ</div>
                 </a>
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="nav-text">Hồ sơ</div>
-                </a>
-                <a href="#" class="nav-item">
+                <a href="/thanh-vien" class="nav-item">
                     <div class="nav-icon">
                         <i class="fas fa-users"></i>
                     </div>
-                    <div class="nav-text">Nhóm</div>
+                    <div class="nav-text">Thành viên</div>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="/noi-quy" class="nav-item">
                     <div class="nav-icon">
-                        <i class="fas fa-sign-out-alt"></i>
+                        <i class="fas fa-clipboard-list"></i>
                     </div>
-                    <div class="nav-text">Đăng xuất</div>
+                    <div class="nav-text">Nội quy</div>
+                </a>
+                <a href="/phan-cong-viec" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="nav-text">Phân công việc</div>
+                </a>
+                <a href="/trach-nhiem" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="nav-text">Trách nhiệm thành viên</div>
+                </a>
+                <a href="/thuc-don" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="nav-text">Thực đơn</div>
+                </a>
+                <a href="/lich-nau-an" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="nav-text">Lịch nấu ăn</div>
+                </a>
+                <a href="/quan-ly-do-dung" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <div class="nav-text">Quản lý đồ dùng</div>
+                </a>
+                <a href="/chi-phi" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="nav-text">Chi phí</div>
+                </a>
+                <a href="/quy-nhom" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-piggy-bank"></i>
+                    </div>
+                    <div class="nav-text">Quỹ nhóm</div>
+                </a>
+                <a href="/thong-ke" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="nav-text">Thống kê</div>
+                </a>
+                <a href="/tro-chuyen" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="nav-text">Trò chuyện</div>
+                </a>
+                <a href="/binh-chon" class="nav-item">
+                    <div class="nav-icon">
+                        <i class="fas fa-vote-yea"></i>
+                    </div>
+                    <div class="nav-text">Bình chọn</div>
                 </a>
             </div>
-
+        
             <div class="sidebar-footer">
                 <div class="theme-toggle">
                     <div class="theme-btn active" data-theme="light">
@@ -392,13 +1209,17 @@
                         <i class="fas fa-moon"></i>
                     </div>
                 </div>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Đăng xuất
+                </button>
             </div>
         </nav>
 
         <!-- Main content -->
         <main class="main-content">
             <div class="profile-section">
-                <h2>Hồ Sơ Cá Nhân</h2>
+                <h2><i class="fas fa-user-circle"></i> Hồ Sơ Cá Nhân</h2>
                 <div class="profile-header">
                     <div class="profile-avatar" id="profile-avatar">
                         <span id="avatar-text">NM</span>
@@ -410,30 +1231,136 @@
                     </div>
                     <div class="profile-info">
                         <h3 id="profile-name">Nguyễn Minh</h3>
-                        <p>Thành viên nhóm: Nhà Mình A2</p>
+                        <p><i class="fas fa-users"></i> Thành viên nhóm: Nhà Mình A2</p>
+                        <span class="profile-status"><i class="fas fa-circle"></i> Đang hoạt động</span>
                     </div>
                 </div>
                 <div class="profile-form">
-                    <input type="text" id="full-name" placeholder="Họ và tên">
-                    <button onclick="updateProfile()">Cập nhật hồ sơ</button>
+                    <div class="form-group">
+                        <label for="full-name">Họ và tên</label>
+                        <input type="text" id="full-name" placeholder="Nhập họ và tên của bạn">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="Nhập email của bạn">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Số điện thoại</label>
+                        <input type="tel" id="phone" placeholder="Nhập số điện thoại">
+                    </div>
+                    <button onclick="updateProfile()"><i class="fas fa-save"></i> Cập nhật hồ sơ</button>
+                </div>
+            </div>
+
+            <div class="security-section">
+                <h2><i class="fas fa-shield-alt"></i> Bảo Mật</h2>
+                <div class="security-item">
+                    <div class="security-info">
+                        <h3><i class="fas fa-key"></i> Mật khẩu</h3>
+                        <p>Đã cập nhật lần cuối 3 tháng trước</p>
+                    </div>
+                    <div class="security-actions">
+                        <button class="security-btn change" onclick="changePassword()">
+                            <i class="fas fa-edit"></i> Đổi mật khẩu
+                        </button>
+                    </div>
+                </div>
+                <div class="security-item">
+                    <div class="security-info">
+                        <h3><i class="fas fa-lock"></i> Xác thực 2 lớp</h3>
+                        <p>Tăng cường bảo mật cho tài khoản của bạn</p>
+                    </div>
+                    <div class="security-actions">
+                        <button class="security-btn toggle" onclick="toggleTwoFactorAuth()">
+                            <i class="fas fa-toggle-off"></i> Bật
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="devices-section">
+                <h2><i class="fas fa-laptop"></i> Thiết bị đã đăng nhập</h2>
+                <div class="device-item">
+                    <div class="device-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div class="device-info">
+                        <h3>iPhone 13 Pro</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> Hà Nội, Việt Nam</p>
+                    </div>
+                    <div class="device-actions">
+                        <button class="device-btn" title="Đăng xuất thiết bị">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="device-item">
+                    <div class="device-icon">
+                        <i class="fas fa-laptop"></i>
+                    </div>
+                    <div class="device-info">
+                        <h3>MacBook Pro 2021</h3>
+                        <p><i class="fas fa-map-marker-alt"></i> TP.HCM, Việt Nam</p>
+                    </div>
+                    <div class="device-actions">
+                        <button class="device-btn" title="Đăng xuất thiết bị">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="notification-section">
+                <h2><i class="fas fa-bell"></i> Cài đặt thông báo</h2>
+                <div class="notification-item">
+                    <div class="notification-info">
+                        <h3><i class="fas fa-envelope"></i> Email thông báo</h3>
+                        <p>Nhận thông báo qua email</p>
+                    </div>
+                    <label class="notification-toggle">
+                        <input type="checkbox" checked>
+                        <span class="notification-slider"></span>
+                    </label>
+                </div>
+                <div class="notification-item">
+                    <div class="notification-info">
+                        <h3><i class="fas fa-sms"></i> Tin nhắn SMS</h3>
+                        <p>Nhận thông báo qua tin nhắn</p>
+                    </div>
+                    <label class="notification-toggle">
+                        <input type="checkbox">
+                        <span class="notification-slider"></span>
+                    </label>
+                </div>
+                <div class="notification-item">
+                    <div class="notification-info">
+                        <h3><i class="fas fa-tasks"></i> Hoạt động nhóm</h3>
+                        <p>Thông báo khi có hoạt động mới trong nhóm</p>
+                    </div>
+                    <label class="notification-toggle">
+                        <input type="checkbox" checked>
+                        <span class="notification-slider"></span>
+                    </label>
                 </div>
             </div>
 
             <div class="group-section">
-                <h2>Quản Lý Nhóm</h2>
-                <div id="group-list">
+                <h2><i class="fas fa-users-cog"></i> Quản Lý Nhóm</h2>
+                <div class="group-list" id="group-list">
                     <!-- Groups will be populated by JavaScript -->
                 </div>
+                
                 <div class="create-group-form">
-                    <input type="text" id="group-name" placeholder="Tên nhóm">
-                    <button onclick="createGroup()">Tạo nhóm</button>
+                    <input type="text" id="group-name" placeholder="Nhập tên nhóm mới">
+                    <button onclick="createGroup()"><i class="fas fa-plus"></i> Tạo nhóm</button>
                 </div>
+                
                 <div class="qr-scanner">
-                    <button class="action-btn scan" onclick="startQRScanner()">Quét mã QR để tham gia</button>
+                    <button class="action-btn scan" onclick="startQRScanner()"><i class="fas fa-qrcode"></i> Quét mã QR để tham gia</button>
                     <div id="scanner-container" style="display: none;">
                         <video id="qr-video" width="300" height="300"></video>
                         <div class="qr-scanner-controls">
-                            <button class="action-btn" onclick="stopQRScanner()">Dừng quét</button>
+                            <button class="action-btn leave" onclick="stopQRScanner()"><i class="fas fa-stop"></i> Dừng quét</button>
                         </div>
                     </div>
                 </div>
@@ -458,6 +1385,7 @@
             const themeToggle = document.querySelector('.theme-toggle');
             const themeBtns = document.querySelectorAll('.theme-btn');
             const body = document.body;
+            const themeIcon = document.querySelector('.theme-icon i');
             
             themeBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -469,7 +1397,6 @@
                     body.setAttribute('data-theme', theme);
                     localStorage.setItem('theme', theme);
                     
-                    const themeIcon = document.querySelector('.theme-icon i');
                     themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
                 });
             });
@@ -482,22 +1409,37 @@
                 themeBtns.forEach(b => b.classList.remove('active'));
                 activeThemeBtn.classList.add('active');
                 
-                const themeIcon = document.querySelector('.theme-icon i');
                 themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
             }
 
             // Profile and group management
             let profile = JSON.parse(localStorage.getItem('profile')) || {
                 fullName: 'Nguyễn Minh',
+                email: 'nguyen.minh@example.com',
+                phone: '0987654321',
                 avatar: null,
                 initials: 'NM'
             };
 
             let groups = JSON.parse(localStorage.getItem('groups')) || [
-                { id: 1, name: 'Nhà Mình A2', qrCode: 'group_a2', members: ['Nguyễn Minh', 'A', 'B'] }
+                { 
+                    id: 1, 
+                    name: 'Nhà Mình A2', 
+                    qrCode: 'group_a2_123456', 
+                    members: ['Nguyễn Minh', 'Trần Anh', 'Lê Bình'],
+                    isAdmin: true
+                },
+                { 
+                    id: 2, 
+                    name: 'Bạn Thân Đại Học', 
+                    qrCode: 'group_friends_789012', 
+                    members: ['Nguyễn Minh', 'Phạm Cường', 'Hoàng Dũng'],
+                    isAdmin: false
+                }
             ];
 
             let videoStream = null;
+            let twoFactorAuthEnabled = false;
 
             function saveProfile() {
                 localStorage.setItem('profile', JSON.stringify(profile));
@@ -510,6 +1452,9 @@
             function renderProfile() {
                 document.getElementById('profile-name').textContent = profile.fullName;
                 document.getElementById('header-avatar').textContent = profile.initials;
+                document.getElementById('full-name').value = profile.fullName || '';
+                document.getElementById('email').value = profile.email || '';
+                document.getElementById('phone').value = profile.phone || '';
                 const avatarText = document.getElementById('avatar-text');
                 const avatarImage = document.getElementById('avatar-image');
                 
@@ -528,28 +1473,93 @@
                 const groupList = document.getElementById('group-list');
                 groupList.innerHTML = '';
 
+                if (groups.length === 0) {
+                    groupList.innerHTML = `
+                        <div class="no-groups">
+                            <i class="fas fa-users-slash"></i>
+                            <p>Bạn chưa tham gia nhóm nào</p>
+                        </div>
+                    `;
+                    return;
+                }
+
                 groups.forEach(group => {
                     const groupItem = document.createElement('div');
                     groupItem.className = 'group-item';
                     groupItem.innerHTML = `
                         <div class="group-info">
-                            <h3>${group.name}</h3>
-                            <p>${group.members.length} thành viên</p>
+                            <h3>${group.name} ${group.isAdmin ? '<i class="fas fa-crown" title="Quản trị viên"></i>' : ''}</h3>
+                            <p><i class="fas fa-user-friends"></i> ${group.members.length} thành viên</p>
                         </div>
                         <div class="group-actions">
-                            <button class="action-btn qr" onclick="showQRCode(${group.id})">Xem mã QR</button>
+                            <button class="action-btn qr" onclick="showQRCode(${group.id})">
+                                <i class="fas fa-qrcode"></i> Mã QR
+                            </button>
+                            ${!group.isAdmin ? `<button class="action-btn leave" onclick="leaveGroup(${group.id})">
+                                <i class="fas fa-sign-out-alt"></i> Rời
+                            </button>` : ''}
                         </div>
                         <div class="qr-code" id="qr-${group.id}" style="display: none;">
-                            <p>Mã QR: ${group.qrCode}</p>
+                            <canvas id="qr-canvas-${group.id}"></canvas>
+                            <p>Quét mã này để tham gia nhóm ${group.name}</p>
                         </div>
                     `;
                     groupList.appendChild(groupItem);
+                    
+                    // Generate QR code
+                    setTimeout(() => {
+                        generateQRCode(group.id, group.qrCode);
+                    }, 100);
                 });
+            }
+
+            function generateQRCode(groupId, qrData) {
+                const canvas = document.getElementById(`qr-canvas-${groupId}`);
+                if (!canvas) return;
+                
+                const qrSize = 200;
+                canvas.width = qrSize;
+                canvas.height = qrSize;
+                
+                const ctx = canvas.getContext('2d');
+                const cellSize = 5;
+                const cells = Math.floor(qrSize / cellSize);
+                
+                // Simple QR-like pattern (in a real app, use a QR library)
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, qrSize, qrSize);
+                
+                // Generate a pattern based on the data
+                ctx.fillStyle = 'black';
+                for (let i = 0; i < cells; i++) {
+                    for (let j = 0; j < cells; j++) {
+                        if ((i * j + qrData.charCodeAt(i % qrData.length)) % 3 === 0) {
+                            ctx.fillRect(i * cellSize, j * cellSize, cellSize, cellSize);
+                        }
+                    }
+                }
+                
+                // Add text in the center
+                ctx.fillStyle = 'white';
+                ctx.fillRect(80, 80, 40, 40);
+                ctx.fillStyle = 'black';
+                ctx.font = '10px Arial';
+                ctx.fillText('CN', 90, 100);
             }
 
             window.uploadAvatar = function(event) {
                 const file = event.target.files[0];
                 if (file) {
+                    if (!file.type.match('image.*')) {
+                        alert('Vui lòng chọn file ảnh!');
+                        return;
+                    }
+                    
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('Kích thước ảnh không được vượt quá 2MB!');
+                        return;
+                    }
+
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         profile.avatar = e.target.result;
@@ -562,16 +1572,32 @@
 
             window.updateProfile = function() {
                 const fullName = document.getElementById('full-name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                
                 if (!fullName) {
                     alert('Vui lòng nhập họ và tên!');
                     return;
                 }
+                
+                if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    alert('Vui lòng nhập email hợp lệ!');
+                    return;
+                }
+                
+                if (phone && !/^\d{10,11}$/.test(phone)) {
+                    alert('Vui lòng nhập số điện thoại hợp lệ!');
+                    return;
+                }
 
                 profile.fullName = fullName;
+                profile.email = email;
+                profile.phone = phone;
                 profile.initials = fullName.split(' ').map(word => word[0]).join('').toUpperCase();
-                document.getElementById('full-name').value = '';
                 saveProfile();
                 renderProfile();
+                
+                alert('Cập nhật hồ sơ thành công!');
             };
 
             window.createGroup = function() {
@@ -582,16 +1608,20 @@
                 }
 
                 const newId = groups.length > 0 ? Math.max(...groups.map(g => g.id)) + 1 : 1;
+                const randomCode = Math.floor(100000 + Math.random() * 900000);
                 groups.push({
                     id: newId,
                     name: groupName,
-                    qrCode: `group_${newId}`, // Simulated QR code identifier
-                    members: [profile.fullName]
+                    qrCode: `group_${newId}_${randomCode}`,
+                    members: [profile.fullName],
+                    isAdmin: true
                 });
 
                 document.getElementById('group-name').value = '';
                 saveGroups();
                 renderGroups();
+                
+                alert(`Tạo nhóm "${groupName}" thành công!`);
             };
 
             window.showQRCode = function(groupId) {
@@ -599,11 +1629,27 @@
                 qrElement.style.display = qrElement.style.display === 'none' ? 'block' : 'none';
             };
 
-            window.startQRScanner = async function() {
-                const video = document.getElementById('qr-video');
-                const scannerContainer = document.getElementById('scanner-container');
-                scannerContainer.style.display = 'block';
+            window.leaveGroup = function(groupId) {
+                if (confirm('Bạn có chắc chắn muốn rời nhóm này?')) {
+                    groups = groups.filter(g => g.id !== groupId);
+                    saveGroups();
+                    renderGroups();
+                    alert('Bạn đã rời nhóm thành công!');
+                }
+            };
 
+            window.startQRScanner = async function() {
+                const scannerContainer = document.getElementById('scanner-container');
+                const video = document.getElementById('qr-video');
+                
+                // Toggle scanner visibility
+                if (scannerContainer.style.display === 'block') {
+                    stopQRScanner();
+                    return;
+                }
+                
+                scannerContainer.style.display = 'block';
+                
                 try {
                     videoStream = await navigator.mediaDevices.getUserMedia({
                         video: { facingMode: 'environment' }
@@ -653,20 +1699,72 @@
             }
 
             function joinGroupByQRCode(qrCode) {
-                const group = groups.find(g => g.qrCode === qrCode);
-                if (group) {
-                    if (!group.members.includes(profile.fullName)) {
-                        group.members.push(profile.fullName);
-                        saveGroups();
-                        renderGroups();
-                        alert(`Đã tham gia nhóm ${group.name}!`);
-                    } else {
-                        alert('Bạn đã là thành viên của nhóm này!');
-                    }
-                } else {
-                    alert('Mã QR không hợp lệ hoặc nhóm không tồn tại!');
+                // Check if already in group
+                const existingGroup = groups.find(g => g.qrCode === qrCode);
+                if (existingGroup) {
+                    alert('Bạn đã là thành viên của nhóm này!');
+                    return;
+                }
+                
+                // In a real app, you would validate the QR code with your backend
+                // For demo, we'll simulate finding a new group
+                const newGroup = {
+                    id: groups.length + 1,
+                    name: `Nhóm mới ${groups.length + 1}`,
+                    qrCode: qrCode,
+                    members: [profile.fullName, 'Thành viên 1', 'Thành viên 2'],
+                    isAdmin: false
+                };
+                
+                if (confirm(`Tham gia nhóm "${newGroup.name}"?`)) {
+                    groups.push(newGroup);
+                    saveGroups();
+                    renderGroups();
+                    alert(`Đã tham gia nhóm ${newGroup.name}!`);
                 }
             }
+
+            window.changePassword = function() {
+                const oldPassword = prompt('Nhập mật khẩu hiện tại:');
+                if (!oldPassword) return;
+                
+                const newPassword = prompt('Nhập mật khẩu mới:');
+                if (!newPassword) return;
+                
+                const confirmPassword = prompt('Nhập lại mật khẩu mới:');
+                if (newPassword !== confirmPassword) {
+                    alert('Mật khẩu nhập lại không khớp!');
+                    return;
+                }
+                
+                // In a real app, you would send this to your backend
+                alert('Đổi mật khẩu thành công!');
+            };
+
+            window.toggleTwoFactorAuth = function() {
+                twoFactorAuthEnabled = !twoFactorAuthEnabled;
+                const btn = document.querySelector('.security-btn.toggle');
+                
+                if (twoFactorAuthEnabled) {
+                    btn.innerHTML = '<i class="fas fa-toggle-on"></i> Tắt';
+                    btn.style.color = 'white';
+                    btn.style.backgroundColor = 'var(--success)';
+                    alert('Xác thực 2 lớp đã được bật!');
+                } else {
+                    btn.innerHTML = '<i class="fas fa-toggle-off"></i> Bật';
+                    btn.style.color = 'var(--text)';
+                    btn.style.backgroundColor = 'var(--border-light)';
+                    alert('Xác thực 2 lớp đã tắt!');
+                }
+            };
+
+            window.logout = function() {
+                if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                    // In a real app, you would call your logout API
+                    alert('Đăng xuất thành công!');
+                    window.location.href = '/dang-nhap'; // Redirect to login page
+                }
+            };
 
             // Initialize
             renderProfile();
