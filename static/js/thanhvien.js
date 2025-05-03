@@ -90,35 +90,68 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // Получить список участников
     function fetchMembers() {
-        const searchTerm = searchInput.value.toLowerCase();
+        const searchTerm   = searchInput.value.toLowerCase();
         const selectedRole = roleFilter.value;
         const selectedStatus = statusFilter.value;
-
-        fetch(`/api/members?group_id=${groupId}&page=${currentPage}&perPage=${membersPerPage}&search=${searchTerm}&role=${selectedRole}&status=${selectedStatus}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch members');
+    
+        fetch(`/api/members?group_id=${groupId}&page=${currentPage}&perPage=${membersPerPage}` +
+              `&search=${searchTerm}&role=${selectedRole}&status=${selectedStatus}`)
+        .then(response => {
+            console.log('[fetchMembers] HTTP status:', response.status);
+            if (!response.ok) {
+                throw new Error('Failed to fetch members');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('[fetchMembers] data:', data);
+    
+            // Debug xem data.group có đúng không
+            if (!data.group) {
+                console.error('[fetchMembers] missing data.group!', data);
+            } else {
+                console.log('[fetchMembers] qr_image_url:', data.group.qr_image_url);
+            }
+    
+            isAdmin  = data.is_admin;
+            isMember = data.members.length > 0 || data.totalMembers > 0;
+            toggleButtons();
+            renderMembers(data.members);
+            updatePagination(data.totalMembers);
+    
+            // Debug element qrCode
+            const qrContainer = document.getElementById('qrCode');
+            console.log('[fetchMembers] qrContainer element:', qrContainer);
+    
+            qrContainer.innerHTML = '';  // clear trước
+    
+            if (isMember) {
+                if (data.group && data.group.qr_image_url) {
+                    qrContainer.innerHTML = 
+                      `<img src="${data.group.qr_image_url}" 
+                             alt="QR code nhóm" 
+                             style="width:180px;height:180px;">`;
+                } else if (data.group_code) {
+                    const qrUrl = `/static/qrcodes/${data.group_code}.png`;
+                    qrContainer.innerHTML = 
+                      `<img src="${qrUrl}" 
+                             alt="QR code nhóm" 
+                             style="width:180px;height:180px;">`;
+                } else {
+                    console.warn('[fetchMembers] no qr_image_url or group_code fallback');
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Fetched members:', data);
-                isAdmin = data.is_admin;
-                isMember = data.members.length > 0 || data.totalMembers > 0;
-                toggleButtons();
-                renderMembers(data.members);
-                updatePagination(data.totalMembers);
-                if (data.group_code && isMember) {
-                    generateQRCode(data.group_code);
-                }
-                document.querySelector('.sidebar-group').textContent = `Nhóm: ${data.group_name || 'Nhà Mình A2'}`;
-            })
-            .catch(error => {
-                console.error('Error fetching members:', error);
-                membersTableBody.innerHTML = '<tr><td colspan="4">Đã xảy ra lỗi khi tải danh sách thành viên.</td></tr>';
-            });
+            }
+    
+            document.querySelector('.sidebar-group').textContent =
+              `Nhóm: ${data.group_name || 'Nhà Mình A2'}`;
+        })
+        .catch(error => {
+            console.error('[fetchMembers] error:', error);
+            membersTableBody.innerHTML =
+              '<tr><td colspan="4">Đã xảy ra lỗi khi tải danh sách thành viên.</td></tr>';
+        });
     }
-
+    
     // Render danh sách thành viên
     function renderMembers(members) {
         membersTableBody.innerHTML = '';

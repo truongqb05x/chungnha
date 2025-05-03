@@ -456,98 +456,152 @@ import logging
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
+import os
+import uuid
+import qrcode
+from datetime import datetime
+from flask import jsonify, request
 
 @app.route('/api/group', methods=['POST'])
 def create_group():
     try:
         print("Starting create_group route")
         
-        # Kiểm tra xác thực người dùng
-        print("Checking user authentication")
+        # 1. Xác thực người dùng
         current_user_id = get_current_user_id()
-        print(f"Current user ID: {current_user_id}")
         if not current_user_id:
-            print("Authentication failed: No user ID")
             return jsonify({"error": "Authentication required"}), 401
 
-        # Lấy dữ liệu từ request
-        print("Parsing request JSON")
+        # 2. Lấy và kiểm tra dữ liệu đầu vào
         data = request.get_json()
-        print(f"Request data: {data}")
         group_name = data.get('group_name')
-        print(f"Group name: {group_name}")
-        
-        # Kiểm tra tên nhóm
         if not group_name:
-            print("Error: Group name is missing")
             return jsonify({"error": "Group name is required"}), 400
         if len(group_name) > 30:
-            print("Error: Group name too long")
             return jsonify({"error": "Group name must not exceed 30 characters"}), 400
 
-        # Tạo mã nhóm duy nhất
-        print("Generating group code")
+        # 3. Sinh mã nhóm cố định
         group_code = str(uuid.uuid4())[:8]
         print(f"Generated group code: {group_code}")
 
-        # Kết nối database
-        print("Connecting to database")
+        # 4. Tạo QR code image và lưu vào static/qrcodes/{group_code}.png
+        qr_data = f"https://your-app.com/join?code={group_code}"
+        qr = qrcode.QRCode(box_size=6, border=2)
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        qr_folder = os.path.join(app.static_folder, 'qrcodes')
+        os.makedirs(qr_folder, exist_ok=True)
+        qr_filename = f"{group_code}.png"
+        qr_path = os.path.join(qr_folder, qr_filename)
+        img.save(qr_path)
+        qr_image_url = f"/static/qrcodes/{qr_filename}"
+        print(f"Saved QR image at: {qr_path}")
+
+        # 5. Kết nối database và kiểm tra trùng
         connection = get_db_connection()
         cursor = connection.cursor()
-        print("Database connection established")
-
-        # Kiểm tra trùng tên nhóm hoặc mã nhóm
-        print("Checking for existing group name or code")
-        cursor.execute("SELECT id FROM groups WHERE group_name = %s OR group_code = %s", (group_name, group_code))
-        existing_group = cursor.fetchone()
-        print(f"Existing group check result: {existing_group}")
-        if existing_group:
+        cursor.execute(
+            "SELECT id FROM groups WHERE group_name = %s OR group_code = %s",
+            (group_name, group_code)
+        )
+        if cursor.fetchone():
             cursor.close()
             connection.close()
-            print("Error: Group name or code already exists")
             return jsonify({"error": "Group name or code already exists"}), 400
 
-        # Thêm nhóm vào bảng groups
-        print("Inserting new group into groups table")
+        # 6. Insert nhóm (kèm qr_image_url)
         insert_group_query = """
-            INSERT INTO groups (group_name, group_code, created_at, updated_at)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO groups
+              (group_name, group_code, qr_image_url, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s)
         """
-        cursor.execute(insert_group_query, (group_name, group_code, datetime.now(), datetime.now()))
+        now = datetime.now()
+        cursor.execute(insert_group_query,
+            (group_name, group_code, qr_image_url, now, now)
+        )
         group_id = cursor.lastrowid
-        print(f"New group ID: {group_id}")
 
-        # Thêm người tạo nhóm làm Admin
-        print("Inserting group creator as Admin into members table")
+        # 7. Gán creator làm Admin
         insert_member_query = """
-            INSERT INTO members (user_id, group_id, role, status, join_date, created_at, updated_at)
+            INSERT INTO members
+              (user_id, group_id, role, status, join_date, created_at, updated_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(insert_member_query, (current_user_id, group_id, 'Admin', 'Active', datetime.now(), datetime.now(), datetime.now()))
-        print("Member insertion completed")
+        cursor.execute(insert_member_query, (
+            current_user_id, group_id, 'Admin', 'Active',
+            now, now, now
+        ))
 
-        # Commit và đóng kết nối
-        print("Committing database changes")
+        # 8. Commit và đóng kết nối
         connection.commit()
         cursor.close()
         connection.close()
-        print("Database connection closed")
 
-        print("Returning success response")
+        # 9. Trả về kết quả
         return jsonify({
             "message": "Group created successfully",
             "group": {
                 "id": group_id,
                 "name": group_name,
                 "code": group_code,
+                "qr_image_url": qr_image_url,
                 "member_count": 1
             }
         }), 201
 
     except Exception as e:
-        print(f"Error occurred: {str(e)}")
-        logging.error(f"Error in create_group: {str(e)}\n{traceback.format_exc()}")
+        logging.error(f"Error in create_group: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
+from flask import request, jsonify
+from datetime import datetime
+import logging, traceback
+
+@app.route('/api/join', methods=['POST'])
+def join_group_by_qr():
+    try:
+        user_id = get_current_user_id()
+        if not user_id:
+            return jsonify({"error": "Authentication required"}), 401
+
+        data = request.get_json()
+        qr_code = data.get('code')
+        if not qr_code:
+            return jsonify({"error": "QR code is required"}), 400
+
+        conn = get_db_connection()
+        cur  = conn.cursor(dictionary=True)
+        # 1) tìm nhóm
+        cur.execute("SELECT id, group_name FROM groups WHERE group_code = %s", (qr_code,))
+        grp = cur.fetchone()
+        if not grp:
+            cur.close(); conn.close()
+            return jsonify({"error": "Group not found"}), 404
+
+        # 2) kiểm tra đã là thành viên chưa
+        cur.execute("SELECT 1 FROM members WHERE user_id=%s AND group_id=%s",
+                    (user_id, grp['id']))
+        if cur.fetchone():
+            cur.close(); conn.close()
+            return jsonify({"message": "Bạn đã là thành viên"}), 200
+
+        # 3) thêm mới
+        now = datetime.now()
+        cur.execute("""
+            INSERT INTO members
+              (user_id, group_id, role, status, join_date, created_at, updated_at)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
+        """, (user_id, grp['id'], 'Member','Active', now, now, now))
+        conn.commit()
+        cur.close(); conn.close()
+
+        return jsonify({"message": f"Đã tham gia nhóm '{grp['group_name']}'"}), 201
+
+    except Exception as e:
+        logging.error(f"join_group error: {e}\n{traceback.format_exc()}")
+        return jsonify({"error": "Internal server error"}), 500
+
 # 0. Lấy luôn group và member tự động
 @app.route('/api/groups/my/rules', methods=['GET'])
 def get_my_group_rules():

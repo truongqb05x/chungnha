@@ -54,6 +54,9 @@ CREATE TABLE `groups` (
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật nhóm'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Lưu thông tin các nhóm';
+ALTER TABLE `groups`
+  ADD COLUMN `qr_image_url` VARCHAR(255) 
+    COMMENT 'Đường dẫn ảnh QR code của nhóm, sinh một lần khi tạo';
 
 -- Bảng: members
 -- Mô tả: Quản lý thành viên trong các nhóm và vai trò của họ.

@@ -207,18 +207,23 @@
             </div>
 
             <!-- Modal for showing QR code -->
-            <div class="modal" id="qrModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2 class="modal-title">Mời tham gia nhóm</h2>
-                        <button class="modal-close" id="closeQrModal">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="qr-code" id="qrCode"></div>
-                    <p class="qr-text">Quét mã QR để tham gia nhóm</p>
-                </div>
-            </div>
+<!-- Modal for showing QR code -->
+<div class="modal" id="qrModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Mời tham gia nhóm</h2>
+            <button class="modal-close" id="closeQrModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <!-- Khi mở modal sẽ inject <img> vào đây -->
+        <div class="qr-code" id="qrCode">
+            <!-- <img src="/static/qrcodes/abcd1234.png" alt="QR code nhóm"> -->
+        </div>
+        <p class="qr-text">Quét mã QR để tham gia nhóm</p>
+    </div>
+</div>
+
 
             <!-- Modal quét mã QR (scan để tham gia) -->
             <div class="modal" id="scanModal">
@@ -240,6 +245,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <!-- Thư viện đọc mã QR bằng camera (html5-qrcode) -->
+<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
 
 <!-- Script dành riêng cho chức năng thành viên -->

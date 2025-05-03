@@ -1373,104 +1373,69 @@
             };
 
             function scanQRCode() {
-                const video = document.getElementById('qr-video');
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
+    const video = document.getElementById('qr-video');
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
 
-                function tick() {
-                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                        canvas.height = video.videoHeight;
-                        canvas.width = video.videoWidth;
-                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                            inversionAttempts: 'dontInvert'
-                        });
+    function tick() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width  = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: 'dontInvert'
+            });
 
-                        if (code) {
-                            joinGroupByQRCode(code.data);
-                            stopQRScanner();
-                            return;
-                        }
-                    }
-                    requestAnimationFrame(tick);
-                }
-
-                tick();
+            if (code && code.data) {
+                // Tắt camera, ẩn scanner
+                stopQRScanner();
+                document.getElementById('scanner-container').style.display = 'none';
+                // Gọi API join
+                joinGroupByQRCode(code.data);
+                return;
             }
+        }
+        requestAnimationFrame(tick);
+    }
+    tick();
+}
 
-            function joinGroupByQRCode(qrCode) {
-                // Check if already in group
-                const existingGroup = groups.find(g => g.qrCode === qrCode);
-                if (existingGroup) {
-                    alert('Bạn đã là thành viên của nhóm này!');
-                    return;
-                }
-                
-                // In a real app, you would validate the QR code with your backend
-                // For demo, we'll simulate finding a new group
-                const newGroup = {
-                    id: groups.length + 1,
-                    name: `Nhóm mới ${groups.length + 1}`,
-                    qrCode: qrCode,
-                    members: [profile.fullName, 'Thành viên 1', 'Thành viên 2'],
-                    isAdmin: false
-                };
-                
-                if (confirm(`Tham gia nhóm "${newGroup.name}"?`)) {
-                    groups.push(newGroup);
-                    saveGroups();
-                    renderGroups();
-                    alert(`Đã tham gia nhóm ${newGroup.name}!`);
-                }
-            }
 
-            window.changePassword = function() {
-                const oldPassword = prompt('Nhập mật khẩu hiện tại:');
-                if (!oldPassword) return;
-                
-                const newPassword = prompt('Nhập mật khẩu mới:');
-                if (!newPassword) return;
-                
-                const confirmPassword = prompt('Nhập lại mật khẩu mới:');
-                if (newPassword !== confirmPassword) {
-                    alert('Mật khẩu nhập lại không khớp!');
-                    return;
-                }
-                
-                // In a real app, you would send this to your backend
-                alert('Đổi mật khẩu thành công!');
-            };
+           // 3) Gọi API để join nhóm
+function joinGroupByQRCode(qrCode) {
+    fetch('/api/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: qrCode })
+    })
+    .then(res => res.json().then(body => ({ status: res.status, body })))
+    .then(({ status, body }) => {
+        if (status === 201) {
+            alert(body.message);
+            // TODO: gọi lại renderGroups()/fetchMembers() để cập nhật UI
+        }
+        else if (status === 200) {
+            alert(body.message);
+        }
+        else {
+            alert(body.error || 'Tham gia nhóm thất bại');
+        }
+    })
+    .catch(err => {
+        console.error('joinGroup error:', err);
+        alert('Lỗi khi tham gia nhóm');
+    });
+}
 
-            window.toggleTwoFactorAuth = function() {
-                twoFactorAuthEnabled = !twoFactorAuthEnabled;
-                const btn = document.querySelector('.security-btn.toggle');
-                
-                if (twoFactorAuthEnabled) {
-                    btn.innerHTML = '<i class="fas fa-toggle-on"></i> Tắt';
-                    btn.style.color = 'white';
-                    btn.style.backgroundColor = 'var(--success)';
-                    alert('Xác thực 2 lớp đã được bật!');
-                } else {
-                    btn.innerHTML = '<i class="fas fa-toggle-off"></i> Bật';
-                    btn.style.color = 'var(--text)';
-                    btn.style.backgroundColor = 'var(--border-light)';
-                    alert('Xác thực 2 lớp đã tắt!');
-                }
-            };
-
-            window.logout = function() {
-                if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-                    // In a real app, you would call your logout API
-                    alert('Đăng xuất thành công!');
-                    window.location.href = '/dang-nhap'; // Redirect to login page
-                }
-            };
 
             // Initialize
             renderProfile();
             renderGroups();
         });
     </script>
+    <!-- jsQR: scan QR từ imageData -->
+<script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+
 </body>
 </html>
