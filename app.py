@@ -1222,22 +1222,52 @@ def cast_vote():
 # Item Categories Routes
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
+    user_id = get_current_user_id()
+    if not user_id:
+        return jsonify({'error': 'User not logged in'}), 401
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute('SELECT * FROM item_categories WHERE group_id = %s', (1,))  # Assuming group_id=1
+
+    cursor.execute('SELECT group_id FROM members WHERE user_id = %s AND status = %s LIMIT 1', (user_id, 'Active'))
+    member = cursor.fetchone()
+
+    if not member:
+        cursor.close()
+        conn.close()
+        return jsonify({'error': 'User is not part of any active group'}), 404
+
+    group_id = member['group_id']
+    cursor.execute('SELECT * FROM item_categories WHERE group_id = %s', (group_id,))
     categories = cursor.fetchall()
+
     cursor.close()
     conn.close()
     return jsonify(categories)
-
 @app.route('/api/categories', methods=['POST'])
 def create_category():
+    user_id = get_current_user_id()
+    if not user_id:
+        return jsonify({'error': 'User not logged in'}), 401
+
     data = request.get_json()
+
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    cursor.execute('SELECT group_id FROM members WHERE user_id = %s AND status = %s LIMIT 1', (user_id, 'Active'))
+    member = cursor.fetchone()
+
+    if not member:
+        cursor.close()
+        conn.close()
+        return jsonify({'error': 'User is not part of any active group'}), 404
+
+    group_id = member['group_id']
+
     cursor.execute(
         'INSERT INTO item_categories (group_id, name) VALUES (%s, %s)',
-        (1, data['name'])  # Assuming group_id=1
+        (group_id, data['name'])
     )
     conn.commit()
     category_id = cursor.lastrowid
@@ -1248,23 +1278,56 @@ def create_category():
 # Shared Items Routes
 @app.route('/api/items', methods=['GET'])
 def get_items():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify([]), 401  # Unauthorized
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
+
+    # Lấy group_id từ user_id
+    cursor.execute("SELECT group_id FROM members WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()
+    if not result:
+        cursor.close()
+        conn.close()
+        return jsonify([])
+
+    group_id = result['group_id']
+    print(f"Using group_id from session: {group_id}")
+
+    # Truy vấn shared_items theo group_id
     cursor.execute('''
         SELECT si.*, ic.name as category_name
         FROM shared_items si
         LEFT JOIN item_categories ic ON si.category_id = ic.id
         WHERE si.group_id = %s AND si.is_active = 1
-    ''', (1,))  # Assuming group_id=1
+    ''', (group_id,))
     items = cursor.fetchall()
+
     cursor.close()
     conn.close()
     return jsonify(items)
-
 @app.route('/api/items', methods=['POST'])
 def create_item():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'User not logged in'}), 401
+
     data = request.get_json()
     conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT id, group_id FROM members WHERE user_id = %s AND status = %s LIMIT 1", (user_id, 'Active'))
+    member = cursor.fetchone()
+    if not member:
+        cursor.close()
+        conn.close()
+        return jsonify({'error': 'User is not part of any active group'}), 403
+
+    group_id = member['group_id']
+    member_id = member['id']
+
     cursor = conn.cursor()
     cursor.execute(
         '''
@@ -1273,9 +1336,9 @@ def create_item():
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''',
         (
-            1,  # group_id
+            group_id,
             data.get('category_id') or None,
-            1,  # member_id
+            member_id,
             data['name'],
             data.get('description'),
             data['quantity'],
@@ -1284,37 +1347,45 @@ def create_item():
             data.get('image_url')
         )
     )
-    
-    # Log history
     item_id = cursor.lastrowid
+
     cursor.execute(
         '''
         INSERT INTO item_histories 
         (item_id, member_id, action_type, quantity_change, new_quantity, notes)
         VALUES (%s, %s, %s, %s, %s, %s)
         ''',
-        (item_id, 1, 'create', data['quantity'], data['quantity'], 'Created new item')
+        (item_id, member_id, 'create', data['quantity'], data['quantity'], 'Created new item')
     )
-    
+
     conn.commit()
     cursor.close()
     conn.close()
-    
-    # Create notification if quantity is low
+
     if data['quantity'] <= data['threshold']:
         create_low_stock_notification(item_id, data['name'], data['quantity'], data['threshold'])
-    
-    return jsonify({'id': item_id, 'message': 'Item created'}), 201
 
+    return jsonify({'id': item_id, 'message': 'Item created'}), 201
 @app.route('/api/items/<int:id>', methods=['PUT'])
 def update_item(id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
     data = request.get_json()
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
+    cursor.execute('SELECT id FROM members WHERE user_id = %s AND status = %s LIMIT 1', (user_id, 'Active'))
+    member = cursor.fetchone()
+    if not member:
+        return jsonify({'error': 'User not in active group'}), 403
+
+    member_id = member[0]
+
     cursor.execute('SELECT quantity FROM shared_items WHERE id = %s', (id,))
     old_quantity = cursor.fetchone()[0]
-    
+
     cursor.execute(
         '''
         UPDATE shared_items 
@@ -1334,8 +1405,7 @@ def update_item(id):
             id
         )
     )
-    
-    # Log history
+
     quantity_change = data['quantity'] - old_quantity
     cursor.execute(
         '''
@@ -1343,36 +1413,44 @@ def update_item(id):
         (item_id, member_id, action_type, quantity_change, old_quantity, new_quantity, notes)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         ''',
-        (id, 1, 'update', quantity_change, old_quantity, data['quantity'], 'Updated item details')
+        (id, member_id, 'update', quantity_change, old_quantity, data['quantity'], 'Updated item details')
     )
-    
+
     conn.commit()
     cursor.close()
     conn.close()
-    
-    # Create notification if quantity is low
+
     if data['quantity'] <= data['threshold']:
         create_low_stock_notification(id, data['name'], data['quantity'], data['threshold'])
-    
-    return jsonify({'message': 'Item updated'})
 
+    return jsonify({'message': 'Item updated'})
 @app.route('/api/items/<int:id>', methods=['DELETE'])
 def delete_item(id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
+    cursor.execute('SELECT id FROM members WHERE user_id = %s AND status = %s LIMIT 1', (user_id, 'Active'))
+    member = cursor.fetchone()
+    if not member:
+        return jsonify({'error': 'User not in active group'}), 403
+
+    member_id = member[0]
+
     cursor.execute('UPDATE shared_items SET is_active = 0 WHERE id = %s', (id,))
-    
-    # Log history
+
     cursor.execute(
         '''
         INSERT INTO item_histories 
         (item_id, member_id, action_type, notes)
         VALUES (%s, %s, %s, %s)
         ''',
-        (id, 1, 'delete', 'Item deactivated')
+        (id, member_id, 'delete', 'Item deactivated')
     )
-    
+
     conn.commit()
     cursor.close()
     conn.close()
@@ -2341,7 +2419,7 @@ def update_fund_balance(fund_id, transaction_type, amount):
 @app.route('/api/notifications/<int:group_id>', methods=['GET'])
 def get_notifications(group_id):
     query = """
-        SELECT n.*, u.full_name as member_name
+        SELECT n.*, u.full_name AS member_name
         FROM notifications n
         JOIN members m ON n.member_id = m.id
         JOIN users u ON m.user_id = u.id
@@ -2350,103 +2428,135 @@ def get_notifications(group_id):
     """
     notifications = execute_query(query, (group_id,))
     return jsonify(notifications if notifications else [])
-
 @app.route('/api/notifications', methods=['POST'])
 def add_notification():
-    data = request.json
+    data = request.get_json()
     query = """
         INSERT INTO notifications (group_id, member_id, title, message)
         VALUES (%s, %s, %s, %s)
     """
     params = (data['group_id'], data['member_id'], data['title'], data['message'])
-    notification_id = execute_query(query, params, fetch=False)
-    return jsonify({"id": notification_id, "message": "Notification added successfully"})
+    execute_query(query, params, fetch=False)
+
+    return jsonify({
+        "group_id": data['group_id'],
+        "member_id": data['member_id'],
+        "message": "Notification added successfully"
+    })
 
 @app.route('/api/notifications/<int:notification_id>/read', methods=['PUT'])
 def mark_notification_read(notification_id):
-    query = "UPDATE notifications SET is_read = 1, read_at = CURRENT_TIMESTAMP WHERE id = %s"
+    query = """
+        UPDATE notifications
+        SET is_read = 1, read_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+    """
     execute_query(query, (notification_id,), fetch=False)
     return jsonify({"message": "Notification marked as read"})
+from flask import jsonify, session
 
-# Tạm giả member hiện tại
-CURRENT_MEMBER_ID = 1  # thay bằng session['member_id'] thật trên production
+from flask import jsonify, session, request
 
-# --- Lấy danh sách tất cả thông báo cùng danh sách ai đã đọc ---
-@app.route('/api/announcements', methods=['GET'])
-def list_announcements():
+@app.route('/api/announcements/<int:group_id>', methods=['GET'])
+def list_announcements(group_id):
+    user_id = session.get('user_id')
+    print(f'GET /api/announcements/{group_id} - user_id: {user_id}')  # Debug
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
     conn = get_db_connection()
     cur = conn.cursor(dictionary=True)
-    # Lấy thông báo
+
+    # Kiểm tra xem user có trong nhóm không
     cur.execute("""
-        SELECT
-          a.id,
-          a.title,
-          a.content,
-          a.priority,
-          a.author_id,
-          u.full_name AS author_name,
-          a.created_at AS timestamp
+        SELECT id, status FROM members 
+        WHERE group_id = %s AND user_id = %s
+    """, (group_id, user_id))
+    member = cur.fetchone()
+    print(f'Member check: {member}')  # Debug
+
+    if not member:
+        cur.close()
+        conn.close()
+        return jsonify({'error': 'User is not a member of this group'}), 403
+
+    # Lấy danh sách thông báo của nhóm
+    cur.execute("""
+        SELECT a.id, a.title, a.content, a.priority, a.author_id,
+               u.full_name AS author_name,
+               a.created_at AS timestamp
         FROM announcements a
         JOIN members m ON a.author_id = m.id
-        JOIN users u   ON m.user_id   = u.id
+        JOIN users u ON m.user_id = u.id
         WHERE a.group_id = %s
         ORDER BY a.created_at DESC
-    """, (1,))  # giả group_id=1
-    ann = cur.fetchall()
-    # Lấy ai đã đọc cho mỗi thông báo
-    for row in ann:
+    """, (group_id,))
+    announcements = cur.fetchall()
+
+    # Lấy danh sách ai đã đọc
+    for row in announcements:
         cur.execute("""
-            SELECT member_id
-            FROM announcement_reads
+            SELECT member_id FROM announcement_reads 
             WHERE announcement_id = %s
         """, (row['id'],))
         row['readBy'] = [r['member_id'] for r in cur.fetchall()]
+
     cur.close()
     conn.close()
-    return jsonify(ann)
+    return jsonify(announcements)
 
-
-# --- Tạo mới thông báo ---
 @app.route('/api/announcements', methods=['POST'])
 def create_announcement():
     data = request.get_json()
+    print(f'POST /api/announcements - data: {data}')  # Debug
+
+    if 'group_id' not in data or 'author_id' not in data:
+        return jsonify({"error": "group_id and author_id are required"}), 400
+
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
+
+    # Kiểm tra xem user có trong nhóm không (cho phép cả Pending)
     cur.execute("""
-        INSERT INTO announcements
-          (group_id, author_id, title, content, priority)
+        SELECT id, status FROM members 
+        WHERE user_id = %s AND group_id = %s
+    """, (data['author_id'], data['group_id']))
+    membership = cur.fetchone()
+    print(f'Membership check: {membership}')  # Debug
+
+    if not membership:
+        cur.close()
+        conn.close()
+        return jsonify({"error": "User is not a member of the group"}), 403
+
+    # Chèn thông báo
+    cur.execute("""
+        INSERT INTO announcements (group_id, author_id, title, content, priority)
         VALUES (%s, %s, %s, %s, %s)
-    """, (
-        1,
-        CURRENT_MEMBER_ID,
-        data['title'],
-        data['content'],
-        data['priority']
-    ))
+    """, (data['group_id'], data['author_id'], data['title'], data['content'], data['priority']))
     conn.commit()
-    new_id = cur.lastrowid
+
     cur.close()
     conn.close()
-    return jsonify({'id': new_id}), 201
-
-
-# --- Đánh dấu đã đọc ---
-@app.route('/api/announcements/<int:aid>/read', methods=['POST'])
-def mark_read(aid):
+    return jsonify({"message": "Announcement created successfully"})
+    # Đánh dấu thông báo là đã đọc
+@app.route('/api/announcements/<int:announcement_id>/read', methods=['POST'])
+def mark_as_read(announcement_id):
     data = request.get_json()
-    member_id = data.get('member_id', CURRENT_MEMBER_ID)
-    conn = get_db_connection()
-    cur = conn.cursor()
-    # tránh duplicate key (khóa chính composite)
-    cur.execute("""
-        INSERT IGNORE INTO announcement_reads
-          (announcement_id, member_id)
+    member_id = data.get('member_id')
+
+    if not member_id:
+        return jsonify({"error": "member_id is required"}), 400
+
+    query = """
+        INSERT INTO announcement_reads (announcement_id, member_id)
         VALUES (%s, %s)
-    """, (aid, member_id))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return jsonify({'read': True})
+        ON DUPLICATE KEY UPDATE read_at = CURRENT_TIMESTAMP
+    """
+    params = (announcement_id, member_id)
+    execute_query(query, params, fetch=False)
+
+    return jsonify({"message": "Announcement marked as read"})
 # Route để lấy danh sách chi phí
 @app.route('/api/expenses', methods=['GET'])
 def get_expenses():

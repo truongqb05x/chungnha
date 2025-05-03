@@ -1,0 +1,8 @@
+Flask
+flask-jwt-extended
+Werkzeug
+qrcode
+numpy
+opencv-python
+mysql-connector-python
+Jinja2
