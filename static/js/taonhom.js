@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    function showSuccessState(groupName = "Nhà Mình A2", memberCount = 5) {
+    function showSuccessState(group) {
         const modalContent = document.querySelector('.modal-content');
         modalContent.innerHTML = `
             <button class="close-btn" id="close-modal-btn">×</button>
@@ -87,9 +87,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="success-state">
                 <i class="fas fa-check-circle success-icon"></i>
                 <div>Bạn được mời tham gia nhóm</div>
-                <div class="group-name">${groupName}</div>
+                <div class="group-name">${group.name}</div>
                 <div style="color: var(--text-light); margin-bottom: 20px;">
-                    <i class="fas fa-user-friends"></i> ${memberCount} thành viên
+                    <i class="fas fa-user-friends"></i> ${group.member_count} thành viên
                 </div>
             </div>
             
@@ -104,9 +104,24 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         // Add event listeners
-        document.getElementById('confirm-join-btn').addEventListener('click', function() {
-            joinGroup({ name: groupName, code: 'UNKNOWN', member_count: memberCount });
-            closeGroupModal();
+        document.getElementById('confirm-join-btn').addEventListener('click', async function() {
+            try {
+                const response = await fetch('/api/join-group', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ group_code: group.code })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Không thể tham gia nhóm');
+                }
+                joinGroup(group);
+                closeGroupModal();
+            } catch (error) {
+                alert(`Lỗi: ${error.message}`);
+            }
         });
         
         document.getElementById('cancel-join-btn').addEventListener('click', function() {
@@ -150,34 +165,54 @@ document.addEventListener('DOMContentLoaded', function() {
             throw new Error(error.message);
         }
     }
+
+    // API call to scan QR code
+    async function scanQRCode(file) {
+        try {
+            const formData = new FormData();
+            formData.append('qr_image', file);
+            
+            const response = await fetch('/api/scan-qr', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Không thể xử lý mã QR');
+            }
+            return data.group;
+        } catch (error) {
+            throw new Error(error.message);
+        }
+    }
+
     // Event listeners
     openModalBtn.addEventListener('click', openGroupModal);
     closeModalBtn.addEventListener('click', closeGroupModal);
 
-    uploadQrInput.addEventListener('change', function(event) {
+    uploadQrInput.addEventListener('change', async function(event) {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 qrImage.src = e.target.result;
                 qrImage.style.display = 'block';
                 qrPlaceholder.style.display = 'none';
                 qrCodeContainer.classList.add('active');
 
                 // Show loading state
-                showLoadingState("Đang xử lý hình ảnh...");
-                
-                // Simulate processing delay (1-2 seconds)
-                setTimeout(() => {
-                    const demoGroups = [
-                        { name: "Nhà Mình A2", members: 5 },
-                        { name: "Bếp Chung 2023", members: 8 },
-                        { name: "Gia Đình Nấu Ăn", members: 4 },
-                        { name: "Căn Hộ Happy", members: 3 }
-                    ];
-                    const randomGroup = demoGroups[Math.floor(Math.random() * demoGroups.length)];
-                    showSuccessState(randomGroup.name, randomGroup.members);
-                }, 1500);
+                showLoadingState("Đang xử lý mã QR...");
+
+                try {
+                    const group = await scanQRCode(file);
+                    showSuccessState(group);
+                } catch (error) {
+                    alert(`Lỗi: ${error.message}`);
+                    modalContent.innerHTML = originalModalContent;
+                    setupModalEvents();
+                    resetQRUpload();
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -232,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 joinGroup(group);
                 closeGroupModal();
             } catch (error) {
-                alert `\Lỗi: ${error.message}`;
+                alert(`Lỗi: ${error.message}`);
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;

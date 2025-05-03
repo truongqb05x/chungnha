@@ -453,15 +453,125 @@ from flask import Flask, jsonify, request
 import uuid
 from datetime import datetime
 import logging
+import numpy as np
+import cv2
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-import os
-import uuid
-import qrcode
-from datetime import datetime
-from flask import jsonify, request
+# Endpoint duyệt thành viên
+@app.route('/api/member/<int:member_id>/approve', methods=['POST'])
+def approve_member(member_id):
+    try:
+        # 1. Xác thực người dùng
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            return jsonify({"error": "Authentication required"}), 401
 
+        # 2. Kết nối database
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # 3. Kiểm tra quyền admin
+        cursor.execute(
+            "SELECT id FROM members WHERE user_id = %s AND group_id = (SELECT group_id FROM members WHERE id = %s) AND role = 'Admin'",
+            (current_user_id, member_id)
+        )
+        if not cursor.fetchone():
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "You do not have permission to approve this member"}), 403
+
+        # 4. Kiểm tra thành viên tồn tại và đang ở trạng thái Pending
+        cursor.execute(
+            "SELECT status FROM members WHERE id = %s",
+            (member_id,)
+        )
+        member = cursor.fetchone()
+        if not member:
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "Member not found"}), 404
+        if member[0] != 'Pending':
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "Member is not in pending status"}), 400
+
+        # 5. Cập nhật trạng thái thành Active
+        update_member_query = """
+            UPDATE members
+            SET status = 'Active', updated_at = %s
+            WHERE id = %s
+        """
+        now = datetime.now()
+        cursor.execute(update_member_query, (now, member_id))
+
+        # 6. Commit và đóng kết nối
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        # 7. Trả về kết quả
+        return jsonify({"message": "Member approved successfully"}), 200
+
+    except Exception as e:
+        logging.error(f"Error in approve_member: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+# Endpoint từ chối thành viên
+@app.route('/api/member/<int:member_id>/reject', methods=['POST'])
+def reject_member(member_id):
+    try:
+        # 1. Xác thực người dùng
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            return jsonify({"error": "Authentication required"}), 401
+
+        # 2. Kết nối database
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # 3. Kiểm tra quyền admin
+        cursor.execute(
+            "SELECT id FROM members WHERE user_id = %s AND group_id = (SELECT group_id FROM members WHERE id = %s) AND role = 'Admin'",
+            (current_user_id, member_id)
+        )
+        if not cursor.fetchone():
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "You do not have permission to reject this member"}), 403
+
+        # 4. Kiểm tra thành viên tồn tại và đang ở trạng thái Pending
+        cursor.execute(
+            "SELECT status FROM members WHERE id = %s",
+            (member_id,)
+        )
+        member = cursor.fetchone()
+        if not member:
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "Member not found"}), 404
+        if member[0] != 'Pending':
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "Member is not in pending status"}), 400
+
+        # 5. Xóa thành viên khỏi bảng members
+        delete_member_query = """
+            DELETE FROM members
+            WHERE id = %s
+        """
+        cursor.execute(delete_member_query, (member_id,))
+
+        # 6. Commit và đóng kết nối
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        # 7. Trả về kết quả
+        return jsonify({"message": "Member rejected successfully"}), 200
+
+    except Exception as e:
+        logging.error(f"Error in reject_member: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+# Cập nhật create_group để thêm random_code
 @app.route('/api/group', methods=['POST'])
 def create_group():
     try:
@@ -480,12 +590,13 @@ def create_group():
         if len(group_name) > 30:
             return jsonify({"error": "Group name must not exceed 30 characters"}), 400
 
-        # 3. Sinh mã nhóm cố định
+        # 3. Sinh mã nhóm và mã ngẫu nhiên
         group_code = str(uuid.uuid4())[:8]
-        print(f"Generated group code: {group_code}")
+        random_code = str(uuid.uuid4())[:12]  # Mã ngẫu nhiên cho QR
+        print(f"Generated group code: {group_code}, random code: {random_code}")
 
-        # 4. Tạo QR code image và lưu vào static/qrcodes/{group_code}.png
-        qr_data = f"https://your-app.com/join?code={group_code}"
+        # 4. Tạo QR code với random_code
+        qr_data = random_code
         qr = qrcode.QRCode(box_size=6, border=2)
         qr.add_data(qr_data)
         qr.make(fit=True)
@@ -503,23 +614,23 @@ def create_group():
         connection = get_db_connection()
         cursor = connection.cursor()
         cursor.execute(
-            "SELECT id FROM groups WHERE group_name = %s OR group_code = %s",
-            (group_name, group_code)
+            "SELECT id FROM groups WHERE group_name = %s OR group_code = %s OR random_code = %s",
+            (group_name, group_code, random_code)
         )
         if cursor.fetchone():
             cursor.close()
             connection.close()
-            return jsonify({"error": "Group name or code already exists"}), 400
+            return jsonify({"error": "Group name, code or random code already exists"}), 400
 
-        # 6. Insert nhóm (kèm qr_image_url)
+        # 6. Insert nhóm (kèm qr_image_url và random_code)
         insert_group_query = """
             INSERT INTO groups
-              (group_name, group_code, qr_image_url, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s)
+              (group_name, group_code, random_code, qr_image_url, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """
         now = datetime.now()
         cursor.execute(insert_group_query,
-            (group_name, group_code, qr_image_url, now, now)
+            (group_name, group_code, random_code, qr_image_url, now, now)
         )
         group_id = cursor.lastrowid
 
@@ -541,7 +652,7 @@ def create_group():
 
         # 9. Trả về kết quả
         return jsonify({
-            "message": "Group created successfully",
+            " Monthly budget successfully reset to zero.message": "Group created successfully",
             "group": {
                 "id": group_id,
                 "name": group_name,
@@ -554,54 +665,166 @@ def create_group():
     except Exception as e:
         logging.error(f"Error in create_group: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
-from flask import request, jsonify
-from datetime import datetime
-import logging, traceback
 
-@app.route('/api/join', methods=['POST'])
-def join_group_by_qr():
+# Endpoint để xử lý QR code upload (sử dụng OpenCV thay vì pyzbar)
+@app.route('/api/scan-qr', methods=['POST'])
+def scan_qr():
     try:
-        user_id = get_current_user_id()
-        if not user_id:
+        # 1. Xác thực người dùng
+        current_user_id = get_current_user_id()
+        if not current_user_id:
             return jsonify({"error": "Authentication required"}), 401
 
-        data = request.get_json()
-        qr_code = data.get('code')
-        if not qr_code:
-            return jsonify({"error": "QR code is required"}), 400
+        # 2. Kiểm tra file upload
+        if 'qr_image' not in request.files:
+            return jsonify({"error": "No QR image provided"}), 400
+        
+        file = request.files['qr_image']
+        if not file or file.filename == '':
+            return jsonify({"error": "No QR image provided"}), 400
 
-        conn = get_db_connection()
-        cur  = conn.cursor(dictionary=True)
-        # 1) tìm nhóm
-        cur.execute("SELECT id, group_name FROM groups WHERE group_code = %s", (qr_code,))
-        grp = cur.fetchone()
-        if not grp:
-            cur.close(); conn.close()
-            return jsonify({"error": "Group not found"}), 404
+        # 3. Đọc và phân tích QR code
+        # Chuyển file thành numpy array để OpenCV xử lý
+        file_bytes = np.frombuffer(file.read(), np.uint8)
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        
+        # Sử dụng QRCodeDetector từ OpenCV
+        qr_detector = cv2.QRCodeDetector()
+        data, points, _ = qr_detector.detectAndDecode(img)
+        
+        if not data:
+            return jsonify({"error": "Could not decode QR code"}), 400
 
-        # 2) kiểm tra đã là thành viên chưa
-        cur.execute("SELECT 1 FROM members WHERE user_id=%s AND group_id=%s",
-                    (user_id, grp['id']))
-        if cur.fetchone():
-            cur.close(); conn.close()
-            return jsonify({"message": "Bạn đã là thành viên"}), 200
+        # 4. Lấy random_code từ QR
+        random_code = data
 
-        # 3) thêm mới
-        now = datetime.now()
-        cur.execute("""
-            INSERT INTO members
-              (user_id, group_id, role, status, join_date, created_at, updated_at)
-            VALUES (%s,%s,%s,%s,%s,%s,%s)
-        """, (user_id, grp['id'], 'Member','Active', now, now, now))
-        conn.commit()
-        cur.close(); conn.close()
+        # 5. Kết nối database
+        connection = get_db_connection()
+        cursor = connection.cursor()
 
-        return jsonify({"message": f"Đã tham gia nhóm '{grp['group_name']}'"}), 201
+        # 6. Tìm nhóm dựa trên random_code
+        cursor.execute(
+            "SELECT id, group_name, group_code FROM groups WHERE random_code = %s",
+            (random_code,)
+        )
+        group = cursor.fetchone()
+        if not group:
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "Invalid QR code"}), 404
+
+        group_id, group_name, group_code = group
+
+        # 7. Kiểm tra xem người dùng đã là thành viên chưa
+        cursor.execute(
+            "SELECT id FROM members WHERE user_id = %s AND group_id = %s",
+            (current_user_id, group_id)
+        )
+        if cursor.fetchone():
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "You are already a member of this group"}), 400
+
+        # 8. Đếm số thành viên hiện tại
+        cursor.execute(
+            "SELECT COUNT(*) FROM members WHERE group_id = %s AND status = 'Active'",
+            (group_id,)
+        )
+        member_count = cursor.fetchone()[0]
+
+        # 9. Đóng kết nối
+        cursor.close()
+        connection.close()
+
+        # 10. Trả về thông tin nhóm
+        return jsonify({
+            "message": "QR code scanned successfully",
+            "group": {
+                "id": group_id,
+                "name": group_name,
+                "code": group_code,
+                "member_count": member_count
+            }
+        }), 200
 
     except Exception as e:
-        logging.error(f"join_group error: {e}\n{traceback.format_exc()}")
-        return jsonify({"error": "Internal server error"}), 500
+        logging.error(f"Error in scan_qr: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
+# Giữ nguyên endpoint join_group
+@app.route('/api/join-group', methods=['POST'])
+def join_group():
+    try:
+        # 1. Xác thực người dùng
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            return jsonify({"error": "Authentication required"}), 401
+
+        # 2. Lấy và kiểm tra dữ liệu đầu vào
+        data = request.get_json()
+        group_code = data.get('group_code')
+        if not group_code:
+            return jsonify({"error": "Group code is required"}), 400
+
+        # 3. Kết nối database
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # 4. Kiểm tra mã nhóm
+        cursor.execute(
+            "SELECT id FROM groups WHERE group_code = %s",
+            (group_code,)
+        )
+        group = cursor.fetchone()
+        if not group:
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "Invalid group code"}), 404
+        group_id = group[0]
+
+        # 5. Kiểm tra xem người dùng đã là thành viên chưa
+        cursor.execute(
+            "SELECT id FROM members WHERE user_id = %s AND group_id = %s",
+            (current_user_id, group_id)
+        )
+        if cursor.fetchone():
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "You are already a member of this group"}), 400
+
+        # 6. Thêm người dùng vào nhóm với trạng thái Pending
+        insert_member_query = """
+            INSERT INTO members
+              (user_id, group_id, role, status, join_date, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        now = datetime.now()
+        cursor.execute(insert_member_query, (
+            current_user_id, group_id, 'Member', 'Pending',
+            now, now, now
+        ))
+
+        # 7. Commit và đóng kết nối
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        # 8. Trả về kết quả
+        return jsonify({
+            "message": "Successfully requested to join the group. Waiting for approval.",
+            "group_id": group_id
+        }), 200
+
+    except Exception as e:
+        logging.error(f"Error in join_group: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+import os
+import uuid
+import qrcode
+from datetime import datetime
+from flask import jsonify, request
 # 0. Lấy luôn group và member tự động
 @app.route('/api/groups/my/rules', methods=['GET'])
 def get_my_group_rules():
@@ -2278,27 +2501,27 @@ def handle_db_operation(query_func):
     return wrapper
 
 # Route: Lấy danh sách cuộc trò chuyện của người dùng
-@app.route('/api/conversations', methods=['GET'])
-@handle_db_operation
-def get_conversations(cursor, connection):
-    user_id = request.args.get('user_id', type=int)  # Giả định user_id được gửi qua query
-    if not user_id:
-        return jsonify({"error": "user_id is required"}), 400
+# @app.route('/api/conversations', methods=['GET'])
+# @handle_db_operation
+# def get_conversations(cursor, connection):
+#     user_id = request.args.get('user_id', type=int)  # Giả định user_id được gửi qua query
+#     if not user_id:
+#         return jsonify({"error": "user_id is required"}), 400
 
-    query = """
-        SELECT c.id, c.is_group, c.group_id, g.group_name, n.unread_count
-        FROM conversations_chat c
-        LEFT JOIN groups g ON c.group_id = g.id
-        LEFT JOIN conversation_participants_chat cp ON c.id = cp.conversation_id
-        LEFT JOIN notifications_chat n ON c.id = n.conversation_id AND n.user_id = %s
-        WHERE cp.user_id = %s
-    """
-    cursor.execute(query, (user_id, user_id))
-    conversations = cursor.fetchall()
+#     query = """
+#         SELECT c.id, c.is_group, c.group_id, g.group_name, n.unread_count
+#         FROM conversations_chat c
+#         LEFT JOIN groups g ON c.group_id = g.id
+#         LEFT JOIN conversation_participants_chat cp ON c.id = cp.conversation_id
+#         LEFT JOIN notifications_chat n ON c.id = n.conversation_id AND n.user_id = %s
+#         WHERE cp.user_id = %s
+#     """
+#     cursor.execute(query, (user_id, user_id))
+#     conversations = cursor.fetchall()
 
-    return jsonify({"conversations": conversations}), 200
+#     return jsonify({"conversations": conversations}), 200
 
-# Route: Gửi một tin nhắn mới
+# # Route: Gửi một tin nhắn mới
 @app.route('/api/conversations/<int:conversation_id>/messages', methods=['POST'])
 @handle_db_operation
 def send_message(cursor, connection, conversation_id):
@@ -2925,5 +3148,139 @@ def delete_menu_api(id):
         return jsonify({'message': 'Xóa thực đơn thành công'})
     except Exception as e:
         return jsonify({'error': f'Lỗi khi xóa thực đơn: {str(e)}'}), 500
+ # Middleware kiểm tra xác thực
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user_id = get_current_user_id()
+        if not user_id:
+            return jsonify({"error": "Authentication required"}), 401
+        request.user_id = user_id
+        return f(*args, **kwargs)
+    return decorated
+
+# Endpoint lấy danh sách cuộc trò chuyện nhóm và thành viên
+@app.route('/api/conversations', methods=['GET'])
+@require_auth
+def get_conversations():
+    try:
+        user_id = request.user_id
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        # Truy vấn lấy danh sách cuộc trò chuyện nhóm
+        query = """
+            SELECT 
+                c.id, c.is_group, c.group_id, g.group_name,
+                n.unread_count, COALESCE(n.is_muted, 0) AS is_muted,
+                m.id AS last_message_id, m.content AS last_message_content,
+                m.timestamp AS last_message_timestamp, u.full_name AS last_message_sender_name
+            FROM conversations_chat c
+            LEFT JOIN groups g ON c.group_id = g.id
+            JOIN conversation_participants_chat cp ON c.id = cp.conversation_id
+            LEFT JOIN notifications_chat n ON c.id = n.conversation_id AND n.user_id = %s
+            LEFT JOIN messages_chat m ON c.id = m.conversation_id
+            LEFT JOIN users u ON m.sender_id = u.id
+            WHERE cp.user_id = %s AND c.is_group = 1
+            ORDER BY m.timestamp DESC
+        """
+        cursor.execute(query, (user_id, user_id))
+        conversations = cursor.fetchall()
+        logging.info(f"[get_conversations] Found {len(conversations)} group conversations for user_id={user_id}")
+
+        result = []
+        for conv in conversations:
+            # Lấy danh sách thành viên của nhóm từ bảng members
+            cursor.execute("""
+                SELECT u.id, u.full_name, m.role, m.status
+                FROM members m
+                JOIN users u ON m.user_id = u.id
+                WHERE m.group_id = %s
+            """, (conv['group_id'],))
+            members = cursor.fetchall()
+
+            conversation_data = {
+                "id": conv['id'],
+                "is_group": bool(conv['is_group']),
+                "group_id": conv['group_id'],
+                "group_name": conv['group_name'],
+                "members": [
+                    {
+                        "id": m['id'],
+                        "full_name": m['full_name'],
+                        "avatar": m['full_name'][:2],  # Avatar mặc định từ full_name
+                        "role": m['role'],
+                        "status": m['status']
+                    } for m in members
+                ],
+                "unread_count": conv['unread_count'] or 0,
+                "is_muted": bool(conv['is_muted']) if conv['is_muted'] is not None else False,
+                "last_message": None
+            }
+
+            if conv['last_message_id']:
+                conversation_data["last_message"] = {
+                    "id": conv['last_message_id'],
+                    "content": conv['last_message_content'],
+                    "timestamp": conv['last_message_timestamp'].isoformat(),
+                    "sender_name": conv['last_message_sender_name']
+                }
+
+            result.append(conversation_data)
+
+        cursor.close()
+        connection.close()
+
+        logging.info(f"[get_conversations] Returning {len(result)} group conversations: {result}")
+        return jsonify({"conversations": result}), 200
+
+    except mysql.connector.Error as e:
+        logging.error(f"SQL Error in get_conversations: {e}", exc_info=True)
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+    except Exception as e:
+        logging.error(f"Error in get_conversations: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+# Endpoint lấy danh sách thành viên trong nhóm
+@app.route('/api/groups/<int:group_id>/members', methods=['GET'])
+@require_auth
+def get_group_members(group_id):
+    try:
+        user_id = request.user_id
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(
+            "SELECT id FROM members WHERE user_id = %s AND group_id = %s",
+            (user_id, group_id)
+        )
+        if not cursor.fetchone():
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "You are not a member of this group"}), 403
+
+        cursor.execute("""
+            SELECT u.id, u.full_name, m.role, m.status
+            FROM members m
+            JOIN users u ON m.user_id = u.id
+            WHERE m.group_id = %s
+        """, (group_id,))
+        members = cursor.fetchall()
+
+        # Thêm avatar mặc định dựa trên full_name
+        for member in members:
+            member['avatar'] = member['full_name'][:2]
+
+        cursor.close()
+        connection.close()
+
+        return jsonify({"members": members}), 200
+
+    except mysql.connector.Error as e:
+        logging.error(f"SQL Error in get_group_members: {e}", exc_info=True)
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+    except Exception as e:
+        logging.error(f"Error in get_group_members: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 if __name__ == '__main__':
     app.run(debug=True)

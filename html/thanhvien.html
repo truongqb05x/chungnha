@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +12,6 @@
     <link rel="stylesheet" href="../static/css/thanhvien.css">
     <link rel="shortcut icon" href="../static/img/logo.png" type="image/x-icon">
 </head>
-
 <body>
     <div class="app-container">
         <!-- Header -->
@@ -42,97 +40,67 @@
                 <div class="sidebar-logo">
                     <a href="/trang-ca-nhan">
                         <img src="../static/img/logo.png" alt="Logo">
-                      </a>
+                    </a>
                 </div>
                 <div>
                     <div class="sidebar-title">Chung Nhà</div>
                     <div class="sidebar-group">Nhóm: Nhà Mình A2</div>
                 </div>
             </div>
-        
             <div class="sidebar-nav">
-                <a href="/home" class="nav-item ">
-                    <div class="nav-icon">
-                        <i class="fas fa-home"></i>
-                    </div>
+                <a href="/home" class="nav-item">
+                    <div class="nav-icon"><i class="fas fa-home"></i></div>
                     <div class="nav-text">Trang chủ</div>
                 </a>
                 <a href="#" class="nav-item active">
-                    <div class="nav-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-users"></i></div>
                     <div class="nav-text">Thành viên</div>
                 </a>
                 <a href="/noi-quy" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-clipboard-list"></i></div>
                     <div class="nav-text">Nội quy</div>
                 </a>
                 <a href="/phan-cong-viec" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-tasks"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-tasks"></i></div>
                     <div class="nav-text">Phân công việc</div>
                 </a>
                 <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-book"></i></div>
                     <div class="nav-text">Thực đơn</div>
                 </a>
                 <a href="#" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-calendar-alt"></i></div>
                     <div class="nav-text">Lịch nấu ăn</div>
                 </a>
                 <a href="/quan-ly-do-dung" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-box-open"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-box-open"></i></div>
                     <div class="nav-text">Quản lý đồ dùng</div>
                 </a>
                 <a href="/chi-phi" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-wallet"></i></div>
                     <div class="nav-text">Chi phí</div>
                 </a>
                 <a href="/quy-nhom" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-piggy-bank"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-piggy-bank"></i></div>
                     <div class="nav-text">Quỹ nhóm</div>
                 </a>
                 <a href="/thong-ke" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
                     <div class="nav-text">Thống kê</div>
                 </a>
                 <a href="/tro-chuyen" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-comments"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-comments"></i></div>
                     <div class="nav-text">Trò chuyện</div>
                 </a>
                 <a href="/binh-chon" class="nav-item">
-                    <div class="nav-icon">
-                        <i class="fas fa-vote-yea"></i>
-                    </div>
+                    <div class="nav-icon"><i class="fas fa-vote-yea"></i></div>
                     <div class="nav-text">Bình chọn</div>
                 </a>
             </div>
-        
             <div class="sidebar-footer">
                 <div class="theme-toggle">
-                    <div class="theme-btn active" data-theme="light">
-                        <i class="fas fa-sun"></i>
-                    </div>
-                    <div class="theme-btn" data-theme="dark">
-                        <i class="fas fa-moon"></i>
-                    </div>
+                    <div class="theme-btn active" data-theme="light"><i class="fas fa-sun"></i></div>
+                    <div class="theme-btn" data-theme="dark"><i class="fas fa-moon"></i></div>
                 </div>
             </div>
         </nav>
@@ -153,8 +121,7 @@
             </div>
 
             <div class="search-filter">
-                <input type="text" class="search-input" id="searchInput"
-                    placeholder="Tìm kiếm theo tên, email hoặc số điện thoại...">
+                <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm theo tên, email hoặc số điện thoại...">
                 <select class="filter-select" id="roleFilter">
                     <option value="">Tất cả vai trò</option>
                     <option value="Admin">Quản trị viên</option>
@@ -197,42 +164,28 @@
             </div>
 
             <div class="pagination">
-                <button class="pagination-btn" id="prevPage" disabled>
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <!-- Các nút trang sẽ được thêm bằng JavaScript -->
-                <button class="pagination-btn" id="nextPage">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <button class="pagination-btn" id="prevPage" disabled><i class="fas fa-chevron-left"></i></button>
+                <button class="pagination-btn" id="nextPage"><i class="fas fa-chevron-right"></i></button>
             </div>
 
             <!-- Modal for showing QR code -->
-<!-- Modal for showing QR code -->
-<div class="modal" id="qrModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Mời tham gia nhóm</h2>
-            <button class="modal-close" id="closeQrModal">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <!-- Khi mở modal sẽ inject <img> vào đây -->
-        <div class="qr-code" id="qrCode">
-            <!-- <img src="/static/qrcodes/abcd1234.png" alt="QR code nhóm"> -->
-        </div>
-        <p class="qr-text">Quét mã QR để tham gia nhóm</p>
-    </div>
-</div>
+            <div class="modal" id="qrModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Mời tham gia nhóm</h2>
+                        <button class="modal-close" id="closeQrModal"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="qr-code" id="qrCode"></div>
+                    <p class="qr-text">Quét mã QR để tham gia nhóm</p>
+                </div>
+            </div>
 
-
-            <!-- Modal quét mã QR (scan để tham gia) -->
+            <!-- Modal quét mã QR -->
             <div class="modal" id="scanModal">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h2 class="modal-title">Quét mã QR để tham gia nhóm</h2>
-                        <button class="modal-close" id="closeScanModal">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <button class="modal-close" id="closeScanModal"><i class="fas fa-times"></i></button>
                     </div>
                     <div id="qrScanner" style="width:300px; height:300px;"></div>
                     <p class="qr-text">Hướng camera vào mã QR để quét</p>
@@ -241,19 +194,13 @@
         </main>
     </div>
 
-<!-- Thư viện tạo mã QR -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-<!-- Thư viện đọc mã QR bằng camera (html5-qrcode) -->
-<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
-
-<!-- Script dành riêng cho chức năng thành viên -->
-<script src="../static/js/thanhvien.js"></script>
-
-<!-- Script dùng chung cho toàn bộ ứng dụng -->
-<script src="../static/js/app.js"></script>
+    <!-- Thư viện tạo mã QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Thư viện đọc mã QR bằng camera -->
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <!-- Script dành riêng cho chức năng thành viên -->
+    <script src="../static/js/thanhvien.js"></script>
+    <!-- Script dùng chung cho toàn bộ ứng dụng -->
+    <script src="../static/js/app.js"></script>
 </body>
-
 </html>

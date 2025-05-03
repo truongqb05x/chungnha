@@ -38,7 +38,7 @@ CREATE TABLE `login_attempts` (
   CONSTRAINT `fk_login_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Lưu lịch sử các lần đăng nhập';
-
+-- Cập nhật schema.sql để thêm random_code
 -- =============================================================================
 -- NHÓM 2: QUẢN LÝ NHÓM
 -- Mô tả: Các bảng quản lý thông tin nhóm và thành viên.
@@ -49,14 +49,13 @@ CREATE TABLE `login_attempts` (
 CREATE TABLE `groups` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `group_name` VARCHAR(255) NOT NULL COMMENT 'Tên của nhóm',
-  `group_code` VARCHAR(255) NOT NULL UNIQUE COMMENT 'Mã QR hoặc mã định danh nhóm',
+  `group_code` VARCHAR(255) NOT NULL UNIQUE COMMENT 'Mã định danh nhóm',
+  `random_code` VARCHAR(255) NOT NULL UNIQUE COMMENT 'Mã ngẫu nhiên cho QR code',
+  `qr_image_url` VARCHAR(255) COMMENT 'Đường dẫn ảnh QR code của nhóm',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo nhóm',
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật nhóm'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Lưu thông tin các nhóm';
-ALTER TABLE `groups`
-  ADD COLUMN `qr_image_url` VARCHAR(255) 
-    COMMENT 'Đường dẫn ảnh QR code của nhóm, sinh một lần khi tạo';
 
 -- Bảng: members
 -- Mô tả: Quản lý thành viên trong các nhóm và vai trò của họ.
@@ -75,7 +74,6 @@ CREATE TABLE `members` (
   CONSTRAINT `fk_member_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Quản lý thành viên và vai trò trong nhóm';
-
 -- =============================================================================
 -- NHÓM 3: NỘI QUY NHÓM
 -- Mô tả: Các bảng quản lý nội quy nhóm, bình luận và lượt thích.
@@ -609,3 +607,4 @@ CREATE TABLE `notifications_chat` (
   UNIQUE KEY `ux_notification` (`user_id`, `conversation_id`) COMMENT 'Đảm bảo mỗi người chỉ có một thông báo mỗi cuộc trò chuyện'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Quản lý thông báo về tin nhắn chưa đọc';
+ALTER TABLE notifications_chat ADD COLUMN is_muted TINYINT(1) DEFAULT 0;

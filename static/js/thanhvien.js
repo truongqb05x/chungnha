@@ -88,70 +88,50 @@ document.addEventListener('DOMContentLoaded', function() {
             alert("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.");
         });
     }
-    // Получить список участников
+
+    // Lấy danh sách thành viên
     function fetchMembers() {
-        const searchTerm   = searchInput.value.toLowerCase();
+        const searchTerm = searchInput.value.toLowerCase();
         const selectedRole = roleFilter.value;
         const selectedStatus = statusFilter.value;
-    
+
         fetch(`/api/members?group_id=${groupId}&page=${currentPage}&perPage=${membersPerPage}` +
               `&search=${searchTerm}&role=${selectedRole}&status=${selectedStatus}`)
-        .then(response => {
-            console.log('[fetchMembers] HTTP status:', response.status);
-            if (!response.ok) {
-                throw new Error('Failed to fetch members');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('[fetchMembers] data:', data);
-    
-            // Debug xem data.group có đúng không
-            if (!data.group) {
-                console.error('[fetchMembers] missing data.group!', data);
-            } else {
-                console.log('[fetchMembers] qr_image_url:', data.group.qr_image_url);
-            }
-    
-            isAdmin  = data.is_admin;
-            isMember = data.members.length > 0 || data.totalMembers > 0;
-            toggleButtons();
-            renderMembers(data.members);
-            updatePagination(data.totalMembers);
-    
-            // Debug element qrCode
-            const qrContainer = document.getElementById('qrCode');
-            console.log('[fetchMembers] qrContainer element:', qrContainer);
-    
-            qrContainer.innerHTML = '';  // clear trước
-    
-            if (isMember) {
-                if (data.group && data.group.qr_image_url) {
-                    qrContainer.innerHTML = 
-                      `<img src="${data.group.qr_image_url}" 
-                             alt="QR code nhóm" 
-                             style="width:180px;height:180px;">`;
+            .then(response => {
+                console.log('[fetchMembers] HTTP status:', response.status);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch members');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('[fetchMembers] data:', data);
+                isAdmin = data.is_admin;
+                isMember = data.members.length > 0 || data.totalMembers > 0;
+                toggleButtons();
+                renderMembers(data.members);
+                updatePagination(data.totalMembers);
+
+                qrCodeElement.innerHTML = '';
+                if (isMember && data.group && data.group.qr_image_url) {
+                    qrCodeElement.innerHTML = 
+                        `<img src="${data.group.qr_image_url}" alt="QR code nhóm" style="width:180px;height:180px;">`;
                 } else if (data.group_code) {
                     const qrUrl = `/static/qrcodes/${data.group_code}.png`;
-                    qrContainer.innerHTML = 
-                      `<img src="${qrUrl}" 
-                             alt="QR code nhóm" 
-                             style="width:180px;height:180px;">`;
-                } else {
-                    console.warn('[fetchMembers] no qr_image_url or group_code fallback');
+                    qrCodeElement.innerHTML = 
+                        `<img src="${qrUrl}" alt="QR code nhóm" style="width:180px;height:180px;">`;
                 }
-            }
-    
-            document.querySelector('.sidebar-group').textContent =
-              `Nhóm: ${data.group_name || 'Nhà Mình A2'}`;
-        })
-        .catch(error => {
-            console.error('[fetchMembers] error:', error);
-            membersTableBody.innerHTML =
-              '<tr><td colspan="4">Đã xảy ra lỗi khi tải danh sách thành viên.</td></tr>';
-        });
+
+                document.querySelector('.sidebar-group').textContent =
+                    `Nhóm: ${data.group_name || 'Nhà Mình A2'}`;
+            })
+            .catch(error => {
+                console.error('[fetchMembers] error:', error);
+                membersTableBody.innerHTML =
+                    '<tr><td colspan="4">Đã xảy ra lỗi khi tải danh sách thành viên.</td></tr>';
+            });
     }
-    
+
     // Render danh sách thành viên
     function renderMembers(members) {
         membersTableBody.innerHTML = '';
@@ -163,6 +143,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
         members.forEach(member => {
             const row = document.createElement('tr');
+            let actionButtons = '';
+            if (isAdmin) {
+                if (member.status === 'Pending') {
+                    actionButtons = `
+                        <button class="action-btn approve-btn" data-id="${member.member_id}" title="Duyệt thành viên">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="action-btn reject-btn" data-id="${member.member_id}" title="Từ chối thành viên">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                } else if (member.can_delete) {
+                    actionButtons = `
+                        <button class="action-btn delete-btn" data-id="${member.member_id}" title="Xóa thành viên">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                }
+            }
+
             row.innerHTML = `
                 <td>
                     <div class="member-name">
@@ -177,18 +177,33 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${member.status}
                     </span>
                 </td>
-                <td>
-                    ${isAdmin && member.can_delete ? `
-                        <button class="action-btn delete-btn" data-id="${member.member_id}" title="Delete member">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    ` : ''}
-                </td>
+                <td>${actionButtons}</td>
             `;
             membersTableBody.appendChild(row);
         });
 
         if (isAdmin) {
+            // Xử lý nút duyệt
+            document.querySelectorAll('.approve-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const memberId = this.getAttribute('data-id');
+                    if (memberId && confirm('Bạn có chắc chắn muốn duyệt thành viên này không?')) {
+                        approveMember(memberId);
+                    }
+                });
+            });
+
+            // Xử lý nút từ chối
+            document.querySelectorAll('.reject-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const memberId = this.getAttribute('data-id');
+                    if (memberId && confirm('Bạn có chắc chắn muốn từ chối thành viên này không?')) {
+                        rejectMember(memberId);
+                    }
+                });
+            });
+
+            // Xử lý nút xóa
             document.querySelectorAll('.delete-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const memberId = this.getAttribute('data-id');
@@ -202,6 +217,64 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleActionColumn();
     }
 
+    // Duyệt thành viên
+    function approveMember(memberId) {
+        fetch(`/api/member/${memberId}/approve`, {
+            method: 'POST',
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else if (response.status === 401) {
+                    throw new Error('Bạn cần đăng nhập để thực hiện hành động này.');
+                } else if (response.status === 403) {
+                    throw new Error('Bạn không có quyền duyệt thành viên này.');
+                } else if (response.status === 404) {
+                    throw new Error('Không tìm thấy thành viên.');
+                } else {
+                    throw new Error('Lỗi server.');
+                }
+            })
+            .then(data => {
+                alert(data.message);
+                fetchMembers();
+            })
+            .catch(error => {
+                console.error('Error approving member:', error);
+                alert(error.message);
+                fetchMembers();
+            });
+    }
+
+    // Từ chối thành viên
+    function rejectMember(memberId) {
+        fetch(`/api/member/${memberId}/reject`, {
+            method: 'POST',
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else if (response.status === 401) {
+                    throw new Error('Bạn cần đăng nhập để thực hiện hành động này.');
+                } else if (response.status === 403) {
+                    throw new Error('Bạn không có quyền từ chối thành viên này.');
+                } else if (response.status === 404) {
+                    throw new Error('Không tìm thấy thành viên.');
+                } else {
+                    throw new Error('Lỗi server.');
+                }
+            })
+            .then(data => {
+                alert(data.message);
+                fetchMembers();
+            })
+            .catch(error => {
+                console.error('Error rejecting member:', error);
+                alert(error.message);
+                fetchMembers();
+            });
+    }
+
     // Xóa thành viên
     function deleteMember(memberId) {
         fetch(`/api/member/${memberId}`, {
@@ -211,19 +284,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (response.ok) {
                     return response.json();
                 } else if (response.status === 401) {
-                    alert('Bạn cần đăng nhập để thực hiện hành động này.');
-                    throw new Error('Unauthorized');
+                    throw new Error('Bạn cần đăng nhập để thực hiện hành động này.');
                 } else if (response.status === 403) {
-                    alert('Bạn không có quyền xóa thành viên này.');
-                    throw new Error('Forbidden');
+                    throw new Error('Bạn không có quyền xóa thành viên này.');
                 } else if (response.status === 404) {
-                    alert('Không tìm thấy thành viên hoặc đã bị xóa.');
-                    throw new Error('Not Found');
+                    throw new Error('Không tìm thấy thành viên hoặc đã bị xóa.');
                 } else if (response.status === 400) {
-                    alert('Không thể thực hiện hành động này.');
-                    throw new Error('Bad Request');
+                    throw new Error('Không thể thực hiện hành động này.');
                 } else {
-                    throw new Error('Server Error');
+                    throw new Error('Lỗi server.');
                 }
             })
             .then(data => {
@@ -232,6 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error deleting member:', error);
+                alert(error.message);
                 fetchMembers();
             });
     }
