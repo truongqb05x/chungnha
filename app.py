@@ -2656,27 +2656,6 @@ def handle_db_operation(query_func):
                 connection.close()
     return wrapper
 
-# Route: Lấy danh sách cuộc trò chuyện của người dùng
-# @app.route('/api/conversations', methods=['GET'])
-# @handle_db_operation
-# def get_conversations(cursor, connection):
-#     user_id = request.args.get('user_id', type=int)  # Giả định user_id được gửi qua query
-#     if not user_id:
-#         return jsonify({"error": "user_id is required"}), 400
-
-#     query = """
-#         SELECT c.id, c.is_group, c.group_id, g.group_name, n.unread_count
-#         FROM conversations_chat c
-#         LEFT JOIN groups g ON c.group_id = g.id
-#         LEFT JOIN conversation_participants_chat cp ON c.id = cp.conversation_id
-#         LEFT JOIN notifications_chat n ON c.id = n.conversation_id AND n.user_id = %s
-#         WHERE cp.user_id = %s
-#     """
-#     cursor.execute(query, (user_id, user_id))
-#     conversations = cursor.fetchall()
-
-#     return jsonify({"conversations": conversations}), 200
-
 # # Route: Gửi một tin nhắn mới
 @app.route('/api/conversations/<int:conversation_id>/messages', methods=['POST'])
 @handle_db_operation

@@ -1,63 +1,90 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // === CÁC PHẦN CHUNG ===
-    const body = document.body;
-    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    const sidebar = document.querySelector('.sidebar');
-    const themeIconContainer = document.querySelector('.header-icon.theme-icon');
-    const themeBtns = document.querySelectorAll('.theme-btn');
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    const themeIcon = themeIconContainer.querySelector('i');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const sidebar = document.querySelector('.sidebar');
+            
+            mobileMenuBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                mobileMenuBtn.innerHTML = sidebar.classList.contains('active') 
+                    ? '<i class="fas fa-times"></i>' 
+                    : '<i class="fas fa-bars"></i>';
+            });
 
-    // === 1. Mobile menu toggle ===
-    function toggleMenu() {
-        sidebar.classList.toggle('active');
-        body.classList.toggle('sidebar-active');
-        mobileMenuBtn.querySelector('i').classList.toggle('fa-bars');
-        mobileMenuBtn.querySelector('i').classList.toggle('fa-times');
-    }
+            // Theme toggle
+            const themeToggle = document.querySelector('.theme-toggle');
+            const themeBtns = document.querySelectorAll('.theme-btn');
+            const body = document.body;
+            
+            themeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const theme = this.getAttribute('data-theme');
+                    
+                    themeBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    body.setAttribute('data-theme', theme);
+                    localStorage.setItem('theme', theme);
+                    
+                    const themeIcon = document.querySelector('.theme-icon i');
+                    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                });
+            });
 
-    // Mở/đóng menu khi nhấn vào icon
-    mobileMenuBtn.addEventListener('click', toggleMenu);
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            body.setAttribute('data-theme', savedTheme);
+            
+            const activeThemeBtn = document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`);
+            if (activeThemeBtn) {
+                themeBtns.forEach(b => b.classList.remove('active'));
+                activeThemeBtn.classList.add('active');
+                
+                const themeIcon = document.querySelector('.theme-icon i');
+                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        });
 
-    // Đóng menu khi click bên ngoài sidebar
-    document.addEventListener('click', function(e) {
-        if (!sidebar.contains(e.target) && sidebar.classList.contains('active')) {
-            toggleMenu();
+        // Hàm kiểm tra session và lấy user_id
+async function checkSession() {
+    try {
+        const response = await fetch('/check_session');
+        const data = await response.json();
+
+        if (response.ok && data.id) {
+            return data.id;  // Trả về user_id
+        } else {
+            return null;  // Không có user_id
         }
-    });
-
-    // Đóng menu tự động khi resize màn hình
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768 && sidebar.classList.contains('active')) {
-            toggleMenu();
-        }
-    });
-
-    // === 2. Theme toggle ===
-    themeIconContainer.addEventListener('click', toggleTheme);
-    themeBtns.forEach(btn => {
-        btn.addEventListener('click', () => setTheme(btn.getAttribute('data-theme')));
-    });
-
-    // === 3. Load saved theme on page load ===
-    setTheme(savedTheme);
-
-    // Hàm thay đổi theme và lưu vào localStorage
-    function setTheme(theme) {
-        body.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-        themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        themeBtns.forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-theme') === theme));
+    } catch (error) {
+        console.error('Lỗi khi gọi API check_session:', error);
+        alert('Đã có lỗi xảy ra. Vui lòng thử lại.');
+        return null;
     }
-
-    // Hàm chuyển theme khi nhấn vào icon
-    function toggleTheme() {
-        const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
+}
+        // Gọi hàm checkSession để lấy user_id và sau đó lấy tên nhóm
+checkSession().then(userId => {
+    if (userId) {
+        fetchUserGroup(userId);  // Gọi API để lấy tên nhóm
+    } else {
+        console.log('Người dùng chưa đăng nhập');
     }
 });
-
-// === Kiểm tra trạng thái đăng nhập ===
+document.addEventListener('DOMContentLoaded', async () => {
+    const avatarEl = document.querySelector('.user-avatar');
+    try {
+      // Gọi API lấy 2 chữ cái đầu của tên user
+      const res = await fetch('/api/user_initials');
+      if (!res.ok) {
+        console.error('Lấy initials thất bại:', res.status);
+        return;
+      }
+      const { initials } = await res.json();
+      // Cập nhật nội dung <a> với initials mới
+      avatarEl.textContent = initials;
+    } catch (err) {
+      console.error('Lỗi khi gọi API /api/user_initials:', err);
+    }
+  });
+  // === Kiểm tra trạng thái đăng nhập ===
 function checkLoginStatus() {
     fetch('/check_session', {
         method: 'GET',
@@ -102,48 +129,4 @@ async function fetchUserGroup(userId) {
       }
     }
   }
-  
-
-// Hàm kiểm tra session và lấy user_id
-async function checkSession() {
-    try {
-        const response = await fetch('/check_session');
-        const data = await response.json();
-
-        if (response.ok && data.id) {
-            return data.id;  // Trả về user_id
-        } else {
-            return null;  // Không có user_id
-        }
-    } catch (error) {
-        console.error('Lỗi khi gọi API check_session:', error);
-        alert('Đã có lỗi xảy ra. Vui lòng thử lại.');
-        return null;
-    }
-}
-
-// Gọi hàm checkSession để lấy user_id và sau đó lấy tên nhóm
-checkSession().then(userId => {
-    if (userId) {
-        fetchUserGroup(userId);  // Gọi API để lấy tên nhóm
-    } else {
-        console.log('Người dùng chưa đăng nhập');
-    }
-});
-document.addEventListener('DOMContentLoaded', async () => {
-    const avatarEl = document.querySelector('.user-avatar');
-    try {
-      // Gọi API lấy 2 chữ cái đầu của tên user
-      const res = await fetch('/api/user_initials');
-      if (!res.ok) {
-        console.error('Lấy initials thất bại:', res.status);
-        return;
-      }
-      const { initials } = await res.json();
-      // Cập nhật nội dung <a> với initials mới
-      avatarEl.textContent = initials;
-    } catch (err) {
-      console.error('Lỗi khi gọi API /api/user_initials:', err);
-    }
-  });
   
