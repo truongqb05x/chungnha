@@ -1628,417 +1628,356 @@ def validate_group_membership(group_id, user_id):
 @app.route('/api/tasks', methods=['GET'])
 def get_tasks():
     try:
-        # Assume user_id is stored in session after authentication
+        # 1) Kiểm tra đăng nhập
         user_id = session.get('user_id')
         if not user_id:
             return jsonify({"error": "Vui lòng đăng nhập"}), 401
 
-        # Get group_id from query parameters
-        group_id = request.args.get('group_id')
-        if not group_id:
-            return jsonify({"error": "Thiếu group_id"}), 400
-        
-        try:
-            group_id = int(group_id)
-        except (ValueError, TypeError):
-            return jsonify({"error": "group_id không hợp lệ"}), 400
-
-        # Validate group and membership
-        is_valid, error = validate_group_membership(group_id, user_id)
-        if not is_valid:
-            return jsonify({"error": error}), 403
-
-        status = request.args.get('status')      # 'completed', 'pending', 'overdue' hoặc None
-        assignee = request.args.get('assignee')  # 'A','B','C' hoặc None
-        from_date = request.args.get('from_date')
-        to_date = request.args.get('to_date')
-
-        # Validate input
-        valid_statuses = {'completed', 'pending', 'overdue', None}
-        if status not in valid_statuses:
-            return jsonify({"error": "Trạng thái không hợp lệ"}), 400
-
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
+        # 2) Lấy group_id mà user đã join (status = 'Active')
+        cursor.execute("""
+            SELECT group_id 
+            FROM members
+            WHERE user_id = %s
+              AND status = 'Active'
+            LIMIT 1
+        """, (user_id,))
+        member = cursor.fetchone()
+        if not member:
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Bạn chưa tham gia nhóm nào"}), 403
+
+        group_id = member['group_id']
+
+        # 3) Build query lấy tasks của nhóm này
+        status   = request.args.get('status')      # 'completed', 'pending', 'overdue' hoặc None
+        assignee = request.args.get('assignee')    # initial của member hoặc None
+        from_date = request.args.get('from_date')
+        to_date   = request.args.get('to_date')
+
+        # Validate status
+        if status and status not in ('completed', 'pending', 'overdue'):
+            cursor.close()
+            conn.close()
+            return jsonify({"error": "Trạng thái không hợp lệ"}), 400
+
         sql = """
             SELECT 
-                tasks.*, 
-                users.full_name AS assignee_name
-            FROM tasks
-            LEFT JOIN members ON tasks.assignee_id = members.id
-            LEFT JOIN users ON members.user_id = users.id
-            WHERE tasks.group_id = %s
+                t.*, 
+                u.full_name AS assignee_name
+            FROM tasks t
+            LEFT JOIN members m ON t.assignee_id = m.id
+            LEFT JOIN users u    ON m.user_id = u.id
+            WHERE t.group_id = %s
         """
         params = [group_id]
 
         today = date.today().isoformat()
         if status == 'completed':
-            sql += " AND tasks.completed = 1"
+            sql += " AND t.completed = 1"
         elif status == 'pending':
-            sql += " AND tasks.completed = 0 AND tasks.due_date >= %s"
+            sql += " AND t.completed = 0 AND t.due_date >= %s"
             params.append(today)
         elif status == 'overdue':
-            sql += " AND tasks.completed = 0 AND tasks.due_date < %s"
+            sql += " AND t.completed = 0 AND t.due_date < %s"
             params.append(today)
 
-        if assignee and assignee != 'all':
-            sql += " AND tasks.assignee_id = (SELECT id FROM members WHERE initial = %s LIMIT 1)"
-            params.append(assignee)
+        if assignee and assignee.lower() != 'all':
+            sql += """
+              AND t.assignee_id = (
+                  SELECT id FROM members 
+                  WHERE initial = %s 
+                    AND group_id = %s
+                  LIMIT 1
+              )
+            """
+            params.extend([assignee, group_id])
 
         if from_date:
-            sql += " AND tasks.due_date >= %s"
+            sql += " AND t.due_date >= %s"
             params.append(from_date)
         if to_date:
-            sql += " AND tasks.due_date <= %s"
+            sql += " AND t.due_date <= %s"
             params.append(to_date)
 
+        sql += " ORDER BY t.due_date ASC"
+
+        # 4) Thực thi và trả về
         cursor.execute(sql, params)
         tasks = cursor.fetchall()
+
         cursor.close()
         conn.close()
         return jsonify(tasks), 200
+
     except mysql.connector.Error as e:
         return jsonify({"error": f"Lỗi cơ sở dữ liệu: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Lỗi hệ thống: {str(e)}"}), 500
-
 # --- Create task ---
-@app.route('/api/creat_tasks', methods=['POST'])
+# Helper: lấy group_id mà user đang tham gia Active
+def get_user_group_id(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT group_id
+        FROM members
+        WHERE user_id = %s
+          AND status = 'Active'
+        LIMIT 1
+    """, (user_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return row['group_id'] if row else None
+
+# --- Create Task ---
+@app.route('/api/tasks', methods=['POST'])
 def create_task():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Vui lòng đăng nhập"}), 401
+
+    data = request.get_json()
+    required_fields = ['type', 'assignee', 'date', 'priority']
+    if not data or not all(key in data for key in required_fields):
+        return jsonify({"error": "Thiếu thông tin bắt buộc"}), 400
+
+    # Lấy group_id từ membership
+    group_id = get_user_group_id(user_id)
+    if not group_id:
+        return jsonify({"error": "Bạn chưa tham gia nhóm nào"}), 403
+
+    # Validate priority
+    valid_priorities = ['low', 'medium', 'high']
+    if data['priority'] not in valid_priorities:
+        return jsonify({"error": "Mức độ ưu tiên không hợp lệ"}), 400
+
+    # Validate assignee_id
     try:
-        # Assume user_id is stored in session after authentication
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({"error": "Vui lòng đăng nhập"}), 401
+        assignee_id = int(data['assignee'])
+    except (ValueError, TypeError):
+        return jsonify({"error": "Người phụ trách không hợp lệ"}), 400
 
-        data = request.get_json()
-        # Bắt buộc có thêm group_id và assignee (dưới dạng ID số)
-        required_fields = ['group_id', 'type', 'assignee', 'date', 'priority']
-        if not data or not all(key in data for key in required_fields):
-            return jsonify({"error": "Thiếu thông tin bắt buộc"}), 400
-
-        # Validate group_id
-        try:
-            group_id = int(data['group_id'])
-        except (ValueError, TypeError):
-            return jsonify({"error": "group_id không hợp lệ"}), 400
-
-        # Validate group and membership
-        is_valid, error = validate_group_membership(group_id, user_id)
-        if not is_valid:
-            return jsonify({"error": error}), 403
-
-        # Validate priority
-        valid_priorities = ['low', 'medium', 'high']
-        if data['priority'] not in valid_priorities:
-            return jsonify({"error": "Mức độ ưu tiên không hợp lệ"}), 400
-
-        # Chuyển assignee thành số và validate tồn tại
-        try:
-            assignee_id = int(data['assignee'])
-        except (ValueError, TypeError):
-            return jsonify({"error": "Người phụ trách không hợp lệ"}), 400
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT id FROM members WHERE id = %s AND group_id = %s LIMIT 1",
-            (assignee_id, group_id)
-        )
-        if not cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return jsonify({"error": "Người phụ trách không tồn tại hoặc không thuộc nhóm"}), 400
-
-        # Thực hiện INSERT
-        cursor.execute(
-            '''
-            INSERT INTO tasks
-                (group_id, custom_type, description, assignee_id, due_date, priority, completed)
-            VALUES
-                (%s, %s, %s, %s, %s, %s, 0)
-            ''',
-            (
-                group_id,
-                data['type'],
-                data.get('desc'),
-                assignee_id,
-                data['date'],
-                data['priority']
-            )
-        )
-        conn.commit()
-        new_id = cursor.lastrowid
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Kiểm tra assignee thuộc nhóm
+    cursor.execute(
+        "SELECT id FROM members WHERE id = %s AND group_id = %s LIMIT 1",
+        (assignee_id, group_id)
+    )
+    if not cursor.fetchone():
         cursor.close()
         conn.close()
+        return jsonify({"error": "Người phụ trách không tồn tại hoặc không thuộc nhóm"}), 400
 
-        return jsonify({"id": new_id, "message": "Tạo công việc thành công"}), 201
+    # Insert task
+    cursor.execute(
+        '''
+        INSERT INTO tasks
+            (group_id, custom_type, description, assignee_id, due_date, priority, completed)
+        VALUES
+            (%s, %s, %s, %s, %s, %s, 0)
+        ''',
+        (
+            group_id,
+            data['type'],
+            data.get('desc'),
+            assignee_id,
+            data['date'],
+            data['priority']
+        )
+    )
+    conn.commit()
+    new_id = cursor.lastrowid
+    cursor.close()
+    conn.close()
 
-    except mysql.connector.Error as e:
-        app.logger.error(f"DB Error: {e}")
-        return jsonify({"error": f"Lỗi cơ sở dữ liệu: {str(e)}"}), 500
-    except Exception as e:
-        app.logger.error(f"System Error: {e}")
-        return jsonify({"error": f"Lỗi hệ thống: {str(e)}"}), 500
+    return jsonify({"id": new_id, "message": "Tạo công việc thành công"}), 201
 
-# --- Update task ---
+# --- Update Task ---
 @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
 def update_task(task_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Vui lòng đăng nhập"}), 401
+
+    data = request.get_json()
+    required_fields = ['type', 'desc', 'assignee', 'date', 'priority']
+    if not data or not all(field in data for field in required_fields):
+        return jsonify({"error": "Thiếu thông tin bắt buộc"}), 400
+
+    group_id = get_user_group_id(user_id)
+    if not group_id:
+        return jsonify({"error": "Bạn chưa tham gia nhóm nào"}), 403
+
+    # Validate priority and assignee
+    valid_priorities = ['low', 'medium', 'high']
+    if data['priority'] not in valid_priorities:
+        return jsonify({"error": "Mức độ ưu tiên không hợp lệ"}), 400
     try:
-        # Assume user_id is stored in session after authentication
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({"error": "Vui lòng đăng nhập"}), 401
+        assignee_id = int(data['assignee'])
+    except (ValueError, TypeError):
+        return jsonify({"error": "Người phụ trách không hợp lệ"}), 400
 
-        data = request.get_json()
-        required_fields = ['group_id', 'type', 'desc', 'assignee', 'date', 'priority']
-        if not data or not all(field in data for field in required_fields):
-            return jsonify({"error": "Thiếu thông tin bắt buộc"}), 400
-
-        # Validate group_id
-        try:
-            group_id = int(data['group_id'])
-        except (ValueError, TypeError):
-            return jsonify({"error": "group_id không hợp lệ"}), 400
-
-        # Validate group and membership
-        is_valid, error = validate_group_membership(group_id, user_id)
-        if not is_valid:
-            return jsonify({"error": error}), 403
-
-        # Validate priority
-        valid_priorities = ['low', 'medium', 'high']
-        if data['priority'] not in valid_priorities:
-            return jsonify({"error": "Mức độ ưu tiên không hợp lệ"}), 400
-
-        # Ép assignee thành số
-        try:
-            assignee_id = int(data['assignee'])
-        except (ValueError, TypeError):
-            return jsonify({"error": "Người phụ trách không hợp lệ"}), 400
-
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        # Kiểm tra task tồn tại trong nhóm
-        cursor.execute(
-            "SELECT id FROM tasks WHERE id = %s AND group_id = %s",
-            (task_id, group_id)
-        )
-        if not cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return jsonify({"error": "Công việc không tồn tại"}), 404
-
-        # Kiểm tra assignee có thuộc nhóm hay không
-        cursor.execute(
-            "SELECT id FROM members WHERE id = %s AND group_id = %s LIMIT 1",
-            (assignee_id, group_id)
-        )
-        if not cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return jsonify({"error": "Người phụ trách không tồn tại hoặc không thuộc nhóm"}), 400
-
-        # Thực hiện UPDATE
-        cursor.execute(
-            """
-            UPDATE tasks
-            SET
-                custom_type = %s,
-                description = %s,
-                assignee_id = %s,
-                due_date    = %s,
-                priority    = %s,
-                completed   = %s
-            WHERE id = %s AND group_id = %s
-            """,
-            (
-                data['type'],
-                data.get('desc'),
-                assignee_id,
-                data['date'],
-                data['priority'],
-                1 if data.get('completed') else 0,
-                task_id,
-                group_id
-            )
-        )
-
-        if cursor.rowcount == 0:
-            cursor.close()
-            conn.close()
-            return jsonify({"error": "Không thể cập nhật công việc"}), 400
-
-        # Lấy lại task vừa sửa để trả về
-        cursor.execute(
-            """
-            SELECT
-                t.id,
-                t.custom_type    AS type,
-                t.description    AS description,
-                t.due_date       AS due_date,
-                t.priority,
-                t.completed,
-                u.full_name      AS assignee_name,
-                t.assignee_id
-            FROM tasks t
-            LEFT JOIN members m ON t.assignee_id = m.id
-            LEFT JOIN users u   ON m.user_id      = u.id
-            WHERE t.id = %s AND t.group_id = %s
-            """,
-            (task_id, group_id)
-        )
-        updated_task = cursor.fetchone()
-
-        conn.commit()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    # Kiểm tra task tồn tại và thuộc nhóm
+    cursor.execute(
+        "SELECT id FROM tasks WHERE id = %s AND group_id = %s",
+        (task_id, group_id)
+    )
+    if not cursor.fetchone():
         cursor.close()
         conn.close()
+        return jsonify({"error": "Công việc không tồn tại"}), 404
 
-        return jsonify({
-            "message": "Cập nhật công việc thành công",
-            "task": {
-                "id":            updated_task['id'],
-                "type":          updated_task['type'],
-                "desc":          updated_task['description'],
-                "date":          str(updated_task['due_date']),
-                "priority":      updated_task['priority'],
-                "completed":     bool(updated_task['completed']),
-                "assignee_id":   updated_task['assignee_id'],
-                "assignee_name": updated_task['assignee_name']
-            }
-        }), 200
+    # Kiểm tra assignee
+    cursor.execute(
+        "SELECT id FROM members WHERE id = %s AND group_id = %s LIMIT 1",
+        (assignee_id, group_id)
+    )
+    if not cursor.fetchone():
+        cursor.close()
+        conn.close()
+        return jsonify({"error": "Người phụ trách không tồn tại hoặc không thuộc nhóm"}), 400
 
-    except mysql.connector.Error as e:
-        app.logger.error(f"DB Error: {e}")
-        return jsonify({"error": f"Lỗi cơ sở dữ liệu: {str(e)}"}), 500
-    except Exception as e:
-        app.logger.error(f"System Error: {e}")
-        return jsonify({"error": f"Lỗi hệ thống: {str(e)}"}), 500
+    # Cập nhật
+    cursor.execute(
+        """
+        UPDATE tasks
+        SET
+            custom_type = %s,
+            description = %s,
+            assignee_id = %s,
+            due_date    = %s,
+            priority    = %s,
+            completed   = %s
+        WHERE id = %s AND group_id = %s
+        """,
+        (
+            data['type'],
+            data.get('desc'),
+            assignee_id,
+            data['date'],
+            data['priority'],
+            1 if data.get('completed') else 0,
+            task_id,
+            group_id
+        )
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
 
-# --- Delete task ---
+    return jsonify({"message": "Cập nhật công việc thành công"}), 200
+
+# --- Delete Task ---
 @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
-    try:
-        # Giả sử user_id được lưu trong session sau khi đăng nhập
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({"error": "Vui lòng đăng nhập"}), 401
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Vui lòng đăng nhập"}), 401
 
-        # Lấy group_id từ query parameters
-        group_id = request.args.get('group_id')
-        if not group_id:
-            return jsonify({"error": "Thiếu group_id"}), 400
+    group_id = get_user_group_id(user_id)
+    if not group_id:
+        return jsonify({"error": "Bạn chưa tham gia nhóm nào"}), 403
 
-        try:
-            group_id = int(group_id)
-        except (ValueError, TypeError):
-            return jsonify({"error": "group_id không hợp lệ"}), 400
-
-        # Kiểm tra quyền thành viên trong nhóm
-        is_valid, error = validate_group_membership(group_id, user_id)
-        if not is_valid:
-            return jsonify({"error": error}), 403
-
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
-
-        # Kiểm tra xem task có tồn tại không
-        cursor.execute(
-            "SELECT id FROM tasks WHERE id = %s AND group_id = %s",
-            (task_id, group_id)
-        )
-        result = cursor.fetchone()
-        if not result:
-            cursor.close()
-            conn.close()
-            return jsonify({"error": "Công việc không tồn tại"}), 404
-
-        # Xóa task
-        cursor.execute(
-            "DELETE FROM tasks WHERE id = %s AND group_id = %s",
-            (task_id, group_id)
-        )
-
-        if cursor.rowcount == 0:
-            cursor.close()
-            conn.close()
-            return jsonify({"error": "Không thể xóa công việc"}), 400
-
-        conn.commit()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Kiểm tra tồn tại
+    cursor.execute(
+        "SELECT id FROM tasks WHERE id = %s AND group_id = %s",
+        (task_id, group_id)
+    )
+    if not cursor.fetchone():
         cursor.close()
         conn.close()
-        return jsonify({"message": "Xóa công việc thành công"}), 200
+        return jsonify({"error": "Công việc không tồn tại"}), 404
 
-    except mysql.connector.Error as e:
-        return jsonify({"error": f"Lỗi cơ sở dữ liệu: {str(e)}"}), 500
-    except Exception as e:
-        return jsonify({"error": f"Lỗi hệ thống: {str(e)}"}), 500
+    # Xóa
+    cursor.execute(
+        "DELETE FROM tasks WHERE id = %s AND group_id = %s",
+        (task_id, group_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"message": "Xóa công việc thành công"}), 200
 
-# --- Mark task as complete ---
+# --- Mark Complete ---
 @app.route('/api/tasks/<int:task_id>/complete', methods=['PATCH'])
 def mark_complete(task_id):
-    try:
-        # Assume user_id is stored in session after authentication
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({"error": "Vui lòng đăng nhập"}), 401
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Vui lòng đăng nhập"}), 401
 
-        # Get group_id from query parameters
-        group_id = request.args.get('group_id')
-        if not group_id:
-            return jsonify({"error": "Thiếu group_id"}), 400
-        
-        try:
-            group_id = int(group_id)
-        except (ValueError, TypeError):
-            return jsonify({"error": "group_id không hợp lệ"}), 400
+    group_id = get_user_group_id(user_id)
+    if not group_id:
+        return jsonify({"error": "Bạn chưa tham gia nhóm nào"}), 403
 
-        # Validate group and membership
-        is_valid, error = validate_group_membership(group_id, user_id)
-        if not is_valid:
-            return jsonify({"error": error}), 403
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE tasks SET completed = 1 WHERE id = %s AND group_id = %s",
-            (task_id, group_id)
-        )
-        
-        if cursor.rowcount == 0:
-            cursor.close()
-            conn.close()
-            return jsonify({"error": "Công việc không tồn tại hoặc không thể cập nhật"}), 404
-
-        conn.commit()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE tasks SET completed = 1 WHERE id = %s AND group_id = %s",
+        (task_id, group_id)
+    )
+    if cursor.rowcount == 0:
         cursor.close()
         conn.close()
-        return jsonify({"completed": True}), 200
-    except mysql.connector.Error as e:
-        return jsonify({"error": f"Lỗi cơ sở dữ liệu: {str(e)}"}), 500
-    except Exception as e:
-        return jsonify({"error": f"Lỗi hệ thống: {str(e)}"}), 500
+        return jsonify({"error": "Công việc không tồn tại hoặc không thể cập nhật"}), 404
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"completed": True}), 200
 # Nếu bạn đã xác định group_id trong session hay token, hãy thay thế hằng số này
 GROUP_ID = 1
 
 # --- Lấy danh sách thành viên để hiển thị tên trong <select> ---
 @app.route('/api/members_exp', methods=['GET'])
 def get_members_exp():
+    # 1) Kiểm tra xem user đã login chưa
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
     conn = get_db_connection()
     cur = conn.cursor(dictionary=True)
+
+    # 2) Lấy group_id mà user hiện tại đang tham gia (status = 'Active')
+    cur.execute("""
+        SELECT group_id 
+        FROM members 
+        WHERE user_id = %s 
+          AND status = 'Active'
+        LIMIT 1
+    """, (user_id,))
+    row = cur.fetchone()
+    if not row:
+        # Nếu user chưa join nhóm nào, trả về mảng rỗng
+        cur.close()
+        conn.close()
+        return jsonify([]), 200
+
+    group_id = row['group_id']
+
+    # 3) Query danh sách thành viên của nhóm đó
     cur.execute("""
         SELECT m.id, u.full_name
         FROM members m
         JOIN users u ON m.user_id = u.id
         WHERE m.group_id = %s
         ORDER BY u.full_name
-    """, (GROUP_ID,))
+    """, (group_id,))
     members = cur.fetchall()
+
     cur.close()
     conn.close()
-    return jsonify(members)
+    return jsonify(members), 200
 
 
 # --- GET tất cả expenses ---

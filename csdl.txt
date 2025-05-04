@@ -104,12 +104,21 @@ CREATE TABLE `group_rule_comments` (
   `rule_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu group_rules.id',
   `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người bình luận)',
   `content` TEXT NOT NULL COMMENT 'Nội dung bình luận',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bình luận',
-  `updated_at` TIMESTAMPassign_to_updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bình luận',
-  CONSTRAINT `fk_comment_rule` FOREIGN KEY (`rule_id`) REFERENCES `group_rules`(`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_comment_member` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT 'Lưu trữ bình luận về nội quy nhóm';
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bình luận',
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP 
+     ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bình luận',
+  INDEX `idx_rule_id` (`rule_id`),
+  INDEX `idx_member_id` (`member_id`),
+  CONSTRAINT `fk_comment_rule`
+    FOREIGN KEY (`rule_id`) REFERENCES `group_rules`(`id`)
+      ON DELETE CASCADE,
+  CONSTRAINT `fk_comment_member`
+    FOREIGN KEY (`member_id`) REFERENCES `members`(`id`)
+      ON DELETE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='Lưu trữ bình luận về nội quy nhóm';
 
 -- Bảng: group_rule_comment_likes
 -- Mô tả: Lưu lượt thích trên các bình luận của nội quy.
@@ -123,6 +132,25 @@ CREATE TABLE `group_rule_comment_likes` (
   UNIQUE KEY `ux_comment_member` (`comment_id`, `member_id`) COMMENT 'Đảm bảo mỗi thành viên chỉ thích một lần'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Lưu trữ lượt thích trên bình luận nội quy';
+-- Bảng: group_rule_likes
+-- Mô tả: Lưu lượt thích trên nội quy của nhóm.
+CREATE TABLE `group_rule_likes` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `rule_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu group_rules.id',
+  `member_id` INT UNSIGNED NOT NULL COMMENT 'Tham chiếu members.id (người thích)',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo lượt thích',
+  CONSTRAINT `fk_rule_like_rule`
+    FOREIGN KEY (`rule_id`) REFERENCES `group_rules`(`id`)
+      ON DELETE CASCADE,
+  CONSTRAINT `fk_rule_like_member`
+    FOREIGN KEY (`member_id`) REFERENCES `members`(`id`)
+      ON DELETE CASCADE,
+  UNIQUE KEY `ux_rule_member` (`rule_id`, `member_id`)
+    COMMENT 'Mỗi thành viên chỉ được like một lần trên một nội quy'
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='Lưu trữ lượt thích trên các nội quy nhóm';
 
 -- =============================================================================
 -- NHÓM 4: BỎ PHIẾU
