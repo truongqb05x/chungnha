@@ -8,27 +8,29 @@
  * Configuration constants
  */
 const CONFIG = {
-  menusPerPage: 5,
-  defaultView: 'calendar',
-  defaultStatus: 'Preparing',
-  apiEndpoints: {
-    menus: '/menus_api',
-    menu: '/menu_api',
-    userGroups: '/user_groups_api'
-  }
-};
+    menusPerPage: 5,
+    defaultView: 'calendar',
+    defaultStatus: 'Preparing',
+    apiEndpoints: {
+      menus: '/menus_api',
+      menu: '/menu_api',
+      userGroups: '/user_groups_api',
+      // Dynamic endpoint for fetching group members as cooks options
+      members: groupId => `/api/groups/${groupId}/members`
+    }
+  };
+  
 
 /**
 * Application state
 */
 const state = {
-  currentMonth: new Date(),
-  currentPage: 1,
-  sort: { column: 'menu_date', direction: 'asc' },
-  confirm: { action: null, params: null },
-  groupId: null
-};
-
+    currentMonth: new Date(),
+    currentPage: 1,
+    sort: { column: 'menu_date', direction: 'asc' },
+    confirm: { action: null, params: null },
+    groupId: null
+  };
 /**
 * Initialize application when DOM is loaded
 */
@@ -38,107 +40,114 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 * Sets up the application
 */
 async function initializeApp() {
-  state.groupId = await getDefaultGroupId();
-  if (!state.groupId) {
+    state.groupId = await getDefaultGroupId();
+    if (!state.groupId) {
       showToast('Bạn chưa tham gia nhóm nào. Vui lòng tham gia một nhóm.');
       return;
+    }
+  
+    setupEventListeners();
+    setDefaultDate();
+    loadPreferredView();
   }
-  setupEventListeners();
-  setDefaultDate();
-  loadPreferredView();
-}
-
+  
 /**
 * Sets today's date in the date picker
 */
 function setDefaultDate() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('date').value = today;
-}
-
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = today;
+  }
+  
+  /**
+ * Load cooks dropdown options from API
+ */
+async function loadCooksOptions() {
+    const select = document.getElementById('cooks');
+    select.innerHTML = `<option value="">-- Chọn người nấu --</option>`;
+    try {
+      const res = await fetch(CONFIG.apiEndpoints.members(state.groupId), { credentials: 'include' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { members } = await res.json();
+      members.forEach(m => {
+        const opt = document.createElement('option');
+        // opt.value = m.id; // nếu cần gửi user_id thay vì full_name
+        opt.value = m.full_name;
+        opt.textContent = m.full_name;
+        select.appendChild(opt);
+      });
+    } catch (err) {
+      console.error('Không load được danh sách cooks:', err);
+      showToast('Lỗi khi lấy danh sách người nấu');
+    }
+  }
+  
 /**
 * Loads and sets up the user's preferred view
 */
 function loadPreferredView() {
-  const viewButtons = document.querySelectorAll('.view-btn');
-  const viewSections = document.querySelectorAll('.view-section');
-  const preferredView = localStorage.getItem('preferredView') || CONFIG.defaultView;
-  const defaultViewButton = document.querySelector(`.view-btn[data-view="${preferredView}"]`) ||
-    document.querySelector(`.view-btn[data-view="${CONFIG.defaultView}"]`);
-
-  viewButtons.forEach(button => {
+    const viewButtons = document.querySelectorAll('.view-btn');
+    const viewSections = document.querySelectorAll('.view-section');
+    const preferredView = localStorage.getItem('preferredView') || CONFIG.defaultView;
+    const defaultViewButton = document.querySelector(`.view-btn[data-view="${preferredView}"]`) ||
+      document.querySelector(`.view-btn[data-view="${CONFIG.defaultView}"]`);
+  
+    viewButtons.forEach(button => {
       button.addEventListener('click', function() {
-          const view = this.dataset.view;
-
-          // Update active button state
-          viewButtons.forEach(btn => btn.classList.remove('active'));
-          this.classList.add('active');
-
-          // Show selected view
-          viewSections.forEach(section => section.style.display = 'none');
-          document.getElementById(`${view}View`).style.display = 'block';
-
-          // Save preference
-          localStorage.setItem('preferredView', view);
-
-          // Reset currentMonth to current month for calendar view
-          if (view === 'calendar') {
-              state.currentMonth = new Date();
-          }
-
-          // Render appropriate view
-          const renderFunctions = {
-              calendar: renderCalendar,
-              table: renderTableView,
-              cards: renderCardsView
-          };
-          renderFunctions[view]?.();
+        const view = this.dataset.view;
+        viewButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        viewSections.forEach(sec => sec.style.display = 'none');
+        document.getElementById(`${view}View`).style.display = 'block';
+        localStorage.setItem('preferredView', view);
+        if (view === 'calendar') state.currentMonth = new Date();
+        const renderFns = { calendar: renderCalendar, table: renderTableView, cards: renderCardsView };
+        renderFns[view]?.();
       });
-  });
-
-  // Trigger the default view
-  defaultViewButton.click();
-}
-
+    });
+    defaultViewButton.click();
+  }
+  
+  
 /**
 * Gets the default group ID for the user
 * @returns {Promise<number|null>} The group ID or null if no groups
 */
 async function getDefaultGroupId() {
-  try {
+    try {
       const response = await fetch(CONFIG.apiEndpoints.userGroups, { credentials: 'include' });
       if (!response.ok) {
-          if (response.status === 401) {
-              window.location.href = '/login';
-              return null;
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return null;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       const groups = await response.json();
       return groups.length > 0 ? groups[0].group_id : null;
-  } catch (error) {
+    } catch (error) {
       console.error('Error fetching user groups:', error);
       showToast('Lỗi khi lấy danh sách nhóm');
       return null;
+    }
   }
-}
-
-/**
+  /**
 * Sets up all event listeners
 */
 function setupEventListeners() {
-  setupModalListeners();
-  setupCalendarListeners();
-  setupSearchAndFilterListeners();
-  setupPaginationListeners();
-  setupSortingListeners();
-}
-
+    setupModalListeners();
+    setupCalendarListeners();
+    setupSearchAndFilterListeners();
+    setupPaginationListeners();
+    setupSortingListeners();
+  }
+  
+  
 /**
 * Sets up modal-related event listeners
 */
 function setupModalListeners() {
-  const elements = {
+    const elements = {
       addMenuBtn: document.getElementById('addMenuBtn'),
       menuModal: document.getElementById('menuModal'),
       closeModal: document.getElementById('closeModal'),
@@ -148,107 +157,96 @@ function setupModalListeners() {
       closeConfirmModal: document.getElementById('closeConfirmModal'),
       cancelConfirmBtn: document.getElementById('cancelConfirmBtn'),
       confirmBtn: document.getElementById('confirmBtn')
-  };
-
-  // Add menu buttons
-  [elements.addMenuBtn, ...document.querySelectorAll('[id*="addMenuEmptyBtn"]')]
+    };
+  
+    // Add menu buttons
+    [elements.addMenuBtn, ...document.querySelectorAll('[id*="addMenuEmptyBtn"]')]
       .filter(Boolean)
       .forEach(btn => btn.addEventListener('click', () => openMenuModal('add')));
-
-  // Modal close buttons
-  [elements.closeModal, elements.cancelBtn].forEach(btn =>
+  
+    // Modal close buttons
+    [elements.closeModal, elements.cancelBtn].forEach(btn =>
       btn.addEventListener('click', () => elements.menuModal.classList.remove('active'))
-  );
-
-  [elements.closeConfirmModal, elements.cancelConfirmBtn].forEach(btn =>
+    );
+    [elements.closeConfirmModal, elements.cancelConfirmBtn].forEach(btn =>
       btn.addEventListener('click', () => elements.confirmModal.classList.remove('active'))
-  );
-
-  // Confirm action
-  elements.confirmBtn.addEventListener('click', () => {
+    );
+  
+    // Confirm action
+    elements.confirmBtn.addEventListener('click', () => {
       if (state.confirm.action) {
-          state.confirm.action(...state.confirm.params);
-          elements.confirmModal.classList.remove('active');
+        state.confirm.action(...state.confirm.params);
+        elements.confirmModal.classList.remove('active');
       }
-  });
-
-  // Form submission
-  elements.menuForm.addEventListener('submit', async e => {
+    });
+  
+    // Form submission
+    elements.menuForm.addEventListener('submit', async e => {
       e.preventDefault();
-      
       if (!state.groupId) {
-          showToast('Vui lòng chọn một nhóm trước khi thêm/cập nhật thực đơn');
-          return;
+        showToast('Vui lòng chọn một nhóm trước khi thêm/cập nhật thực đơn');
+        return;
       }
-
       const formData = {
-          group_id: state.groupId,
-          menu_date: document.getElementById('date').value,
-          dishes: document.getElementById('dishes').value,
-          cooks: document.getElementById('cooks').value,
-          status: document.getElementById('status').value,
-          notes: document.getElementById('notes').value
+        group_id: state.groupId,
+        menu_date: document.getElementById('date').value,
+        dishes: document.getElementById('dishes').value,
+        cooks: document.getElementById('cooks').value,
+        status: document.getElementById('status').value,
+        notes: document.getElementById('notes').value
       };
-
       try {
-          const isEditMode = elements.menuForm.dataset.mode === 'edit';
-          const url = isEditMode 
-              ? `${CONFIG.apiEndpoints.menu}/${elements.menuForm.dataset.id}`
-              : CONFIG.apiEndpoints.menu;
-          const method = isEditMode ? 'PUT' : 'POST';
-
-          const response = await fetch(url, {
-              method,
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(formData),
-              credentials: 'include'
-          });
-          
-          const result = await response.json();
-          if (result.error) throw new Error(result.error);
-
-          showToast(isEditMode ? 'Cập nhật thực đơn thành công' : 'Thêm thực đơn thành công');
-          elements.menuModal.classList.remove('active');
-          
-          // Refresh all views
-          Promise.all([
-              renderCalendar(),
-              renderTableView(),
-              renderCardsView()
-          ]);
+        const isEdit = elements.menuForm.dataset.mode === 'edit';
+        const url = isEdit ? `${CONFIG.apiEndpoints.menu}/${elements.menuForm.dataset.id}` : CONFIG.apiEndpoints.menu;
+        const method = isEdit ? 'PUT' : 'POST';
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+          credentials: 'include'
+        });
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+        showToast(isEdit ? 'Cập nhật thực đơn thành công' : 'Thêm thực đơn thành công');
+        elements.menuModal.classList.remove('active');
+        Promise.all([renderCalendar(), renderTableView(), renderCardsView()]);
       } catch (error) {
-          if (error.message.includes('chưa đăng nhập')) {
-              showToast('Vui lòng đăng nhập để tiếp tục');
-              window.location.href = '/login';
-          } else if (error.message.includes('thành viên hoạt động')) {
-              showToast('Bạn không có quyền truy cập nhóm này. Vui lòng kiểm tra tư cách thành viên.');
-          } else {
-              showToast(`Lỗi: ${error.message}`);
-          }
+        if (error.message.includes('chưa đăng nhập')) {
+          showToast('Vui lòng đăng nhập để tiếp tục');
+          window.location.href = '/login';
+        } else if (error.message.includes('thành viên hoạt động')) {
+          showToast('Bạn không có quyền truy cập nhóm này. Vui lòng kiểm tra tư cách thành viên.');
+        } else {
+          showToast(`Lỗi: ${error.message}`);
+        }
       }
-  });
-}
-
+    });
+  }
+  
 /**
 * Opens the menu modal in specified mode
 * @param {string} mode - 'add' or 'edit'
 */
 function openMenuModal(mode) {
-  const modal = document.getElementById('menuModal');
-  const form = document.getElementById('menuForm');
-  const modalTitle = document.querySelector('.modal-title');
-
-  modal.classList.add('active');
-  form.reset();
-  setDefaultDate();
-
-  if (mode === 'add') {
-      modalTitle.textContent = 'Thêm thực đơn';
+    const modal = document.getElementById('menuModal');
+    const form = document.getElementById('menuForm');
+    const title = document.querySelector('.modal-title');
+  
+    modal.classList.add('active');
+    form.reset();
+    setDefaultDate();
+    // Load cooks options dynamically
+    loadCooksOptions();
+  
+    if (mode === 'add') {
+      title.textContent = 'Thêm thực đơn';
       document.getElementById('status').value = CONFIG.defaultStatus;
       form.dataset.mode = 'add';
       delete form.dataset.id;
+    }
   }
-}
+  
+  
 
 /**
 * Sets up calendar navigation listeners
@@ -669,40 +667,39 @@ function setupActionListeners(selector, handler) {
 * @param {number} id - Menu ID
 */
 async function handleEdit(id) {
-  try {
+    try {
       const params = new URLSearchParams({ group_id: state.groupId });
-      const response = await fetch(`${CONFIG.apiEndpoints.menu}/${id}?${params}`, { credentials: 'include' });
-      const menu = await response.json();
+      const res = await fetch(`${CONFIG.apiEndpoints.menu}/${id}?${params}`, { credentials: 'include' });
+      const menu = await res.json();
       if (menu.error) throw new Error(menu.error);
-
+  
       const modal = document.getElementById('menuModal');
       const form = document.getElementById('menuForm');
-
       modal.classList.add('active');
       document.querySelector('.modal-title').textContent = 'Chỉnh sửa thực đơn';
-      
-      document.getElementById('date').value = menu.menu_date;
+  
+      // Reload cooks then set selected
+      await loadCooksOptions();
+      document.getElementById('date').value   = menu.menu_date;
       document.getElementById('dishes').value = menu.dishes;
-      document.getElementById('cooks').value = menu.cooks;
+      document.getElementById('cooks').value  = menu.cooks;
       document.getElementById('status').value = menu.status;
-      document.getElementById('notes').value = menu.notes || '';
-      
+      document.getElementById('notes').value  = menu.notes || '';
+  
       form.dataset.mode = 'edit';
-      form.dataset.id = id;
-  } catch (error) {
+      form.dataset.id   = id;
+    } catch (error) {
       if (error.message.includes('chưa đăng nhập')) {
-          showToast('Vui lòng đăng nhập để tiếp tục');
-          window.location.href = '/login';
+        showToast('Vui lòng đăng nhập để tiếp tục'); window.location.href = '/login';
       } else if (error.message.includes('thành viên hoạt động')) {
-          showToast('Bạn không có quyền truy cập nhóm này. Vui lòng kiểm tra tư cách thành viên.');
-      } else if (error.message.includes('group_id')) {
-          showToast('Vui lòng chọn một nhóm hợp lệ');
+        showToast('Bạn không có quyền truy cập nhóm này. Vui lòng kiểm tra tư cách thành viên.');
       } else {
-          showToast(`Lỗi: ${error.message}`);
+        showToast(`Lỗi: ${error.message}`);
       }
+    }
   }
-}
-
+  
+  
 /**
 * Handles delete action
 * @param {number} id - Menu ID

@@ -410,7 +410,37 @@
             text-overflow: ellipsis;
             margin-top: 0.25rem;
         }
-
+/* Style chung cho all select trong form */
+#menuForm select {
+    width: 100%;               /* full-width */
+    padding: 0.5rem 0.75rem;   /* khoảng trong */
+    font-size: 1rem;           /* cỡ chữ */
+    line-height: 1.5;          /* độ cao dòng */
+    color: #333;               /* màu chữ */
+    background-color: #fff;    /* nền trắng */
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5'%3E%3Cpath fill='%23999' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E"); /* mũi tên */
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center; /* vị trí mũi tên */
+    background-size: 8px 10px;
+    border: 1px solid #ccc;    /* viền xám nhạt */
+    border-radius: 0.25rem;     /* bo góc */
+    appearance: none;           /* tắt style mặc định */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  /* Hover và focus state để UX rõ hơn */
+  #menuForm select:hover {
+    border-color: #999;
+  }
+  #menuForm select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+  }
+  
+  
         /* Card view - New */
         .cards-container {
             display: grid;
@@ -874,12 +904,24 @@
 }
 
 .btn-text {
-    background: none;
+    background-color: none;  /* skyblue */
     border: none;
-    color: #666;
+    color: #ffffff;             /* trắng cho dễ đọc */
     padding: 10px 12px;
-}
-
+    border-radius: 4px;         /* bo góc nhẹ */
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .btn-text:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .btn-text:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(135, 206, 235, 0.5);
+  }
+  
 
 .btn-loading {
     display: inline-flex;

@@ -1170,55 +1170,138 @@ def get_vote_items(group_id):
     cursor.close()
     conn.close()
     return jsonify(items)
+from flask import jsonify, request
+from mysql.connector.errors import IntegrityError
+from datetime import datetime
+
 # API: thêm mục vote
 @app.route('/api/group/<int:group_id>/vote_items', methods=['POST'])
 def add_vote_item(group_id):
+    # Lấy dữ liệu từ request
     data = request.json
     name = data.get('name')
     type_ = data.get('type')
     vote_date = data.get('vote_date')
     member_id = data.get('member_id')
-    if not all([name, type_, vote_date, member_id]):
-        return jsonify({'error': 'Missing fields'}), 400
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        '''INSERT INTO vote_items (group_id, member_id, name, type, vote_date)
-           VALUES (%s, %s, %s, %s, %s)''',
-        (group_id, member_id, name, type_, vote_date)
-    )
-    conn.commit()
-    new_id = cursor.lastrowid
-    cursor.close()
-    conn.close()
-    return jsonify({'id': new_id}), 201
+    # Kiểm tra các trường bắt buộc
+    if not all([name, type_, vote_date, member_id]):
+        return jsonify({'error': 'Thiếu các trường bắt buộc (name, type, vote_date, member_id)'}), 400
+
+    # Kiểm tra giá trị type hợp lệ
+    if type_ not in ['food', 'activity']:
+        return jsonify({'error': 'Loại không hợp lệ, phải là "food" hoặc "activity"'}), 400
+
+    # Kiểm tra định dạng vote_date
+    try:
+        datetime.strptime(vote_date, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'error': 'Định dạng ngày không hợp lệ (phải là YYYY-MM-DD)'}), 400
+
+    try:
+        # Kết nối cơ sở dữ liệu
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Kiểm tra group_id tồn tại
+        cursor.execute("SELECT id FROM groups WHERE id = %s", (group_id,))
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'Nhóm không tồn tại'}), 404
+
+        # Kiểm tra member_id tồn tại và thuộc nhóm
+        cursor.execute(
+            "SELECT id FROM members WHERE id = %s AND group_id = %s AND status = 'Active'",
+            (member_id, group_id)
+        )
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'Thành viên không hợp lệ hoặc không thuộc nhóm'}), 400
+
+        # Thêm mục vote vào bảng vote_items
+        cursor.execute(
+            '''INSERT INTO vote_items (group_id, member_id, name, type, vote_date)
+               VALUES (%s, %s, %s, %s, %s)''',
+            (group_id, member_id, name, type_, vote_date)
+        )
+        conn.commit()
+        new_id = cursor.lastrowid
+
+        # Đóng kết nối
+        cursor.close()
+        conn.close()
+
+        return jsonify({'id': new_id}), 201
+
+    except IntegrityError as e:
+        cursor.close()
+        conn.close()
+        return jsonify({'error': f'Lỗi cơ sở dữ liệu: {str(e)}'}), 500
+    except Exception as e:
+        cursor.close()
+        conn.close()
+        return jsonify({'error': f'Đã xảy ra lỗi: {str(e)}'}), 500
 
 # API: bỏ phiếu
 @app.route('/api/vote', methods=['POST'])
 def cast_vote():
+    # Lấy dữ liệu từ request
     data = request.json
     vote_item_id = data.get('vote_item_id')
     member_id = data.get('member_id')
-    if not all([vote_item_id, member_id]):
-        return jsonify({'error': 'Missing fields'}), 400
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    # Kiểm tra các trường bắt buộc
+    if not all([vote_item_id, member_id]):
+        return jsonify({'error': 'Thiếu các trường bắt buộc (vote_item_id, member_id)'}), 400
+
     try:
+        # Kết nối cơ sở dữ liệu
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Kiểm tra vote_item_id tồn tại
+        cursor.execute("SELECT group_id FROM vote_items WHERE id = %s", (vote_item_id,))
+        vote_item = cursor.fetchone()
+        if not vote_item:
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'Mục bỏ phiếu không tồn tại'}), 404
+        group_id = vote_item[0]
+
+        # Kiểm tra member_id tồn tại và thuộc nhóm
+        cursor.execute(
+            "SELECT id FROM members WHERE id = %s AND group_id = %s AND status = 'Active'",
+            (member_id, group_id)
+        )
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'Thành viên không hợp lệ hoặc không thuộc nhóm'}), 400
+
+        # Thêm lượt bỏ phiếu
         cursor.execute(
             'INSERT INTO votes (vote_item_id, member_id) VALUES (%s, %s)',
             (vote_item_id, member_id)
         )
         conn.commit()
-    except mysql.connector.IntegrityError:
+
+        # Đóng kết nối
         cursor.close()
         conn.close()
-        return jsonify({'error': 'Already voted'}), 409
+        return jsonify({'success': True}), 201
 
-    cursor.close()
-    conn.close()
-    return jsonify({'success': True}), 201
+    except IntegrityError as e:
+        cursor.close()
+        conn.close()
+        if "Duplicate entry" in str(e):
+            return jsonify({'error': 'Bạn đã bỏ phiếu cho mục này rồi'}), 409
+        return jsonify({'error': f'Lỗi cơ sở dữ liệu: {str(e)}'}), 500
+    except Exception as e:
+        cursor.close()
+        conn.close()
+        return jsonify({'error': f'Đã xảy ra lỗi: {str(e)}'}), 500
 # Item Categories Routes
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
@@ -3419,5 +3502,44 @@ def get_group_members(group_id):
     except Exception as e:
         logging.error(f"Error in get_group_members: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
+
+# API: Lấy full_name của người dùng theo user_id 
+@app.route('/api/user/full_name', methods=['GET'])
+def get_user_full_name():
+    # Lấy user_id từ session
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Chưa đăng nhập hoặc phiên hết hạn'}), 401
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT full_name
+            FROM users
+            WHERE id = %s
+              AND is_active = 1
+        """
+        cursor.execute(query, (user_id, ))
+        user = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if not user:
+            return jsonify({'error': 'Không tìm thấy người dùng hoặc tài khoản không hoạt động'}), 404
+
+        return jsonify({'full_name': user['full_name']}), 200
+
+    except Error as e:
+        # Đóng kết nối nếu lỗi
+        if cursor: cursor.close()
+        if conn: conn.close()
+        return jsonify({'error': f'Lỗi cơ sở dữ liệu: {e}'}), 500
+    except Exception as e:
+        if cursor: cursor.close()
+        if conn: conn.close()
+        return jsonify({'error': f'Đã xảy ra lỗi: {e}'}), 500
 if __name__ == '__main__':
     app.run(debug=True)

@@ -140,8 +140,12 @@
         <!-- Main content -->
         <main class="main-content">
             <section class="welcome-section">
-                <h1 class="welcome-title">Chào mừng trở lại, <span class="highlight">Chưa tham gia</span>!</h1>
-                <p class="welcome-subtitle">
+<!-- HTML của bạn -->
+<h1 class="welcome-title">
+    Chào mừng trở lại, <span class="highlight">Chưa tham gia</span>!
+  </h1>
+  
+                  <p class="welcome-subtitle">
                     Cùng nhau quản lý bữa ăn, chia sẻ chi phí và lên kế hoạch nấu nướng thật dễ dàng.
                     Hôm nay nhóm bạn có <span class="highlight">3 hoạt động</span> cần quan tâm.
                 </p>
@@ -286,9 +290,37 @@
     </div>
             <!-- JavaScript dùng chung cho toàn bộ giao diện (template chính) -->
     <script src="../static/js/app.js"></script>
-<script>
-    
-</script>
+  <!-- Cuối body, hoặc trong file JS riêng -->
+  <script>
+    // Hàm cập nhật tên từ API
+    function updateUserName() {
+      fetch('/api/user/full_name')
+        .then(res => {
+          if (!res.ok) throw new Error('Chưa đăng nhập hoặc session hết hạn');
+          return res.json();
+        })
+        .then(data => {
+          const el = document.querySelector('.welcome-title .highlight');
+          if (el && data.full_name) {
+            el.textContent = data.full_name;
+          }
+        })
+        .catch(console.warn);
+    }
+
+    // 3.a. Chạy khi toàn bộ trang (và external.js) đã load xong
+    window.addEventListener('load', () => {
+      // Đẩy xuống cuối hàng đợi để override mọi listener DOMContentLoaded khác
+      setTimeout(updateUserName, 0);
+
+      // 3.b. Nếu external.js sau này sửa span.highlight, chúng ta vẫn override lại
+      const target = document.querySelector('.welcome-title .highlight');
+      if (target) {
+        const obs = new MutationObserver(() => updateUserName());
+        obs.observe(target, { childList: true });
+      }
+    });
+  </script>
 </body>
 
 </html>
