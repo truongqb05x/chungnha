@@ -291,8 +291,8 @@
             <!-- JavaScript dùng chung cho toàn bộ giao diện (template chính) -->
     <script src="../static/js/app.js"></script>
   <!-- Cuối body, hoặc trong file JS riêng -->
-  <script>
-    // Hàm cập nhật tên từ API
+<script>
+    // Hàm cập nhật tên từ API (giữ nguyên code của bạn)
     function updateUserName() {
       fetch('/api/user/full_name')
         .then(res => {
@@ -308,19 +308,58 @@
         .catch(console.warn);
     }
 
-    // 3.a. Chạy khi toàn bộ trang (và external.js) đã load xong
-    window.addEventListener('load', () => {
-      // Đẩy xuống cuối hàng đợi để override mọi listener DOMContentLoaded khác
-      setTimeout(updateUserName, 0);
+    // Hàm cập nhật số lượng thực đơn
+    function updatePreparingMenuCount() {
+      fetch('/api/menus/preparing/count', {
+        method: 'GET',
+        credentials: 'include', // Gửi session cookie để Flask nhận diện người dùng
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Lỗi khi gọi API: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Chỉ chọn card-subtitle trong menu-card
+        const subtitleElement = document.querySelector('.menu-card .card-subtitle');
+        if (subtitleElement) {
+          if (data.status === 'success') {
+            subtitleElement.textContent = `${data.preparing_count} món đã lên kế hoạch`;
+          } else {
+            subtitleElement.textContent = 'Lỗi: ' + data.message;
+            console.error('API error:', data.message);
+          }
+        } else {
+          console.warn('Không tìm thấy phần tử .menu-card .card-subtitle');
+        }
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        const subtitleElement = document.querySelector('.menu-card .card-subtitle');
+        if (subtitleElement) {
+          subtitleElement.textContent = 'Lỗi khi tải dữ liệu';
+        }
+      });
+    }
 
-      // 3.b. Nếu external.js sau này sửa span.highlight, chúng ta vẫn override lại
+    // Chạy khi trang tải
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        updateUserName();
+        updatePreparingMenuCount();
+      }, 0);
+
+      // Theo dõi thay đổi span.highlight (giữ nguyên)
       const target = document.querySelector('.welcome-title .highlight');
       if (target) {
         const obs = new MutationObserver(() => updateUserName());
         obs.observe(target, { childList: true });
       }
     });
-  </script>
-</body>
+</script></body>
 
 </html>

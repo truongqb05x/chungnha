@@ -1,3 +1,6 @@
+# ======================= #
+#     IMPORT MODULES     #
+# ======================= #
 import os
 import uuid
 import logging
@@ -10,7 +13,7 @@ import mysql.connector
 from mysql.connector import Error
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    session, flash, jsonify
+    session, flash, jsonify, send_from_directory
 )
 from flask_jwt_extended import (
     JWTManager, jwt_required,
@@ -19,26 +22,39 @@ from flask_jwt_extended import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from jinja2 import FileSystemLoader
 
-# ---- Ứng dụng Flask ----
+# ======================= #
+#     FLASK CONFIG        #
+# ======================= #
 app = Flask(
     __name__,
-    template_folder='html',
-    static_folder='static'
+    template_folder='html',     # Thư mục chứa các file giao diện HTML
+    static_folder='static'      # Thư mục chứa các file tĩnh (CSS, JS, ảnh...)
 )
-app.secret_key = 'your_secret_key'            # Khóa bí mật cho session
-app.permanent_session_lifetime = timedelta(days=1)
+app.secret_key = 'your_secret_key'  # Khóa bí mật dùng để mã hóa session
+app.permanent_session_lifetime = timedelta(days=1)  # Thời gian sống của session
+
+# Cho phép Flask tìm template từ nhiều thư mục
 app.jinja_env.loader = FileSystemLoader(['templates', 'html'])
 
-# ---- Logging & JWT ----
-logging.basicConfig(level=logging.DEBUG)
-jwt = JWTManager(app)
+# ======================= #
+#      LOGGING & JWT      #
+# ======================= #
+logging.basicConfig(level=logging.DEBUG)  # Thiết lập cấp độ log
+jwt = JWTManager(app)                     # Khởi tạo JWT
 
-# Đảm bảo Flask có thể phục vụ file tĩnh từ thư mục 'static'
+# ============================= #
+#      STATIC FILE HANDLER     #
+# ============================= #
+# Cho phép phục vụ các file tĩnh như ảnh, CSS, JS từ đường dẫn /static/...
 @app.route('/static/<path:filename>')
 def static_files(filename):
     return send_from_directory(app.config['STATIC_FOLDER'], filename)
 
+# ============================= #
+#     DATABASE CONNECTION       #
+# ============================= #
 def get_db_connection():
+    """Tạo kết nối đến cơ sở dữ liệu MySQL"""
     connection = mysql.connector.connect(
         host="localhost",
         user="root",
@@ -46,97 +62,129 @@ def get_db_connection():
         database="test"
     )
     return connection
+
+# ============================= #
+#        ROUTING PAGES         #
+# ============================= #
+
+# Trang chính (landing page)
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Trang home
+# Trang chủ
 @app.route('/home')
 def trangchu():
     return render_template('home.html')
-# Trang thành viên
+
+# Trang thông tin thành viên
 @app.route('/thanh-vien')
 def thanhvien():
     return render_template('thanhvien.html')
-# Trang nội quy
+
+# Trang nội quy của nhóm
 @app.route('/noi-quy')
 def noiquy():
     return render_template('noiquy.html')
-# Trang phân công việc
+
+# Trang phân chia công việc
 @app.route('/phan-cong-viec')
 def phancongviec():
     return render_template('phanchiacongviec.html')
-# Trang quản lý đồ dùng
+
+# Trang quản lý vật dụng chung
 @app.route('/quan-ly-do-dung')
 def quanlydodung():
     return render_template('quanlyvatdung.html')
-# Trang chi phí
+
+# Trang quản lý chi phí
 @app.route('/chi-phi')
 def chiphi():
     return render_template('chiphi.html')
-# Trang quỹ nhóm
+
+# Trang thông tin quỹ nhóm
 @app.route('/quy-nhom')
 def quynhom():
     return render_template('quynhom.html')
-# Trang thống kê
+
+# Trang thống kê tổng hợp
 @app.route('/thong-ke')
 def thongke():
     return render_template('thongke.html')
-# Trang trò chuyện
+
+# Trang trò chuyện nhóm
 @app.route('/tro-chuyen')
 def trochuyen():
     return render_template('trochuyen.html')
-# Trang bình chọn
+
+# Trang bình chọn ý kiến
 @app.route('/binh-chon')
 def binhchon():
     return render_template('binhchon.html')
-# Trang thông báo
+
+# Trang thông báo nội bộ
 @app.route('/thong-bao')
 def thongbao():
     return render_template('thongbao.html')
-# Trang thực đơn
+
+# Trang thực đơn nấu ăn
 @app.route('/thuc-don')
 def thucdon():
     return render_template('thucdon.html')
-# Trang cá nhân
+
+# Trang cá nhân người dùng
 @app.route('/trang-ca-nhan')
 def profile():
     return render_template('profile.html')
-# Trang nấu ăn
+
+# Trang lịch nấu ăn
 @app.route('/lich-nau-an')
 def lichnauan():
     return render_template('lichnauan.html')
-# Trang taonhom
+
+# Trang tạo nhóm mới
 @app.route('/tao-nhom')
 def taonhom():
     return render_template('taonhom.html')
+# ============================= #
+#        ROUTING AUTH          #
+# ============================= #
 
+# API xử lý đăng nhập người dùng
 @app.route('/login', methods=['POST'])
 def login():
+    # Lấy dữ liệu từ form gửi lên
     data = request.form
     email = data.get('email')
     password = data.get('password')
-    ip_address = request.remote_addr
+    ip_address = request.remote_addr  # Lấy địa chỉ IP của client
 
+    # Log thông tin đăng nhập (dùng cho debug)
     print("Received login request")
     print(f"Email: {email}, Password: {password}, IP: {ip_address}")
 
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
 
+    # Tìm người dùng theo email
     cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
     user = cursor.fetchone()
 
     if user:
         print(f"User found: {user}")
+        # Kiểm tra mật khẩu đúng không
         if check_password_hash(user['password_hash'], password):
             print("Password is correct")
+            # Lưu thông tin user vào session
             session.permanent = True
             session['user_id'] = user['id']
             session['full_name'] = user['full_name']
 
-            cursor.execute("INSERT INTO login_attempts (user_id, email_attempted, ip_address, success) VALUES (%s, %s, %s, 1)",
-                           (user['id'], email, ip_address))
+            # Ghi nhận lần đăng nhập thành công
+            cursor.execute("""
+                INSERT INTO login_attempts (user_id, email_attempted, ip_address, success)
+                VALUES (%s, %s, %s, 1)
+            """, (user['id'], email, ip_address))
             db.commit()
             db.close()
 
@@ -146,28 +194,36 @@ def login():
     else:
         print(f"No user found with email: {email}")
 
-    cursor.execute("INSERT INTO login_attempts (user_id, email_attempted, ip_address, success) VALUES (%s, %s, %s, 0)",
-                   (None, email, ip_address))
+    # Ghi nhận lần đăng nhập thất bại
+    cursor.execute("""
+        INSERT INTO login_attempts (user_id, email_attempted, ip_address, success)
+        VALUES (%s, %s, %s, 0)
+    """, (None, email, ip_address))
     db.commit()
     db.close()
 
     return jsonify({"success": False, "message": "Email hoặc mật khẩu không đúng"}), 401
+
+
+# API xử lý đăng xuất người dùng
 @app.route('/logout', methods=['GET'])
 def logout():
     user_id = session.get('user_id')
     full_name = session.get('full_name')
     ip_address = request.remote_addr
 
+    # Ghi log thông tin đăng xuất
     if user_id:
         logging.info("User logged out: ID %s, Name: %s, IP: %s", user_id, full_name, ip_address)
     else:
         logging.warning("Logout attempted without a valid session. IP: %s", ip_address)
 
-    session.clear()  # Xoá tất cả session
+    session.clear()  # Xoá toàn bộ session
 
     return jsonify({"success": True, "message": "Đăng xuất thành công"})
 
 
+# API kiểm tra session hiện tại có hợp lệ không
 @app.route('/check_session', methods=['GET'])
 def check_session():
     user_id = session.get('user_id')
@@ -177,25 +233,32 @@ def check_session():
         return jsonify({
             "id": user_id,
             "full_name": full_name,
-            "avatar": full_name[:2]  # avatar tạm lấy 2 ký tự đầu
+            "avatar": full_name[:2]  # Dùng 2 ký tự đầu tên làm avatar tạm
         })
     else:
         return jsonify({"error": "Chưa đăng nhập"}), 401
 
+
+# API xử lý đăng ký tài khoản mới
 @app.route('/register', methods=['POST'])
 def register():
+    # Lấy dữ liệu từ form gửi lên
     data = request.form
     full_name = data.get('full_name')
     email = data.get('email')
     password = data.get('password')
+
+    # Băm mật khẩu trước khi lưu vào database
     password_hash = generate_password_hash(password)
 
+    # Log thông tin đăng ký (dùng cho debug)
     print("Received registration request")
     print(f"Full Name: {full_name}, Email: {email}, Password: {password}")
 
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
 
+    # Kiểm tra email đã tồn tại chưa
     cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
     existing_user = cursor.fetchone()
 
@@ -205,6 +268,7 @@ def register():
         return jsonify({"success": False, "message": "Email đã được đăng ký"}), 409
     else:
         print(f"Registering new user: {email}")
+        # Thêm người dùng mới vào bảng users
         cursor.execute(
             "INSERT INTO users (full_name, email, password_hash) VALUES (%s, %s, %s)",
             (full_name, email, password_hash)
@@ -212,400 +276,1068 @@ def register():
         db.commit()
         db.close()
         return jsonify({"success": True, "message": "Đăng ký thành công"})
+# ============================= #
+#       ROUTING & TIỆN ÍCH      #
+# ============================= #
+
 # --- Hàm lấy User ID từ Session ---
 def get_current_user_id():
-    """Lấy user_id của người dùng hiện tại từ session."""
+    """
+    Lấy user_id của người dùng hiện tại từ session.
+
+    Trả về:
+        int hoặc None: user_id nếu tồn tại trong session, ngược lại là None.
+    """
     return session.get('user_id')
-# Cấu hình JWT
-app.config['JWT_SECRET_KEY'] = 'your-secret-key'  # Thay bằng khóa bí mật mạnh
+
+# Cấu hình JWT (JSON Web Token)
+# JWT được sử dụng để xác thực người dùng sau khi đăng nhập.
+app.config['JWT_SECRET_KEY'] = 'your-jwt-secret-key'  # **Cần thay bằng khóa bí mật mạnh và duy nhất**
 jwt = JWTManager(app)
 
 
-# Middleware để xử lý lỗi kết nối
+# Middleware (Decorator) để xử lý tự động kết nối và đóng kết nối cơ sở dữ liệu,
+# đồng thời bắt lỗi trong quá trình thao tác DB.
 def handle_db_operation(query_func):
+    """
+    Decorator xử lý kết nối/đóng kết nối DB và bắt lỗi cho các hàm thao tác DB.
+
+    Args:
+        query_func (function): Hàm gốc thực hiện thao tác DB.
+                                Hàm này cần nhận (cursor, connection, *args, **kwargs).
+
+    Returns:
+        function: Hàm wrapper đã được bọc logic xử lý DB và lỗi.
+    """
+    # Sử dụng @wraps để giữ nguyên tên và docstring của hàm gốc khi sử dụng decorator
+    @wraps(query_func)
     def wrapper(*args, **kwargs):
         connection = None
+        cursor = None # Khởi tạo cursor ngoài khối try
         try:
+            # Lấy kết nối cơ sở dữ liệu
             connection = get_db_connection()
+            # Tạo cursor với dictionary=True để kết quả trả về là dictionary
             cursor = connection.cursor(dictionary=True)
+
+            # Thực thi hàm thao tác DB gốc, truyền cursor và connection vào
             result = query_func(cursor, connection, *args, **kwargs)
+
+            # Commit các thay đổi vào cơ sở dữ liệu
             connection.commit()
+
+            # Trả về kết quả từ hàm gốc
             return result
         except Error as e:
-            return jsonify({"error": str(e)}), 500
+            # Bắt lỗi liên quan đến cơ sở dữ liệu (từ mysql.connector)
+            # Rollback các thay đổi nếu có lỗi
+            if connection:
+                connection.rollback()
+            logging.error(f"Database Error: {e}", exc_info=True)
+            return jsonify({"error": f"Lỗi cơ sở dữ liệu: {e}"}), 500 # Trả về lỗi DB với mã 500
+        except Exception as e:
+             # Bắt các lỗi ngoại lệ khác
+            if connection:
+                connection.rollback() # Rollback nếu có lỗi khác xảy ra trước khi commit
+            logging.error(f"Application Error: {e}", exc_info=True)
+            return jsonify({'error': f'Đã xảy ra lỗi: {e}'}), 500 # Trả về lỗi chung với mã 500
         finally:
-            if connection and connection.is_connected():
+            # Đảm bảo cursor và kết nối luôn được đóng
+            if cursor:
                 cursor.close()
+            if connection and connection.is_connected():
                 connection.close()
     return wrapper
 
-# Route để trả về thông tin thành viên
-@app.route('/api/member/<int:member_id>', methods=['GET'])
-def get_member(member_id):
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor(dictionary=True)
+# API: Lấy full_name của người dùng theo user_id
+# Endpoint này yêu cầu người dùng đã đăng nhập (có user_id trong session)
+@app.route('/api/user/full_name', methods=['GET'])
+def get_user_full_name():
+    """
+    Lấy họ tên đầy đủ của người dùng hiện tại từ session.
 
-        # Sửa lại câu lệnh truy vấn để lấy thông tin thành viên từ bảng members, users và groups
+    Yêu cầu:
+        Người dùng phải đăng nhập (user_id tồn tại trong session).
+
+    Trả về:
+        JSON: {'full_name': 'Họ tên'} nếu thành công (mã 200).
+        JSON: {'error': 'Thông báo lỗi'} nếu lỗi (mã 401, 404, 500).
+    """
+    # Lấy user_id của người dùng hiện tại từ session
+    user_id = session.get('user_id')
+
+    # Kiểm tra xem người dùng đã đăng nhập chưa
+    if not user_id:
+        # Nếu chưa có user_id trong session, trả về lỗi yêu cầu đăng nhập
+        return jsonify({'error': 'Chưa đăng nhập hoặc phiên hết hạn'}), 401
+
+    conn = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
+    try:
+        # Lấy kết nối đến cơ sở dữ liệu
+        conn = get_db_connection()
+        # Tạo cursor để thực thi truy vấn
+        cursor = conn.cursor(dictionary=True) # Sử dụng dictionary=True để lấy kết quả dạng dictionary
+
+        # Truy vấn lấy full_name từ bảng users dựa trên user_id
+        # Thêm điều kiện is_active = 1 để chỉ lấy người dùng đang hoạt động
         query = """
-            SELECT m.id AS member_id, u.full_name, u.email, m.role, m.status, m.join_date, m.leave_date, m.avatar, m.created_at, m.updated_at, g.group_name
-            FROM members m
-            JOIN users u ON m.user_id = u.id
-            JOIN groups g ON m.group_id = g.id
-            WHERE m.id = %s
+            SELECT full_name
+            FROM users
+            WHERE id = %s
+              AND is_active = 1
         """
-        cursor.execute(query, (member_id,))
-        member = cursor.fetchone()
+        cursor.execute(query, (user_id, )) # Thực thi truy vấn với user_id
 
-        # Kiểm tra xem dữ liệu đã được lấy ra hay chưa
-        print("Retrieved member data:", member)
+        # Lấy kết quả truy vấn (chỉ lấy 1 dòng vì user_id là duy nhất)
+        user = cursor.fetchone()
 
-        cursor.close()
-        connection.close()
+        # Kiểm tra xem có tìm thấy người dùng hoạt động với user_id này không
+        if not user:
+            # Nếu không tìm thấy hoặc tài khoản không hoạt động, trả về lỗi 404 Not Found
+            return jsonify({'error': 'Không tìm thấy người dùng hoặc tài khoản không hoạt động'}), 404
 
-        if member:
-            return jsonify(member)  # Trả về đối tượng JSON
-        else:
-            return jsonify({"error": "Member not found"}), 404
+        # Nếu tìm thấy, trả về full_name dưới dạng JSON
+        return jsonify({'full_name': user['full_name']}), 200
+
+    except Error as e:
+        # Bắt lỗi cơ sở dữ liệu và trả về mã 500 Internal Server Error
+        logging.error(f"Database Error in get_user_full_name: {e}", exc_info=True)
+        return jsonify({'error': f'Lỗi cơ sở dữ liệu: {e}'}), 500
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        # Bắt các lỗi ngoại lệ khác và trả về mã 500 Internal Server Error
+        logging.error(f"Application Error in get_user_full_name: {e}", exc_info=True)
+        return jsonify({'error': f'Đã xảy ra lỗi: {e}'}), 500
+    finally:
+        # Đảm bảo cursor và kết nối luôn được đóng
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
+# API lấy tên nhóm hiện tại của người dùng (nếu có)
+# Endpoint này lấy user_id từ query string
+@app.route('/api/user_group', methods=['GET'])
+def get_user_group():
+    """
+    Kiểm tra trạng thái nhóm của người dùng dựa trên user_id.
+    Kiểm tra xem người dùng có đang ở trong nhóm Active hoặc có yêu cầu Pending không.
 
+    Yêu cầu:
+        Tham số 'user_id' trong query string.
 
+    Trả về:
+        JSON: {'group': 'Tên nhóm'} nếu đang Active (mã 200).
+        JSON: {'message': 'chua_tham_gia'} nếu đang Pending (mã 200).
+        JSON: {'message': 'chua_co_nhom'} nếu không có nhóm Active/Pending (mã 404).
+        JSON: {'error': 'Thông báo lỗi'} nếu lỗi (mã 400, 500).
+    """
+    # Lấy user_id từ query string (ví dụ: /api/user_group?user_id=123)
+    user_id = request.args.get('user_id')
 
-@app.route('/api/members', methods=['GET'])
-def get_members():
+    # Kiểm tra xem user_id có được cung cấp không
+    if not user_id:
+        # Trả về lỗi 400 Bad Request nếu không có user_id
+        return jsonify({'error': 'User ID is required'}), 400
+
+    conn = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
     try:
+        # Kết nối đến cơ sở dữ liệu
+        conn = get_db_connection()
+        # Tạo cursor với dictionary=True để kết quả trả về là dictionary
+        cursor = conn.cursor(dictionary=True)
+
+        # 1) Truy vấn kiểm tra xem người dùng có đang ở trong nhóm có trạng thái 'Active' không
+        query = """
+        SELECT g.group_name
+          FROM groups g
+          JOIN members m ON m.group_id = g.id
+         WHERE m.user_id = %s
+           AND m.status = 'Active'
+         LIMIT 1 -- Chỉ cần tìm 1 nhóm Active là đủ
+        """
+        cursor.execute(query, (user_id,)) # Thực thi truy vấn
+        group = cursor.fetchone() # Lấy kết quả
+
+        # Nếu tìm thấy nhóm Active, trả về tên nhóm và mã 200 OK
+        if group:
+            return jsonify({'group': group['group_name']}), 200
+
+        # 2) Nếu không có nhóm Active, kiểm tra xem có yêu cầu tham gia nhóm nào đang chờ duyệt ('Pending') không
+        query2 = """
+        SELECT 1 -- Chỉ cần kiểm tra sự tồn tại, không cần lấy dữ liệu cụ thể
+          FROM members
+         WHERE user_id = %s
+           AND status = 'Pending'
+         LIMIT 1 -- Chỉ cần tìm 1 yêu cầu Pending là đủ
+        """
+        cursor.execute(query2, (user_id,)) # Thực thi truy vấn thứ hai
+        pending = cursor.fetchone() # Lấy kết quả
+
+        # Kiểm tra xem có yêu cầu Pending nào không
+        if pending:
+            # Nếu có, thông báo người dùng chưa được tham gia nhóm (đang chờ duyệt)
+            return jsonify({'message': 'chua_tham_gia'}), 200 # Trả về mã 200 vì đây không phải lỗi, chỉ là trạng thái
+
+        else:
+            # Nếu không có nhóm Active và không có yêu cầu Pending, thông báo người dùng chưa có nhóm
+            return jsonify({'message': 'chua_co_nhom'}), 404 # Trả về mã 404 Not Found vì không tìm thấy trạng thái nhóm Active/Pending
+
+    except Error as e:
+        # Bắt lỗi cơ sở dữ liệu
+        logging.error(f"Database Error in get_user_group: {e}", exc_info=True)
+        return jsonify({'error': f'Lỗi cơ sở dữ liệu: {e}'}), 500 # Trả về mã 500 Internal Server Error
+    except Exception as e:
+        # Bắt các lỗi ngoại lệ khác
+        logging.error(f"Application Error in get_user_group: {e}", exc_info=True)
+        return jsonify({'error': f'Đã xảy ra lỗi: {e}'}), 500 # Trả về mã 500 Internal Server Error
+    finally:
+        # Đảm bảo cursor và kết nối luôn được đóng
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+
+# API lấy 2 chữ cái đầu trong họ tên người dùng (viết hoa)
+# Endpoint này lấy user_id từ session (người dùng đã đăng nhập)
+@app.route('/api/user_initials', methods=['GET'])
+def get_user_initials():
+    """
+    Lấy 2 chữ cái đầu tiên trong họ tên của người dùng hiện tại và viết hoa.
+
+    Yêu cầu:
+        Người dùng phải đăng nhập (user_id tồn tại trong session).
+
+    Trả về:
+        JSON: {'initials': 'XY'} nếu thành công (mã 200).
+        JSON: {'error': 'Thông báo lỗi'} nếu lỗi (mã 401, 404, 500).
+    """
+    # Lấy user_id từ session (người dùng đã đăng nhập)
+    user_id = session.get('user_id')
+
+    # Kiểm tra xem người dùng đã đăng nhập chưa
+    if not user_id:
+        # Nếu chưa đăng nhập, trả về lỗi 401 Unauthorized
+        return jsonify({'error': 'Chưa đăng nhập'}), 401
+
+    conn = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
+    try:
+        # Kết nối đến cơ sở dữ liệu
+        conn = get_db_connection()
+        # Tạo cursor để thực thi truy vấn
+        cursor = conn.cursor(dictionary=True) # Sử dụng dictionary=True để lấy kết quả dạng dictionary
+
+        # Truy vấn họ tên đầy đủ (full_name) từ bảng users dựa trên user_id
+        cursor.execute("SELECT full_name FROM users WHERE id = %s", (user_id,))
+        row = cursor.fetchone() # Lấy kết quả
+
+        # Kiểm tra xem có tìm thấy người dùng với user_id này không
+        if not row:
+            # Trả về lỗi 404 Not Found nếu user không tồn tại trong DB
+            return jsonify({'error': 'User không tồn tại'}), 404
+
+        # Lấy họ tên đầy đủ từ kết quả truy vấn
+        full_name = row['full_name']
+        # Loại bỏ khoảng trắng ở đầu và cuối chuỗi
+        full_name = full_name.strip()
+        # Tách họ tên thành các phần dựa trên khoảng trắng
+        parts = full_name.split()
+
+        # Logic để lấy 2 chữ cái đầu:
+        if len(parts) >= 2:
+            # Nếu họ tên có ít nhất 2 từ, lấy chữ cái đầu của từ đầu tiên và từ thứ hai
+            initials = parts[0][0] + parts[1][0]
+        elif len(parts) == 1:
+            # Nếu họ tên chỉ có 1 từ, lấy 2 ký tự đầu tiên của từ đó
+            initials = full_name[:2]
+        else:
+             # Trường hợp tên rỗng hoặc chỉ có khoảng trắng sau khi strip
+             initials = "NN" # Hoặc có thể trả về lỗi hoặc một giá trị mặc định khác
+
+        # Chuyển các chữ cái đầu thành chữ hoa
+        initials = initials.upper()
+
+        # Trả kết quả dưới dạng JSON với mã 200 OK
+        return jsonify({'initials': initials}), 200
+
+    except Error as e:
+        # Bắt lỗi cơ sở dữ liệu
+        logging.error(f"Database Error in get_user_initials: {e}", exc_info=True)
+        return jsonify({'error': f'Lỗi cơ sở dữ liệu: {e}'}), 500 # Trả về mã 500 Internal Server Error
+    except Exception as e:
+        # Bắt các lỗi ngoại lệ khác
+        logging.error(f"Application Error in get_user_initials: {e}", exc_info=True)
+        return jsonify({'error': f'Đã xảy ra lỗi: {e}'}), 500 # Trả về mã 500 Internal Server Error
+    finally:
+        # Đảm bảo cursor và kết nối luôn được đóng để tránh rò rỉ tài nguyên
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+
+# Endpoint để xử lý quét mã QR từ ảnh tải lên
+# Sử dụng thư viện OpenCV để đọc mã QR
+@app.route('/api/scan-qr', methods=['POST'])
+def scan_qr():
+    """
+    Xử lý yêu cầu tải lên ảnh chứa mã QR để quét và lấy thông tin nhóm.
+
+    Yêu cầu:
+        Phương thức POST.
+        File ảnh mã QR được gửi trong request dưới dạng 'qr_image'.
+        Người dùng phải được xác thực (user_id có trong session).
+
+    Trả về:
+        JSON: Thông tin nhóm (id, name, code, member_count) nếu quét thành công (mã 200).
+        JSON: {'error': 'Thông báo lỗi'} nếu lỗi (mã 401, 400, 404, 500).
+    """
+    try:
+        # 1. Xác thực người dùng: Kiểm tra xem người dùng đã đăng nhập chưa
         current_user_id = get_current_user_id()
         if not current_user_id:
+            # Nếu chưa đăng nhập, trả về lỗi xác thực 401 Unauthorized
             return jsonify({"error": "Authentication required"}), 401
 
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('perPage', 5))
-        search = request.args.get('search', '')
-        role_filter = request.args.get('role', '')
-        status_filter = request.args.get('status', '')
+        # 2. Kiểm tra file upload: Đảm bảo có file ảnh được gửi lên
+        if 'qr_image' not in request.files:
+            # Nếu không có trường 'qr_image' trong request.files, trả về lỗi 400 Bad Request
+            return jsonify({"error": "No QR image provided"}), 400
 
-        connection = get_db_connection()
-        cursor = connection.cursor(dictionary=True)
+        file = request.files['qr_image']
+        # Kiểm tra xem file có rỗng hoặc không có tên không
+        if not file or file.filename == '':
+             # Nếu file rỗng hoặc không có tên, trả về lỗi 400 Bad Request
+            return jsonify({"error": "No QR image provided"}), 400
 
-        # Lấy group_id và role của người dùng hiện tại
-        user_roles_query = "SELECT group_id, role FROM members WHERE user_id = %s"
-        cursor.execute(user_roles_query, (current_user_id,))
-        user_memberships = cursor.fetchall()
+        # 3. Đọc và phân tích QR code từ ảnh
+        # Đọc nội dung file ảnh thành byte string, sau đó chuyển thành numpy array (kiểu uint8)
+        file_bytes = np.frombuffer(file.read(), np.uint8)
+        # Sử dụng OpenCV để giải mã ảnh từ numpy array
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
+        # Sử dụng bộ phát hiện mã QR của OpenCV
+        qr_detector = cv2.QRCodeDetector()
+        # detectAndDecode trả về data (nội dung QR), points (các điểm góc của QR), và bounding box (không dùng ở đây)
+        data, points, _ = qr_detector.detectAndDecode(img)
+
+        # Kiểm tra xem OpenCV có giải mã được mã QR không
+        if not data:
+            # Nếu không giải mã được, trả về lỗi 400 Bad Request
+            return jsonify({"error": "Could not decode QR code"}), 400
+
+        # 4. Lấy random_code từ nội dung QR đã giải mã
+        random_code = data
+
+        # 5. Kết nối database để tìm thông tin nhóm
+        connection = None # Khởi tạo biến kết nối
+        cursor = None # Khởi tạo biến cursor
+        try:
+            connection = get_db_connection()
+            cursor = connection.cursor(dictionary=True) # Sử dụng dictionary=True
+
+            # 6. Tìm nhóm dựa trên random_code từ mã QR
+            # Truy vấn bảng 'groups' để tìm nhóm có 'random_code' tương ứng
+            cursor.execute(
+                "SELECT id, group_name, group_code FROM groups WHERE random_code = %s",
+                (random_code,)
+            )
+            group = cursor.fetchone() # Lấy kết quả tìm được
+
+            # Nếu không tìm thấy nhóm nào với random_code này
+            if not group:
+                # Trả về lỗi 404 Not Found (Mã QR không hợp lệ)
+                return jsonify({"error": "Invalid QR code"}), 404
+
+            # Phân rã thông tin nhóm tìm được
+            group_id = group['id']
+            group_name = group['group_name']
+            group_code = group['group_code']
+
+            # 7. Kiểm tra xem người dùng hiện tại đã là thành viên của nhóm này chưa
+            cursor.execute(
+                "SELECT id FROM members WHERE user_id = %s AND group_id = %s",
+                (current_user_id, group_id)
+            )
+            # Nếu tìm thấy một bản ghi thành viên (nghĩa là người dùng đã là thành viên)
+            if cursor.fetchone():
+                # Trả về lỗi 400 Bad Request (Đã là thành viên)
+                return jsonify({"error": "You are already a member of this group"}), 400
+
+            # 8. Đếm số thành viên hiện tại đang ở trạng thái 'Active' trong nhóm
+            cursor.execute(
+                "SELECT COUNT(*) AS member_count FROM members WHERE group_id = %s AND status = 'Active'",
+                (group_id,)
+            )
+            member_count = cursor.fetchone()['member_count'] # Lấy số lượng từ kết quả
+
+            # 10. Trả về thông tin chi tiết của nhóm vừa quét được
+            return jsonify({
+                "message": "QR code scanned successfully",
+                "group": {
+                    "id": group_id,
+                    "name": group_name,
+                    "code": group_code,
+                    "member_count": member_count
+                }
+            }), 200 # Trả về mã 200 OK
+
+        except Error as e:
+             # Bắt lỗi cơ sở dữ liệu trong khối try/except lồng nhau
+            logging.error(f"Database Error during QR scan process: {e}", exc_info=True)
+            return jsonify({'error': f'Lỗi cơ sở dữ liệu khi quét QR: {e}'}), 500 # Trả về mã 500
+        finally:
+             # Đảm bảo đóng kết nối DB nếu nó đã được mở
+            if cursor:
+                cursor.close()
+            if connection and connection.is_connected():
+                connection.close()
+
+    except Exception as e:
+        # Bắt các lỗi ngoại lệ khác xảy ra trong toàn bộ hàm (ngoài thao tác DB)
+        logging.error(f"General Error in scan_qr: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500 # Trả về mã 500 Internal Server Error
+# ============================= #
+#       ROUTING & Groups      #
+# ============================= #
+
+# Route để trả về thông tin chi tiết của một thành viên dựa trên ID thành viên
+@app.route('/api/member/<int:member_id>', methods=['GET'])
+def get_member(member_id):
+    """
+    Lấy thông tin chi tiết của một thành viên cụ thể dựa trên ID thành viên.
+
+    Args:
+        member_id (int): ID của bản ghi thành viên trong bảng 'members'.
+
+    Yêu cầu:
+        Phương thức GET.
+
+    Trả về:
+        JSON: Thông tin chi tiết thành viên (bao gồm thông tin user, role, status, group_name, v.v.)
+              nếu tìm thấy (mã 200).
+        JSON: {'error': 'Member not found'} nếu không tìm thấy thành viên (mã 404).
+        JSON: {'error': 'Thông báo lỗi'} nếu có lỗi xảy ra (mã 500).
+    """
+    conn = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
+    try:
+        # Lấy kết nối đến cơ sở dữ liệu
+        conn = get_db_connection()
+        # Tạo cursor để thực thi truy vấn, kết quả trả về dạng dictionary
+        cursor = conn.cursor(dictionary=True)
+
+        # Truy vấn lấy thông tin thành viên bằng cách JOIN các bảng 'members', 'users', 'groups'
+        # Dùng Alias (AS) để đặt tên rõ ràng cho các cột trùng tên (ví dụ: id)
+        query = """
+            SELECT m.id AS member_id, u.full_name, u.email, m.role, m.status, m.join_date, m.leave_date, u.avatar, m.created_at, m.updated_at, g.group_name
+            FROM members m
+            JOIN users u ON m.user_id = u.id     -- Nối với bảng users để lấy thông tin người dùng
+            JOIN groups g ON m.group_id = g.id   -- Nối với bảng groups để lấy tên nhóm
+            WHERE m.id = %s -- Lọc theo ID của bản ghi thành viên
+        """
+        cursor.execute(query, (member_id,)) # Thực thi truy vấn với member_id
+        member = cursor.fetchone() # Lấy kết quả (một dòng duy nhất)
+
+        # In ra dữ liệu thành viên đã lấy được (để debug)
+        print("Retrieved member data:", member)
+
+        # Kiểm tra xem có tìm thấy thành viên nào không
+        if member:
+            # Nếu tìm thấy, trả về thông tin thành viên dưới dạng JSON
+            return jsonify(member), 200
+        else:
+            # Nếu không tìm thấy, trả về lỗi 404 Not Found
+            return jsonify({"error": "Member not found"}), 404
+
+    except Exception as e:
+        # Bắt các lỗi ngoại lệ và trả về mã 500 Internal Server Error
+        logging.error(f"Error fetching member details for ID {member_id}: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        # Đảm bảo đóng cursor và kết nối
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+
+# API lấy danh sách thành viên của các nhóm mà người dùng hiện tại thuộc về
+# Hỗ trợ phân trang, tìm kiếm và lọc
+@app.route('/api/members', methods=['GET'])
+def get_members():
+    """
+    Lấy danh sách thành viên từ các nhóm mà người dùng hiện tại là thành viên.
+    Hỗ trợ phân trang, tìm kiếm (theo tên, email) và lọc (theo vai trò, trạng thái).
+    Cung cấp thông tin group_code, group_name và quyền admin của nhóm đầu tiên tìm thấy.
+
+    Yêu cầu:
+        Phương thức GET.
+        Có thể kèm theo các tham số query string:
+        - page (int): Số trang (mặc định 1).
+        - perPage (int): Số lượng mục trên mỗi trang (mặc định 5).
+        - search (str): Chuỗi tìm kiếm trong tên hoặc email.
+        - role (str): Lọc theo vai trò thành viên.
+        - status (str): Lọc theo trạng thái thành viên.
+
+    Trả về:
+        JSON: {'members': [...], 'totalMembers': count, 'group_code': '...', 'group_name': '...', 'is_admin': bool}
+              (mã 200).
+        JSON: {'error': 'Authentication required'} nếu chưa đăng nhập (mã 401).
+        JSON: {'error': 'Thông báo lỗi'} nếu có lỗi xảy ra (mã 500).
+    """
+    conn = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
+    try:
+        # 1. Xác thực người dùng: Lấy ID người dùng hiện tại từ session
+        current_user_id = get_current_user_id()
+        if not current_user_id:
+            # Nếu chưa đăng nhập, trả về lỗi 401 Unauthorized
+            return jsonify({"error": "Authentication required"}), 401
+
+        # 2. Lấy tham số từ query string cho phân trang, tìm kiếm, lọc
+        page = int(request.args.get('page', 1))         # Số trang, mặc định là 1
+        per_page = int(request.args.get('perPage', 5))  # Số thành viên trên mỗi trang, mặc định là 5
+        search = request.args.get('search', '')         # Chuỗi tìm kiếm, mặc định rỗng
+        role_filter = request.args.get('role', '')      # Lọc theo vai trò, mặc định rỗng (không lọc)
+        status_filter = request.args.get('status', '')  # Lọc theo trạng thái, mặc định rỗng (không lọc)
+
+        # Lấy kết nối đến cơ sở dữ liệu
+        conn = get_db_connection()
+        # Tạo cursor để thực thi truy vấn, kết quả trả về dạng dictionary
+        cursor = conn.cursor(dictionary=True)
+
+        # 3. Lấy group_id và role của người dùng hiện tại trong tất cả các nhóm mà họ tham gia
+        user_memberships_query = "SELECT group_id, role FROM members WHERE user_id = %s"
+        cursor.execute(user_memberships_query, (current_user_id,))
+        user_memberships = cursor.fetchall() # Lấy tất cả các nhóm mà người dùng hiện tại là thành viên
+
+        # Tạo danh sách các group_id mà người dùng thuộc về
         user_group_ids = [m['group_id'] for m in user_memberships]
+        # Tạo dictionary ánh xạ group_id với role của người dùng hiện tại trong nhóm đó
         user_role_map = {m['group_id']: m['role'] for m in user_memberships}
 
+        # Nếu người dùng không thuộc bất kỳ nhóm nào, trả về danh sách rỗng
         if not user_group_ids:
-            cursor.close()
-            connection.close()
-            return jsonify({'members': [], 'totalMembers': 0, 'group_code': None, 'is_admin': False})
+            return jsonify({'members': [], 'totalMembers': 0, 'group_code': None, 'group_name': None, 'is_admin': False}), 200 # Trả về 200 với dữ liệu rỗng
 
+        # Tạo chuỗi placeholder cho mệnh đề IN trong câu truy vấn SQL
+        # Ví dụ: nếu user_group_ids = [1, 5, 10], group_filter_placeholders sẽ là '%s, %s, %s'
         group_filter_placeholders = ', '.join(['%s'] * len(user_group_ids))
 
-        # Lấy group_code và group_name của nhóm đầu tiên (giả sử xem một nhóm tại một thời điểm)
+        # 4. Lấy group_code và group_name của nhóm đầu tiên trong danh sách nhóm của người dùng
+        # (Giả định endpoint này hiển thị danh sách thành viên của nhóm mà user đang "xem",
+        # và tạm lấy nhóm đầu tiên nếu user ở nhiều nhóm. Logic thực tế có thể cần tham số group_id)
         cursor.execute(
-            "SELECT group_code, group_name FROM groups WHERE id = %s",
-            (user_group_ids[0],)
+             f"SELECT group_code, group_name FROM groups WHERE id IN ({group_filter_placeholders}) LIMIT 1",
+             tuple(user_group_ids) # Chú ý: truyền tuple các group_id vào đây
         )
         group = cursor.fetchone()
         group_code = group['group_code'] if group else None
         group_name = group['group_name'] if group else None
 
-        # Xác định is_admin cho nhóm đầu tiên
-        is_admin = user_role_map.get(user_group_ids[0], '') == 'Admin'
+        # 5. Xác định xem người dùng hiện tại có phải là Admin trong nhóm đầu tiên đó không
+        # Logic này cần xem xét lại nếu user có thể xem danh sách thành viên của nhiều nhóm.
+        # Hiện tại đang kiểm tra quyền admin trong *một* nhóm cụ thể (nhóm đầu tiên lấy được).
+        is_admin = user_role_map.get(user_group_ids[0], '') == 'Admin' if user_group_ids else False # Xử lý trường hợp user_group_ids rỗng
 
-        # Lấy danh sách thành viên từ tất cả nhóm của người dùng
+        # 6. Xây dựng câu truy vấn chính để lấy danh sách thành viên
+        # Truy vấn JOIN các bảng 'members', 'users', 'groups'
+        # Lọc theo group_id (trong danh sách nhóm của user), tìm kiếm theo full_name hoặc email,
+        # và lọc theo role, status nếu có tham số.
+        # Sử dụng LIMIT và OFFSET cho phân trang.
         query = f"""
             SELECT m.id AS member_id, u.full_name, u.email, m.role, m.status,
-                   g.group_name, m.group_id, LEFT(u.full_name, 1) AS initials
+                   g.group_name, m.group_id, LEFT(u.full_name, 1) AS initials -- Lấy chữ cái đầu tiên
             FROM members m
             JOIN users u ON m.user_id = u.id
             JOIN groups g ON m.group_id = g.id
-            WHERE m.group_id IN ({group_filter_placeholders})
-            AND (u.full_name LIKE %s OR u.email LIKE %s)
-            AND (%s = '' OR m.role = %s)
-            AND (%s = '' OR m.status = %s)
-            LIMIT %s OFFSET %s
+            WHERE m.group_id IN ({group_filter_placeholders}) -- Lọc theo nhóm của người dùng hiện tại
+            AND (u.full_name LIKE %s OR u.email LIKE %s)     -- Điều kiện tìm kiếm (LIKE cho tên hoặc email)
+            AND (%s = '' OR m.role = %s)                   -- Điều kiện lọc theo vai trò (nếu role_filter rỗng thì bỏ qua)
+            AND (%s = '' OR m.status = %s)                 -- Điều kiện lọc theo trạng thái (nếu status_filter rỗng thì bỏ qua)
+            ORDER BY u.full_name -- Sắp xếp theo tên
+            LIMIT %s OFFSET %s   -- Phân trang
         """
+        # Chuỗi tìm kiếm với ký tự wildcard % ở hai đầu
         search_pattern = f"%{search}%"
+        # Tính toán offset cho phân trang
         offset = (page - 1) * per_page
+
+        # Danh sách các tham số truyền vào câu truy vấn
+        # Thứ tự phải khớp với thứ tự placeholder (%s) trong query
         query_params = user_group_ids + [search_pattern, search_pattern, role_filter, role_filter, status_filter, status_filter, per_page, offset]
 
-        cursor.execute(query, tuple(query_params))
-        members = cursor.fetchall()
+        cursor.execute(query, tuple(query_params)) # Thực thi truy vấn với tuple các tham số
+        members = cursor.fetchall() # Lấy tất cả các dòng kết quả cho trang hiện tại
 
-        # Xử lý danh sách thành viên
+        # 7. Xử lý danh sách thành viên để thêm thông tin 'can_delete'
         processed_members = []
         for member in members:
-            can_delete = user_role_map.get(member['group_id'], '') == 'Admin' and member['member_id'] != current_user_id
-            processed_members.append({
-                'member_id': member['member_id'],
-                'full_name': member['full_name'],
-                'email': member['email'],
-                'role': member['role'],
-                'status': member['status'],
-                'group_name': member['group_name'],
-                'group_id': member['group_id'],
-                'initials': member['initials'],
-                'can_delete': can_delete
-            })
+            # Xác định quyền xóa: người dùng hiện tại phải là Admin trong nhóm của thành viên
+            # và thành viên đó không phải là chính người dùng hiện tại.
+            can_delete = user_role_map.get(member['group_id'], '') == 'Admin' and member['user_id'] != current_user_id # Sửa: so sánh với user_id thay vì member_id
+            processed_member = member.copy() # Tạo bản sao để thêm/sửa khóa
+            processed_member['can_delete'] = can_delete
+            processed_members.append(processed_member)
 
-        # Đếm tổng số thành viên
+
+        # 8. Đếm tổng số thành viên phù hợp với điều kiện lọc (không phân trang)
         count_query = f"""
             SELECT COUNT(*) AS total
             FROM members m
             JOIN users u ON m.user_id = u.id
             JOIN groups g ON m.group_id = g.id
-            WHERE m.group_id IN ({group_filter_placeholders})
-            AND (u.full_name LIKE %s OR u.email LIKE %s)
-            AND (%s = '' OR m.role = %s)
-            AND (%s = '' OR m.status = %s)
+            WHERE m.group_id IN ({group_filter_placeholders}) -- Lọc theo nhóm của người dùng hiện tại
+            AND (u.full_name LIKE %s OR u.email LIKE %s)     -- Điều kiện tìm kiếm
+            AND (%s = '' OR m.role = %s)                   -- Điều kiện lọc theo vai trò
+            AND (%s = '' OR m.status = %s)                 -- Điều kiện lọc theo trạng thái
         """
+        # Danh sách tham số cho câu truy vấn đếm
         count_query_params = user_group_ids + [search_pattern, search_pattern, role_filter, role_filter, status_filter, status_filter]
         cursor.execute(count_query, tuple(count_query_params))
-        total_members = cursor.fetchone()['total']
+        total_members = cursor.fetchone()['total'] # Lấy tổng số
 
+        # 9. Đóng cursor và kết nối
         cursor.close()
-        connection.close()
+        conn.close()
 
+        # 10. Trả về kết quả bao gồm danh sách thành viên, tổng số, và thông tin nhóm/quyền admin
         return jsonify({
             'members': processed_members,
             'totalMembers': total_members,
             'group_code': group_code,
-            'group_name': group_name,
+            'group_name': group_name, # Thêm group_name vào response
             'is_admin': is_admin
-        })
+        }), 200
+
     except Exception as e:
-        print(f"Error fetching members: {e}")
+        # Bắt các lỗi ngoại lệ và trả về mã 500 Internal Server Error
+        logging.error(f"Error fetching members: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
-# --- Route để xóa thành viên (Đã thêm kiểm tra quyền Admin) ---
+    finally:
+        # Đảm bảo đóng cursor và kết nối nếu chúng đã được mở
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+
+# Route để xóa một thành viên khỏi nhóm dựa trên ID thành viên
+# Endpoint này yêu cầu người dùng hiện tại phải là Admin của nhóm đó
 @app.route('/api/member/<int:member_id>', methods=['DELETE'])
 def delete_member(member_id):
-    print(f"Attempting to delete member with ID: {member_id}")
+    """
+    Xóa một thành viên khỏi nhóm.
+
+    Args:
+        member_id (int): ID của bản ghi thành viên trong bảng 'members' cần xóa.
+
+    Yêu cầu:
+        Phương thức DELETE.
+        Người dùng phải đăng nhập (user_id tồn tại trong session).
+        Người dùng hiện tại phải là Admin của nhóm mà thành viên cần xóa thuộc về.
+        Người dùng không được tự xóa chính mình.
+
+    Trả về:
+        JSON: {'message': 'Member deleted successfully'} nếu xóa thành công (mã 200).
+        JSON: {'error': 'Authentication required'} nếu chưa đăng nhập (mã 401).
+        JSON: {'error': 'Unauthorized...'} nếu không đủ quyền (mã 403).
+        JSON: {'error': 'Member not found'} nếu thành viên không tồn tại (mã 404).
+        JSON: {'error': 'You cannot delete yourself...'} nếu tự xóa mình (mã 400).
+        JSON: {'error': 'Thông báo lỗi'} nếu có lỗi xảy ra (mã 500).
+    """
+    print(f"Attempting to delete member with ID: {member_id}") # Log debug
+    # 1. Xác thực người dùng: Lấy ID người dùng hiện tại từ session
     current_user_id = get_current_user_id()
 
+    # Kiểm tra xem người dùng đã đăng nhập chưa
     if not current_user_id:
-        return jsonify({"error": "Authentication required"}), 401 # Chưa đăng nhập
+        # Nếu chưa đăng nhập, trả về lỗi 401 Unauthorized
+        return jsonify({"error": "Authentication required"}), 401
 
-    connection = None
-    cursor = None
+    connection = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
     try:
+        # Lấy kết nối đến cơ sở dữ liệu
         connection = get_db_connection()
+        # Tạo cursor để thực thi truy vấn, kết quả trả về dạng dictionary
         cursor = connection.cursor(dictionary=True)
 
-        # 1. Lấy group_id và user_id của thành viên cần xóa
+        # 2. Lấy group_id và user_id của thành viên cần xóa
+        # Cần thông tin này để kiểm tra quyền của người dùng hiện tại
         cursor.execute("SELECT group_id, user_id FROM members WHERE id = %s", (member_id,))
-        member_to_delete = cursor.fetchone()
+        member_to_delete = cursor.fetchone() # Lấy thông tin thành viên cần xóa
 
+        # Kiểm tra xem bản ghi thành viên có tồn tại không
         if not member_to_delete:
-            # Thành viên không tồn tại
+            # Nếu không tìm thấy, trả về lỗi 404 Not Found
             return jsonify({"error": "Member not found"}), 404
 
+        # Lấy group_id và user_id của thành viên cần xóa
         target_group_id = member_to_delete['group_id']
         target_user_id = member_to_delete['user_id']
 
-        # Optional: Ngăn admin tự xóa mình khỏi nhóm
+        # 3. Kiểm tra xem người dùng hiện tại có đang cố gắng tự xóa mình không
+        # Ngăn không cho admin tự ý rời khỏi nhóm bằng cách xóa bản ghi thành viên của chính mình.
         if target_user_id == current_user_id:
-             return jsonify({"error": "You cannot delete yourself from the group."}), 400 # Bad Request
+             # Trả về lỗi 400 Bad Request nếu người dùng tự xóa mình
+             return jsonify({"error": "You cannot delete yourself from the group."}), 400
 
-
-        # 2. Lấy vai trò của người dùng hiện tại trong nhóm của thành viên cần xóa
+        # 4. Lấy vai trò của người dùng hiện tại trong nhóm của thành viên cần xóa
         cursor.execute("SELECT role FROM members WHERE user_id = %s AND group_id = %s", (current_user_id, target_group_id))
-        current_user_membership = cursor.fetchone()
+        current_user_membership = cursor.fetchone() # Lấy thông tin thành viên của người dùng hiện tại trong nhóm đó
 
-        # 3. Kiểm tra xem người dùng hiện tại có tồn tại trong nhóm này và có vai trò là Admin không
+        # 5. Kiểm tra xem người dùng hiện tại có tồn tại trong nhóm này và có vai trò là Admin không
         if not current_user_membership or current_user_membership['role'] != 'Admin':
-            # Người dùng không đủ quyền (không phải admin trong nhóm này)
-            return jsonify({"error": "Unauthorized. Only group admins can delete members."}), 403 # 403 Forbidden
+            # Nếu không tìm thấy bản ghi thành viên của người dùng hiện tại trong nhóm,
+            # hoặc vai trò không phải là 'Admin', trả về lỗi 403 Forbidden
+            return jsonify({"error": "Unauthorized. Only group admins can delete members."}), 403
 
-        # 4. Nếu đã đủ quyền, tiến hành xóa thành viên
+        # 6. Nếu đã đủ quyền, tiến hành xóa bản ghi thành viên khỏi bảng 'members'
         delete_query = "DELETE FROM members WHERE id = %s"
-        cursor.execute(delete_query, (member_id,))
-        connection.commit()
+        cursor.execute(delete_query, (member_id,)) # Thực thi câu lệnh DELETE
+        connection.commit() # Commit thay đổi vào cơ sở dữ liệu
 
-        # Kiểm tra xem có bản ghi nào bị xóa không
+        # 7. Kiểm tra xem có bản ghi nào thực sự bị xóa không (số dòng bị ảnh hưởng)
         if cursor.rowcount == 0:
-             # Điều này hiếm xảy ra nếu các kiểm tra trên đã pass,
-             # có thể do racing condition hoặc lỗi khác.
+             # Nếu không có dòng nào bị xóa, có thể do thành viên đã bị xóa trước đó
+             # hoặc lỗi race condition. Trả về lỗi 404.
              return jsonify({"error": "Member not found or already deleted."}), 404
 
-
+        # In log thông báo xóa thành công
         print(f"Successfully deleted member with ID: {member_id} (User ID: {target_user_id}) from group {target_group_id} by user {current_user_id}")
+        # Trả về thông báo thành công với mã 200 OK
         return jsonify({"message": "Member deleted successfully"}), 200
 
     except Exception as e:
-        print(f"Error deleting member: {e}")
+        # Bắt các lỗi ngoại lệ và trả về mã 500 Internal Server Error
+        logging.error(f"Error deleting member with ID {member_id}: {e}", exc_info=True)
+        print(f"Error deleting member: {e}") # In log lỗi
+        # Rollback các thay đổi nếu có lỗi xảy ra trước khi commit
+        if connection:
+             connection.rollback()
         return jsonify({"error": str(e)}), 500
     finally:
+        # Đảm bảo đóng cursor và kết nối nếu chúng đã được mở
         if cursor:
             cursor.close()
         if connection:
             connection.close()
+
+
+# API lấy thông tin của người dùng hiện tại (đã đăng nhập)
+# Bao gồm id, full_name, email và vai trò (nếu thuộc nhóm)
 @app.route('/api/current-user', methods=['GET'])
 def get_current_user():
+    """
+    Lấy thông tin của người dùng hiện tại đã đăng nhập.
+    Bao gồm id, full_name, email và vai trò (nếu họ là thành viên của bất kỳ nhóm nào - lấy vai trò đầu tiên tìm thấy).
+
+    Yêu cầu:
+        Phương thức GET.
+        Người dùng phải đăng nhập (user_id tồn tại trong session).
+
+    Trả về:
+        JSON: {'id': ..., 'full_name': '...', 'email': '...', 'role': '...'} nếu thành công (mã 200).
+        JSON: {'error': 'Authentication required'} nếu chưa đăng nhập (mã 401).
+        JSON: {'error': 'User not found'} nếu không tìm thấy người dùng trong DB (mã 404).
+        JSON: {'error': 'Thông báo lỗi'} nếu có lỗi xảy ra (mã 500).
+    """
+    conn = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
     try:
+        # 1. Xác thực người dùng: Lấy ID người dùng hiện tại từ session
         current_user_id = get_current_user_id()
         if not current_user_id:
+            # Nếu chưa đăng nhập, trả về lỗi 401 Unauthorized
             return jsonify({"error": "Authentication required"}), 401
 
+        # Lấy kết nối đến cơ sở dữ liệu
         connection = get_db_connection()
+        # Tạo cursor để thực thi truy vấn, kết quả trả về dạng dictionary
         cursor = connection.cursor(dictionary=True)
 
-        # Lấy thông tin người dùng hiện tại
+        # 2. Lấy thông tin người dùng hiện tại và vai trò của họ trong các nhóm (nếu có)
+        # Sử dụng LEFT JOIN với bảng members để lấy thông tin người dùng kể cả khi họ chưa thuộc nhóm nào.
+        # Nếu user thuộc nhiều nhóm, truy vấn này sẽ trả về nhiều dòng cho cùng user_id.
+        # Tuy nhiên, chúng ta chỉ fetchone(), nên sẽ lấy vai trò từ bản ghi thành viên đầu tiên tìm thấy.
         query = """
             SELECT u.id, u.full_name, u.email, m.role, m.group_id
             FROM users u
-            LEFT JOIN members m ON u.id = m.user_id
-            WHERE u.id = %s
+            LEFT JOIN members m ON u.id = m.user_id -- LEFT JOIN để lấy user kể cả khi không có trong members
+            WHERE u.id = %s -- Lọc theo ID người dùng hiện tại
+            LIMIT 1 -- Chỉ cần lấy một bản ghi user (và vai trò đầu tiên tìm thấy nếu có)
         """
-        cursor.execute(query, (current_user_id,))
-        user = cursor.fetchone()
+        cursor.execute(query, (current_user_id,)) # Thực thi truy vấn
+        user = cursor.fetchone() # Lấy kết quả
 
-        cursor.close()
-        connection.close()
-
+        # 3. Kiểm tra xem có tìm thấy người dùng không
         if user:
+            # Nếu tìm thấy, trả về thông tin người dùng
+            # Vai trò ('role') có thể là None nếu user chưa thuộc nhóm nào. Mặc định là 'Member'.
             return jsonify({
                 'id': user['id'],
                 'full_name': user['full_name'],
                 'email': user['email'],
-                'role': user['role'] or 'Member'  # Mặc định là Member nếu không có role
-            })
+                'role': user['role'] or 'Member'  # Mặc định vai trò là 'Member' nếu là None
+            }), 200
         else:
+            # Nếu không tìm thấy người dùng trong bảng 'users', trả về lỗi 404 Not Found
             return jsonify({"error": "User not found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
-# Endpoint duyệt thành viên
+    except Exception as e:
+        # Bắt các lỗi ngoại lệ và trả về mã 500 Internal Server Error
+        logging.error(f"Error fetching current user details: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        # Đảm bảo đóng cursor và kết nối nếu chúng đã được mở
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+
+# Endpoint để Admin duyệt yêu cầu tham gia nhóm của một thành viên
 @app.route('/api/member/<int:member_id>/approve', methods=['POST'])
 def approve_member(member_id):
+    """
+    Duyệt yêu cầu tham gia nhóm của một thành viên (chuyển trạng thái từ 'Pending' sang 'Active').
+
+    Args:
+        member_id (int): ID của bản ghi thành viên trong bảng 'members' cần duyệt.
+
+    Yêu cầu:
+        Phương thức POST.
+        Người dùng phải đăng nhập (user_id tồn tại trong session).
+        Người dùng hiện tại phải là Admin của nhóm mà thành viên cần duyệt thuộc về.
+        Thành viên cần duyệt phải tồn tại và đang ở trạng thái 'Pending'.
+
+    Trả về:
+        JSON: {'message': 'Member approved successfully'} nếu duyệt thành công (mã 200).
+        JSON: {'error': 'Authentication required'} nếu chưa đăng nhập (mã 401).
+        JSON: {'error': 'You do not have permission...'} nếu không đủ quyền (mã 403).
+        JSON: {'error': 'Member not found'} nếu thành viên không tồn tại (mã 404).
+        JSON: {'error': 'Member is not in pending status'} nếu thành viên không ở trạng thái Pending (mã 400).
+        JSON: {'error': 'Thông báo lỗi'} nếu có lỗi xảy ra (mã 500).
+    """
+    connection = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
     try:
-        # 1. Xác thực người dùng
+        # 1. Xác thực người dùng: Lấy ID người dùng hiện tại từ session
         current_user_id = get_current_user_id()
         if not current_user_id:
+            # Nếu chưa đăng nhập, trả về lỗi 401 Unauthorized
             return jsonify({"error": "Authentication required"}), 401
 
         # 2. Kết nối database
         connection = get_db_connection()
-        cursor = connection.cursor()
+        cursor = connection.cursor() # Không cần dictionary=True ở đây nếu chỉ kiểm tra sự tồn tại
 
-        # 3. Kiểm tra quyền admin
+        # 3. Kiểm tra quyền admin: Kiểm tra xem người dùng hiện tại có phải là Admin trong nhóm của thành viên cần duyệt không
+        # Truy vấn kiểm tra: tìm bản ghi thành viên của người dùng hiện tại,
+        # trong cùng nhóm với thành viên cần duyệt, và có role là 'Admin'.
         cursor.execute(
-            "SELECT id FROM members WHERE user_id = %s AND group_id = (SELECT group_id FROM members WHERE id = %s) AND role = 'Admin'",
-            (current_user_id, member_id)
+            """
+            SELECT id FROM members
+            WHERE user_id = %s
+              AND group_id = (SELECT group_id FROM members WHERE id = %s) -- Lấy group_id của thành viên cần duyệt
+              AND role = 'Admin'
+            """,
+            (current_user_id, member_id) # Truyền user_id hiện tại và member_id cần duyệt
         )
+        # Nếu không tìm thấy bản ghi nào (tức không phải admin trong nhóm này)
         if not cursor.fetchone():
-            cursor.close()
-            connection.close()
+            # Trả về lỗi 403 Forbidden
             return jsonify({"error": "You do not have permission to approve this member"}), 403
 
         # 4. Kiểm tra thành viên tồn tại và đang ở trạng thái Pending
+        # Truy vấn lấy trạng thái hiện tại của thành viên cần duyệt
         cursor.execute(
             "SELECT status FROM members WHERE id = %s",
-            (member_id,)
+            (member_id,) # Truyền member_id cần duyệt
         )
-        member = cursor.fetchone()
+        member = cursor.fetchone() # Lấy kết quả
+
+        # Kiểm tra xem có tìm thấy thành viên không
         if not member:
-            cursor.close()
-            connection.close()
+            # Nếu không tìm thấy, trả về lỗi 404 Not Found
             return jsonify({"error": "Member not found"}), 404
+        # Kiểm tra xem trạng thái có phải là 'Pending' không
         if member[0] != 'Pending':
-            cursor.close()
-            connection.close()
+            # Nếu không phải 'Pending', trả về lỗi 400 Bad Request
             return jsonify({"error": "Member is not in pending status"}), 400
 
-        # 5. Cập nhật trạng thái thành Active
+        # 5. Cập nhật trạng thái của thành viên thành 'Active'
         update_member_query = """
             UPDATE members
-            SET status = 'Active', updated_at = %s
-            WHERE id = %s
+            SET status = 'Active', updated_at = %s -- Cập nhật trạng thái và thời gian cập nhật
+            WHERE id = %s -- Áp dụng cho bản ghi thành viên có ID tương ứng
         """
-        now = datetime.now()
-        cursor.execute(update_member_query, (now, member_id))
+        now = datetime.now() # Lấy thời gian hiện tại
+        cursor.execute(update_member_query, (now, member_id)) # Thực thi câu lệnh UPDATE
 
-        # 6. Commit và đóng kết nối
+        # 6. Commit các thay đổi vào cơ sở dữ liệu và đóng kết nối
         connection.commit()
-        cursor.close()
-        connection.close()
 
-        # 7. Trả về kết quả
+        # 7. Trả về thông báo thành công với mã 200 OK
         return jsonify({"message": "Member approved successfully"}), 200
 
     except Exception as e:
-        logging.error(f"Error in approve_member: {e}", exc_info=True)
+        # Bắt các lỗi ngoại lệ và trả về mã 500 Internal Server Error
+        logging.error(f"Error in approve_member for ID {member_id}: {e}", exc_info=True)
+        # Rollback các thay đổi nếu có lỗi xảy ra trước khi commit
+        if connection:
+             connection.rollback()
         return jsonify({"error": str(e)}), 500
+    finally:
+        # Đảm bảo đóng cursor và kết nối nếu chúng đã được mở
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
 
-# Endpoint từ chối thành viên
+
+# Endpoint để Admin từ chối yêu cầu tham gia nhóm của một thành viên
+# Bằng cách xóa bản ghi thành viên đó khỏi bảng 'members'
 @app.route('/api/member/<int:member_id>/reject', methods=['POST'])
 def reject_member(member_id):
+    """
+    Từ chối yêu cầu tham gia nhóm của một thành viên (xóa bản ghi khỏi DB).
+
+    Args:
+        member_id (int): ID của bản ghi thành viên trong bảng 'members' cần từ chối.
+
+    Yêu cầu:
+        Phương thức POST.
+        Người dùng phải đăng nhập (user_id tồn tại trong session).
+        Người dùng hiện tại phải là Admin của nhóm mà thành viên cần từ chối thuộc về.
+        Thành viên cần từ chối phải tồn tại và đang ở trạng thái 'Pending'.
+
+    Trả về:
+        JSON: {'message': 'Member rejected successfully'} nếu từ chối thành công (mã 200).
+        JSON: {'error': 'Authentication required'} nếu chưa đăng nhập (mã 401).
+        JSON: {'error': 'You do not have permission...'} nếu không đủ quyền (mã 403).
+        JSON: {'error': 'Member not found'} nếu thành viên không tồn tại (mã 404).
+        JSON: {'error': 'Member is not in pending status'} nếu thành viên không ở trạng thái Pending (mã 400).
+        JSON: {'error': 'Thông báo lỗi'} nếu có lỗi xảy ra (mã 500).
+    """
+    connection = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
     try:
-        # 1. Xác thực người dùng
+        # 1. Xác thực người dùng: Lấy ID người dùng hiện tại từ session
         current_user_id = get_current_user_id()
         if not current_user_id:
+            # Nếu chưa đăng nhập, trả về lỗi 401 Unauthorized
             return jsonify({"error": "Authentication required"}), 401
 
         # 2. Kết nối database
         connection = get_db_connection()
-        cursor = connection.cursor()
+        cursor = connection.cursor() # Không cần dictionary=True
 
-        # 3. Kiểm tra quyền admin
+        # 3. Kiểm tra quyền admin: Kiểm tra xem người dùng hiện tại có phải là Admin trong nhóm của thành viên cần từ chối không
+        # Tương tự như hàm approve_member, kiểm tra user hiện tại là admin trong cùng nhóm với member_id.
         cursor.execute(
-            "SELECT id FROM members WHERE user_id = %s AND group_id = (SELECT group_id FROM members WHERE id = %s) AND role = 'Admin'",
-            (current_user_id, member_id)
+            """
+            SELECT id FROM members
+            WHERE user_id = %s
+              AND group_id = (SELECT group_id FROM members WHERE id = %s) -- Lấy group_id của thành viên cần từ chối
+              AND role = 'Admin'
+            """,
+            (current_user_id, member_id) # Truyền user_id hiện tại và member_id cần từ chối
         )
+        # Nếu không tìm thấy bản ghi (tức không phải admin trong nhóm này)
         if not cursor.fetchone():
-            cursor.close()
-            connection.close()
+            # Trả về lỗi 403 Forbidden
             return jsonify({"error": "You do not have permission to reject this member"}), 403
 
         # 4. Kiểm tra thành viên tồn tại và đang ở trạng thái Pending
+        # Truy vấn lấy trạng thái hiện tại của thành viên cần từ chối
         cursor.execute(
             "SELECT status FROM members WHERE id = %s",
-            (member_id,)
+            (member_id,) # Truyền member_id cần từ chối
         )
-        member = cursor.fetchone()
+        member = cursor.fetchone() # Lấy kết quả
+
+        # Kiểm tra xem có tìm thấy thành viên không
         if not member:
-            cursor.close()
-            connection.close()
+            # Nếu không tìm thấy, trả về lỗi 404 Not Found
             return jsonify({"error": "Member not found"}), 404
+        # Kiểm tra xem trạng thái có phải là 'Pending' không
         if member[0] != 'Pending':
-            cursor.close()
-            connection.close()
+            # Nếu không phải 'Pending', trả về lỗi 400 Bad Request
             return jsonify({"error": "Member is not in pending status"}), 400
 
-        # 5. Xóa thành viên khỏi bảng members
+        # 5. Xóa thành viên khỏi bảng members (vì yêu cầu bị từ chối)
         delete_member_query = """
             DELETE FROM members
-            WHERE id = %s
+            WHERE id = %s -- Xóa bản ghi thành viên có ID tương ứng
         """
-        cursor.execute(delete_member_query, (member_id,))
+        cursor.execute(delete_member_query, (member_id,)) # Thực thi câu lệnh DELETE
 
-        # 6. Commit và đóng kết nối
+        # 6. Commit các thay đổi vào cơ sở dữ liệu và đóng kết nối
         connection.commit()
-        cursor.close()
-        connection.close()
 
-        # 7. Trả về kết quả
+        # 7. Trả về thông báo thành công với mã 200 OK
         return jsonify({"message": "Member rejected successfully"}), 200
 
     except Exception as e:
-        logging.error(f"Error in reject_member: {e}", exc_info=True)
+        # Bắt các lỗi ngoại lệ và trả về mã 500 Internal Server Error
+        logging.error(f"Error in reject_member for ID {member_id}: {e}", exc_info=True)
+        # Rollback các thay đổi nếu có lỗi xảy ra trước khi commit
+        if connection:
+             connection.rollback()
         return jsonify({"error": str(e)}), 500
-# Cập nhật create_group để thêm random_code và giới hạn 1 nhóm/người
+    finally:
+        # Đảm bảo đóng cursor và kết nối nếu chúng đã được mở
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+
+# API để tạo một nhóm mới
+# Endpoint này thêm một nhóm vào bảng 'groups' và gán người tạo làm Admin
+# Đồng thời kiểm tra giới hạn 1 nhóm/người dùng ở trạng thái Active.
 @app.route('/api/group', methods=['POST'])
 def create_group():
+    """
+    Tạo một nhóm mới.
+    Người dùng tạo nhóm sẽ tự động được gán vai trò 'Admin' trong nhóm đó.
+    Tạo mã nhóm (group_code) và mã ngẫu nhiên (random_code), sinh ảnh QR code và lưu vào static.
+    Kiểm tra người dùng đã có nhóm Active nào khác chưa.
+
+    Yêu cầu:
+        Phương thức POST.
+        Body request là JSON chứa:
+        - group_name (str): Tên nhóm (bắt buộc, max 30 ký tự).
+        Người dùng phải đăng nhập (user_id tồn tại trong session).
+
+    Trả về:
+        JSON: Thông tin nhóm vừa tạo (id, name, code, qr_image_url, member_count) nếu thành công (mã 201 Created).
+        JSON: {'error': 'Authentication required'} nếu chưa đăng nhập (mã 401).
+        JSON: {'error': 'Group name is required'} nếu thiếu tên nhóm (mã 400).
+        JSON: {'error': 'Group name must not exceed 30 characters'} nếu tên nhóm quá dài (mã 400).
+        JSON: {'error': 'Bạn chỉ có thể tham gia một nhóm'} nếu đã có nhóm Active (mã 400).
+        JSON: {'error': 'Group name, code or random code already exists'} nếu trùng lặp (mã 400).
+        JSON: {'error': 'Thông báo lỗi'} nếu có lỗi xảy ra (mã 500).
+    """
+    print("Starting create_group route") # Log debug
+    connection = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
     try:
-        print("Starting create_group route")
-        
-        # 1. Xác thực người dùng
+        # 1. Xác thực người dùng: Lấy ID người dùng hiện tại từ session
         current_user_id = get_current_user_id()
         if not current_user_id:
+            # Nếu chưa đăng nhập, trả về lỗi 401 Unauthorized
             return jsonify({"error": "Authentication required"}), 401
 
-        # 1.1. Kiểm tra user đã tham gia nhóm Active nào chưa
-        connection = get_db_connection()
+        # 1.1. Kiểm tra giới hạn: Kiểm tra xem người dùng đã tham gia nhóm Active nào khác chưa
+        # Một người dùng chỉ có thể là thành viên Active của một nhóm duy nhất tại một thời điểm.
+        connection = get_db_connection() # Mở kết nối đầu tiên để kiểm tra
         cursor = connection.cursor()
         cursor.execute(
             """
@@ -613,85 +1345,104 @@ def create_group():
             FROM members
             WHERE user_id = %s
               AND status = 'Active'
-              AND (leave_date IS NULL OR leave_date > NOW())
+              AND (leave_date IS NULL OR leave_date > NOW()) -- Đảm bảo không tính nhóm đã rời đi
             """,
             (current_user_id,)
         )
+        # Nếu tìm thấy bất kỳ bản ghi thành viên Active nào
         if cursor.fetchone():
+            # Đóng kết nối tạm thời và trả về lỗi 400 Bad Request
             cursor.close()
             connection.close()
             return jsonify({"error": "Bạn chỉ có thể tham gia một nhóm"}), 400
-        cursor.close()
-        connection.close()
 
-        # 2. Lấy và kiểm tra dữ liệu đầu vào
+        # Đóng kết nối tạm thời sau khi kiểm tra
+        cursor.close()
+        connection.close() # Đóng kết nối tạm
+
+
+        # 2. Lấy và kiểm tra dữ liệu đầu vào từ body request
         data = request.get_json()
-        group_name = data.get('group_name')
+        group_name = data.get('group_name') # Lấy tên nhóm
+
+        # Kiểm tra xem tên nhóm có được cung cấp không
         if not group_name:
+            # Trả về lỗi 400 Bad Request nếu thiếu tên nhóm
             return jsonify({"error": "Group name is required"}), 400
+        # Kiểm tra độ dài tên nhóm
         if len(group_name) > 30:
+            # Trả về lỗi 400 Bad Request nếu tên nhóm quá dài
             return jsonify({"error": "Group name must not exceed 30 characters"}), 400
 
-        # 3. Sinh mã nhóm và mã ngẫu nhiên
-        group_code = str(uuid.uuid4())[:8]
-        random_code = str(uuid.uuid4())[:12]  # Mã ngẫu nhiên cho QR
-        print(f"Generated group code: {group_code}, random code: {random_code}")
+        # 3. Sinh mã nhóm (group_code) và mã ngẫu nhiên (random_code)
+        # Sử dụng UUID để tạo mã duy nhất, cắt ngắn để dễ sử dụng
+        group_code = str(uuid.uuid4())[:8] # Mã nhóm 8 ký tự
+        random_code = str(uuid.uuid4())[:12] # Mã ngẫu nhiên 12 ký tự cho QR
+        print(f"Generated group code: {group_code}, random code: {random_code}") # Log debug
 
-        # 4. Tạo QR code với random_code
-        qr = qrcode.QRCode(box_size=6, border=2)
-        qr.add_data(random_code)
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
+        # 4. Tạo QR code từ random_code
+        qr = qrcode.QRCode(box_size=6, border=2) # Cấu hình QR code
+        qr.add_data(random_code) # Thêm dữ liệu (mã ngẫu nhiên) vào QR code
+        qr.make(fit=True) # Tạo ma trận QR code
+        img = qr.make_image(fill_color="black", back_color="white") # Tạo đối tượng ảnh QR
 
-        qr_folder = os.path.join(app.static_folder, 'qrcodes')
-        os.makedirs(qr_folder, exist_ok=True)
-        qr_filename = f"{group_code}.png"
-        qr_path = os.path.join(qr_folder, qr_filename)
-        img.save(qr_path)
-        qr_image_url = f"/static/qrcodes/{qr_filename}"
-        print(f"Saved QR image at: {qr_path}")
+        # Lưu ảnh QR code vào thư mục static
+        qr_folder = os.path.join(app.static_folder, 'qrcodes') # Đường dẫn đến thư mục qrcodes trong static
+        os.makedirs(qr_folder, exist_ok=True) # Tạo thư mục nếu chưa tồn tại
+        qr_filename = f"{group_code}.png" # Tên file ảnh QR (dựa trên group_code)
+        qr_path = os.path.join(qr_folder, qr_filename) # Đường dẫn đầy đủ để lưu file
+        img.save(qr_path) # Lưu ảnh
+        qr_image_url = f"/static/qrcodes/{qr_filename}" # URL để truy cập ảnh QR từ trình duyệt
+        print(f"Saved QR image at: {qr_path}") # Log debug
 
-        # 5. Kết nối database và kiểm tra trùng
+        # 5. Kết nối database và kiểm tra trùng lặp
+        # Mở kết nối mới để thực hiện thao tác INSERT
         connection = get_db_connection()
         cursor = connection.cursor()
+        # Kiểm tra xem tên nhóm, group_code hoặc random_code đã tồn tại chưa
         cursor.execute(
             "SELECT id FROM groups WHERE group_name = %s OR group_code = %s OR random_code = %s",
             (group_name, group_code, random_code)
         )
+        # Nếu tìm thấy bất kỳ bản ghi nào
         if cursor.fetchone():
+            # Đóng kết nối và trả về lỗi 400 Bad Request
             cursor.close()
             connection.close()
+            # Optional: Xóa file QR vừa tạo nếu bị trùng lặp
+            if os.path.exists(qr_path):
+                 os.remove(qr_path)
+                 print(f"Cleaned up duplicate QR file: {qr_path}")
             return jsonify({"error": "Group name, code or random code already exists"}), 400
 
-        # 6. Insert nhóm (kèm qr_image_url và random_code)
+        # 6. Insert thông tin nhóm mới vào bảng 'groups'
         insert_group_query = """
             INSERT INTO groups
               (group_name, group_code, random_code, qr_image_url, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s) -- Các giá trị sẽ được truyền qua tuple
         """
-        now = datetime.now()
+        now = datetime.now() # Lấy thời gian hiện tại cho created_at và updated_at
         cursor.execute(insert_group_query,
-            (group_name, group_code, random_code, qr_image_url, now, now)
+            (group_name, group_code, random_code, qr_image_url, now, now) # Truyền tuple các giá trị
         )
-        group_id = cursor.lastrowid
+        group_id = cursor.lastrowid # Lấy ID của nhóm vừa được insert (auto-increment)
 
-        # 7. Gán creator làm Admin
+        # 7. Gán người dùng hiện tại làm Admin của nhóm vừa tạo
+        # Thêm một bản ghi vào bảng 'members' cho người tạo nhóm với vai trò 'Admin' và trạng thái 'Active'
         insert_member_query = """
             INSERT INTO members
               (user_id, group_id, role, status, join_date, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s) -- Các giá trị sẽ được truyền qua tuple
         """
         cursor.execute(insert_member_query, (
-            current_user_id, group_id, 'Admin', 'Active',
-            now, now, now
+            current_user_id, group_id, 'Admin', 'Active', # user_id, group_id, role, status
+            now, now, now # join_date, created_at, updated_at
         ))
 
-        # 8. Commit và đóng kết nối
+        # 8. Commit các thay đổi (thêm nhóm và thêm thành viên Admin) và đóng kết nối
         connection.commit()
-        cursor.close()
-        connection.close()
 
-        # 9. Trả về kết quả
+        # 9. Trả về kết quả thành công với thông tin nhóm vừa tạo (mã 201 Created)
         return jsonify({
             "message": "Group created successfully",
             "group": {
@@ -699,232 +1450,308 @@ def create_group():
                 "name": group_name,
                 "code": group_code,
                 "qr_image_url": qr_image_url,
-                "member_count": 1
+                "member_count": 1 # Ban đầu nhóm chỉ có 1 thành viên (Admin)
             }
         }), 201
 
     except Exception as e:
+        # Bắt các lỗi ngoại lệ và trả về mã 500 Internal Server Error
         logging.error(f"Error in create_group: {e}", exc_info=True)
+        # Rollback các thay đổi nếu có lỗi xảy ra trước khi commit
+        if connection:
+             connection.rollback()
+        # Xóa file QR nếu đã tạo thành công nhưng có lỗi khác xảy ra sau đó
+        if 'qr_path' in locals() and os.path.exists(qr_path):
+             os.remove(qr_path)
+             print(f"Cleaned up QR file due to error: {qr_path}")
         return jsonify({"error": str(e)}), 500
-# Endpoint để xử lý QR code upload (sử dụng OpenCV thay vì pyzbar)
-@app.route('/api/scan-qr', methods=['POST'])
-def scan_qr():
-    try:
-        # 1. Xác thực người dùng
-        current_user_id = get_current_user_id()
-        if not current_user_id:
-            return jsonify({"error": "Authentication required"}), 401
-
-        # 2. Kiểm tra file upload
-        if 'qr_image' not in request.files:
-            return jsonify({"error": "No QR image provided"}), 400
-        
-        file = request.files['qr_image']
-        if not file or file.filename == '':
-            return jsonify({"error": "No QR image provided"}), 400
-
-        # 3. Đọc và phân tích QR code
-        # Chuyển file thành numpy array để OpenCV xử lý
-        file_bytes = np.frombuffer(file.read(), np.uint8)
-        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-        
-        # Sử dụng QRCodeDetector từ OpenCV
-        qr_detector = cv2.QRCodeDetector()
-        data, points, _ = qr_detector.detectAndDecode(img)
-        
-        if not data:
-            return jsonify({"error": "Could not decode QR code"}), 400
-
-        # 4. Lấy random_code từ QR
-        random_code = data
-
-        # 5. Kết nối database
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
-        # 6. Tìm nhóm dựa trên random_code
-        cursor.execute(
-            "SELECT id, group_name, group_code FROM groups WHERE random_code = %s",
-            (random_code,)
-        )
-        group = cursor.fetchone()
-        if not group:
+    finally:
+        # Đảm bảo đóng cursor và kết nối nếu chúng đã được mở
+        if cursor:
             cursor.close()
+        if connection and connection.is_connected():
             connection.close()
-            return jsonify({"error": "Invalid QR code"}), 404
 
-        group_id, group_name, group_code = group
 
-        # 7. Kiểm tra xem người dùng đã là thành viên chưa
-        cursor.execute(
-            "SELECT id FROM members WHERE user_id = %s AND group_id = %s",
-            (current_user_id, group_id)
-        )
-        if cursor.fetchone():
-            cursor.close()
-            connection.close()
-            return jsonify({"error": "You are already a member of this group"}), 400
-
-        # 8. Đếm số thành viên hiện tại
-        cursor.execute(
-            "SELECT COUNT(*) FROM members WHERE group_id = %s AND status = 'Active'",
-            (group_id,)
-        )
-        member_count = cursor.fetchone()[0]
-
-        # 9. Đóng kết nối
-        cursor.close()
-        connection.close()
-
-        # 10. Trả về thông tin nhóm
-        return jsonify({
-            "message": "QR code scanned successfully",
-            "group": {
-                "id": group_id,
-                "name": group_name,
-                "code": group_code,
-                "member_count": member_count
-            }
-        }), 200
-
-    except Exception as e:
-        logging.error(f"Error in scan_qr: {e}", exc_info=True)
-        return jsonify({"error": str(e)}), 500
-
-# Giữ nguyên endpoint join_group, nhưng thêm kiểm tra 1 nhóm/người
+# API để người dùng tham gia nhóm bằng mã nhóm (group_code)
+# Endpoint này thêm người dùng vào bảng 'members' với status='Pending'
+# Đồng thời kiểm tra giới hạn 1 nhóm/người dùng ở trạng thái Active hoặc Pending.
 @app.route('/api/join-group', methods=['POST'])
 def join_group():
+    """
+    Gửi yêu cầu tham gia một nhóm bằng mã nhóm (group_code).
+    Thêm người dùng vào bảng 'members' với trạng thái 'Pending'.
+    Kiểm tra người dùng đã ở trong nhóm Active/Pending nào khác chưa.
+
+    Yêu cầu:
+        Phương thức POST.
+        Body request là JSON chứa:
+        - group_code (str): Mã nhóm cần tham gia (bắt buộc).
+        Người dùng phải đăng nhập (user_id tồn tại trong session).
+
+    Trả về:
+        JSON: {'message': 'Yêu cầu tham gia nhóm đã được gửi...', 'group_id': id} nếu thành công (mã 200).
+        JSON: {'error': 'Authentication required'} nếu chưa đăng nhập (mã 401).
+        JSON: {'error': 'Bạn chỉ có thể tham gia một nhóm tại một thời điểm'} nếu đã có nhóm Active/Pending (mã 400).
+        JSON: {'error': 'Group code is required'} nếu thiếu mã nhóm (mã 400).
+        JSON: {'error': 'Invalid group code'} nếu mã nhóm không tồn tại (mã 404).
+        JSON: {'error': 'Bạn đã là thành viên của nhóm này'} nếu đã là thành viên (mã 400).
+        JSON: {'error': 'Thông báo lỗi'} nếu có lỗi xảy ra (mã 500).
+    """
+    connection = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
     try:
-        # 1. Xác thực người dùng
+        # 1. Xác thực người dùng: Lấy ID người dùng hiện tại từ session
         current_user_id = get_current_user_id()
         if not current_user_id:
+            # Nếu chưa đăng nhập, trả về lỗi 401 Unauthorized
             return jsonify({"error": "Authentication required"}), 401
 
-        # 1.1. Kiểm tra user đã tham gia hoặc đang chờ duyệt nhóm nào chưa
-        connection = get_db_connection()
+        # 1.1. Kiểm tra giới hạn: Kiểm tra user đã tham gia hoặc đang chờ duyệt nhóm nào chưa
+        # Một người dùng chỉ có thể ở trong 1 nhóm (Active hoặc Pending) tại một thời điểm.
+        connection = get_db_connection() # Mở kết nối đầu tiên để kiểm tra
         cursor = connection.cursor()
         cursor.execute(
             """
             SELECT 1
             FROM members
             WHERE user_id = %s
-              AND status IN ('Active', 'Pending')
+              AND status IN ('Active', 'Pending') -- Kiểm tra cả Active và Pending
               AND (leave_date IS NULL OR leave_date > NOW())
             """,
             (current_user_id,)
         )
+        # Nếu tìm thấy bất kỳ bản ghi thành viên Active hoặc Pending nào
         if cursor.fetchone():
+            # Đóng kết nối tạm thời và trả về lỗi 400 Bad Request
             cursor.close()
             connection.close()
             return jsonify({"error": "Bạn chỉ có thể tham gia một nhóm tại một thời điểm"}), 400
 
-        # 2. Lấy và kiểm tra dữ liệu đầu vào
-        data = request.get_json()
-        group_code = data.get('group_code')
-        if not group_code:
-            cursor.close()
-            connection.close()
-            return jsonify({"error": "Group code is required"}), 400
+        # Đóng kết nối tạm thời sau khi kiểm tra
+        cursor.close()
+        connection.close() # Đóng kết nối tạm
 
-        # 3. Kiểm tra mã nhóm tồn tại
+        # 2. Lấy và kiểm tra dữ liệu đầu vào (group_code)
+        data = request.get_json()
+        group_code = data.get('group_code') # Lấy mã nhóm từ body request
+
+        # Kiểm tra xem mã nhóm có được cung cấp không
+        if not group_code:
+             # Nếu thiếu mã nhóm, trả về lỗi 400 Bad Request. Cần đóng kết nối tạm trước khi return.
+             # Đảm bảo cursor và connection đã đóng nếu mở ở bước 1.1
+             return jsonify({"error": "Group code is required"}), 400
+
+        # 3. Kiểm tra mã nhóm tồn tại trong bảng 'groups'
+        # Mở kết nối mới để thực hiện các thao tác tiếp theo
+        connection = get_db_connection()
+        cursor = connection.cursor()
         cursor.execute(
             "SELECT id FROM groups WHERE group_code = %s",
-            (group_code,)
+            (group_code,) # Truyền mã nhóm
         )
-        row = cursor.fetchone()
+        row = cursor.fetchone() # Lấy kết quả
+
+        # Nếu không tìm thấy nhóm nào với mã này
         if not row:
+            # Đóng kết nối và trả về lỗi 404 Not Found
             cursor.close()
             connection.close()
             return jsonify({"error": "Invalid group code"}), 404
-        group_id = row[0]
+        group_id = row[0] # Lấy group_id từ kết quả truy vấn
 
-        # 4. Kiểm tra user đã là thành viên của nhóm này chưa
+        # 4. Kiểm tra xem người dùng hiện tại đã là thành viên (Active hoặc Pending) của nhóm này chưa
+        # Kiểm tra trùng lặp trong cùng nhóm.
         cursor.execute(
-            "SELECT 1 FROM members WHERE user_id = %s AND group_id = %s",
+            "SELECT 1 FROM members WHERE user_id = %s AND group_id = %s AND status IN ('Active', 'Pending')",
             (current_user_id, group_id)
         )
+        # Nếu tìm thấy bất kỳ bản ghi thành viên nào cho user này trong nhóm này (Active hoặc Pending)
         if cursor.fetchone():
+            # Đóng kết nối và trả về lỗi 400 Bad Request
             cursor.close()
             connection.close()
             return jsonify({"error": "Bạn đã là thành viên của nhóm này"}), 400
 
-        # 5. Thêm user vào nhóm với status = 'Pending'
+        # 5. Thêm người dùng vào nhóm với status = 'Pending'
+        # Tạo một bản ghi mới trong bảng 'members'
         insert_member_query = """
             INSERT INTO members
               (user_id, group_id, role, status, join_date, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s) -- Các giá trị sẽ được truyền qua tuple
         """
-        now = datetime.now()
+        now = datetime.now() # Lấy thời gian hiện tại cho join_date, created_at, updated_at
         cursor.execute(insert_member_query, (
-            current_user_id, group_id, 'Member', 'Pending',
-            now, now, now
+            current_user_id, group_id, 'Member', 'Pending', # user_id, group_id, role (mặc định Member), status
+            now, now, now # join_date, created_at, updated_at
         ))
 
-        # 6. Commit và đóng kết nối
+        # 6. Commit các thay đổi (thêm bản ghi thành viên Pending) và đóng kết nối
         connection.commit()
-        cursor.close()
-        connection.close()
 
-        # 7. Trả về kết quả
+        # 7. Trả về kết quả thành công với thông báo và group_id (mã 200 OK)
         return jsonify({
             "message": "Yêu cầu tham gia nhóm đã được gửi. Vui lòng chờ duyệt.",
-            "group_id": group_id
+            "group_id": group_id # Trả về group_id của nhóm đã gửi yêu cầu
         }), 200
 
     except Exception as e:
+        # Bắt các lỗi ngoại lệ và trả về mã 500 Internal Server Error
         logging.error(f"Error in join_group: {e}", exc_info=True)
+        # Rollback các thay đổi nếu có lỗi xảy ra trước khi commit
+        if connection:
+             connection.rollback()
         return jsonify({"error": str(e)}), 500
-# 0. Lấy luôn group và member tự động
+    finally:
+        # Đảm bảo đóng cursor và kết nối nếu chúng đã được mở
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+
+# API lấy danh sách nội quy của nhóm mà người dùng hiện tại đang Active
+# Endpoint này tự động tìm group_id và member_id của người dùng.
 @app.route('/api/groups/my/rules', methods=['GET'])
 def get_my_group_rules():
-    user_id = get_current_user_id()
-    if not user_id:
-        return jsonify({'error': 'Unauthorized'}), 401
+    """
+    Lấy danh sách nội quy của nhóm mà người dùng hiện tại là thành viên Active.
+    Đồng thời trả về group_id và member_id của người dùng trong nhóm đó.
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    Yêu cầu:
+        Phương thức GET.
+        Người dùng phải đăng nhập (user_id tồn tại trong session).
+        Người dùng phải là thành viên Active của ít nhất một nhóm.
 
-    # Lấy nhóm đầu tiên mà user đang Active
-    cursor.execute("""
-        SELECT m.group_id, m.id AS member_id
-        FROM members m
-        WHERE m.user_id = %s AND m.status = 'Active'
-        LIMIT 1
-    """, (user_id,))
-    m = cursor.fetchone()
-    if not m:
+    Trả về:
+        JSON: {'group_id': id, 'member_id': id, 'rules': [...]} nếu thành công (mã 200).
+        JSON: {'error': 'Unauthorized'} nếu chưa đăng nhập (mã 401).
+        JSON: {'error': 'User is not a member of any group'} nếu không thuộc nhóm Active nào (mã 403).
+        JSON: {'error': 'Thông báo lỗi'} nếu có lỗi xảy ra (mã 500).
+    """
+    conn = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
+    try:
+        # 1. Xác thực người dùng: Lấy ID người dùng hiện tại từ session
+        user_id = get_current_user_id()
+        if not user_id:
+             # Nếu chưa đăng nhập, trả về lỗi 401 Unauthorized
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        # Lấy kết nối đến cơ sở dữ liệu
+        conn = get_db_connection()
+        # Tạo cursor để thực thi truy vấn, kết quả trả về dạng dictionary
+        cursor = conn.cursor(dictionary=True)
+
+        # 2. Tìm group_id và member_id của người dùng hiện tại trong nhóm Active đầu tiên tìm thấy
+        # Giả định người dùng chỉ quan tâm đến nội quy của một nhóm Active tại một thời điểm.
+        cursor.execute("""
+            SELECT m.group_id, m.id AS member_id
+            FROM members m
+            WHERE m.user_id = %s AND m.status = 'Active' -- Lọc theo user_id và trạng thái Active
+            LIMIT 1 -- Chỉ lấy bản ghi đầu tiên
+        """, (user_id,))
+        m = cursor.fetchone() # Lấy kết quả
+
+        # 3. Kiểm tra xem người dùng có thuộc nhóm Active nào không
+        if not m:
+            # Nếu không tìm thấy, trả về lỗi 403 Forbidden (hoặc 404 Not Found, tùy ngữ cảnh)
+            return jsonify({'error': 'User is not a member of any active group'}), 403 # Sửa lại thông báo cho rõ hơn
+
+        # Lấy group_id và member_id từ kết quả tìm được
+        group_id = m['group_id']
+        member_id = m['member_id']
+
+        # 4. Lấy danh sách nội quy của nhóm đã tìm được
+        # Truy vấn lấy các nội quy từ bảng 'group_rules' cho nhóm 'group_id'
+        # JOIN với 'members' và 'users' để lấy thông tin người tạo nội quy
+        # Sử dụng subquery để kiểm tra xem người dùng hiện tại đã Like nội quy đó chưa ('liked')
+        query = """
+            SELECT r.id, r.title, r.content, r.privacy, r.like_count, r.comment_count,
+                   r.created_at, m.id AS member_id, u.full_name, m.avatar,
+                   EXISTS(SELECT 1 FROM group_rule_likes l
+                          WHERE l.rule_id = r.id AND l.member_id = %s) AS liked -- Kiểm tra xem người dùng hiện tại (member_id của họ) đã like rule này chưa
+            FROM group_rules r
+            JOIN members m ON r.member_id = m.id -- Nối với members để lấy thông tin người tạo (member_id)
+            JOIN users u ON m.user_id = u.id     -- Nối với users để lấy full_name của người tạo
+            WHERE r.group_id = %s -- Lọc theo group_id của nhóm
+            ORDER BY r.created_at DESC -- Sắp xếp nội quy theo thời gian tạo mới nhất
+        """
+        # Thực thi truy vấn, truyền member_id của user hiện tại (để kiểm tra like) và group_id
+        cursor.execute(query, (member_id, group_id))
+        rules = cursor.fetchall() # Lấy tất cả các nội quy
+
+        # 5. Đóng cursor và kết nối
         cursor.close()
         conn.close()
-        return jsonify({'error': 'User is not a member of any group'}), 403
 
-    group_id  = m['group_id']
-    member_id = m['member_id']
+        # 6. Trả về kết quả bao gồm group_id, member_id và danh sách nội quy
+        return jsonify({
+            'group_id': group_id,
+            'member_id': member_id,
+            'rules': rules
+        }), 200
 
-    # Lấy danh sách nội quy giống hệt logic cũ
-    query = """
-        SELECT r.id, r.title, r.content, r.privacy, r.like_count, r.comment_count,
-               r.created_at, m.id AS member_id, u.full_name, m.avatar,
-               EXISTS(SELECT 1 FROM group_rule_likes l 
-                      WHERE l.rule_id = r.id AND l.member_id = %s) AS liked
-        FROM group_rules r
-        JOIN members m ON r.member_id = m.id
-        JOIN users u ON m.user_id = u.id
-        WHERE r.group_id = %s
-        ORDER BY r.created_at DESC
+    except Exception as e:
+        # Bắt các lỗi ngoại lệ và trả về mã 500 Internal Server Error
+        logging.error(f"Error fetching my group rules for user {user_id}: {e}", exc_info=True)
+        return jsonify({'error': f'Đã xảy ra lỗi: {e}'}), 500
+    finally:
+        # Đảm bảo đóng cursor và kết nối nếu chúng đã được mở
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+
+# API: đếm số lượng thành viên Active trong một nhóm
+@app.route('/api/group/<int:group_id>/members/count', methods=['GET'])
+def get_member_count(group_id):
     """
-    cursor.execute(query, (member_id, group_id))
-    rules = cursor.fetchall()
+    Đếm tổng số thành viên có trạng thái 'Active' trong một nhóm cụ thể.
 
-    cursor.close()
-    conn.close()
+    Args:
+        group_id (int): ID của nhóm cần đếm thành viên.
 
-    # Trả kèm luôn group_id + member_id để front-end có thể reuse
-    return jsonify({
-        'group_id': group_id,
-        'member_id': member_id,
-        'rules': rules
-    }), 200
+    Yêu cầu:
+        Phương thức GET.
 
+    Trả về:
+        JSON: {'total_members': count} số lượng thành viên Active (mã 200).
+        JSON: {'error': 'Thông báo lỗi'} nếu có lỗi xảy ra (mã 500).
+    """
+    conn = None # Khởi tạo biến kết nối
+    cursor = None # Khởi tạo biến cursor
+    try:
+        # Lấy kết nối đến cơ sở dữ liệu
+        conn = get_db_connection()
+        cursor = conn.cursor() # Không cần dictionary=True ở đây
+
+        # Truy vấn đếm số lượng bản ghi trong bảng 'members'
+        # Lọc theo group_id và trạng thái 'Active'
+        cursor.execute(
+            'SELECT COUNT(*) FROM members WHERE group_id=%s AND status="Active"',
+            (group_id,) # Truyền group_id
+        )
+        total = cursor.fetchone()[0] # Lấy kết quả đếm (là phần tử đầu tiên của tuple)
+
+        # 3. Đóng cursor và kết nối
+        cursor.close()
+        conn.close()
+
+        # 4. Trả về kết quả dưới dạng JSON
+        return jsonify({'total_members': total}), 200
+
+    except Exception as e:
+        # Bắt các lỗi ngoại lệ và trả về mã 500 Internal Server Error
+        logging.error(f"Error fetching member count for group {group_id}: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        # Đảm bảo đóng cursor và kết nối nếu chúng đã được mở
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 # 1. Lấy danh sách nội quy của nhóm (chỉ khi user là thành viên)
 @app.route('/api/groups/<int:group_id>/rules', methods=['GET'])
 def get_group_rules(group_id):
@@ -1114,20 +1941,6 @@ def vote_page():
     conn.close()
 
     return render_template('binhchon.html', group_id=group_id, member_id=member_id)
-
-# API: đếm thành viên
-@app.route('/api/group/<int:group_id>/members/count', methods=['GET'])
-def get_member_count(group_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        'SELECT COUNT(*) FROM members WHERE group_id=%s AND status="Active"',
-        (group_id,)
-    )
-    total = cursor.fetchone()[0]
-    cursor.close()
-    conn.close()
-    return jsonify({'total_members': total})
 
 # API: lấy mục vote
 @app.route('/api/group/<int:group_id>/vote_items', methods=['GET'])
@@ -2658,25 +3471,6 @@ def get_menus():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Middleware để xử lý lỗi kết nối
-def handle_db_operation(query_func):
-    @wraps(query_func)
-    def wrapper(*args, **kwargs):
-        connection = None
-        try:
-            connection = get_db_connection()
-            cursor = connection.cursor(dictionary=True)
-            # query_func giờ đây nhận (cursor, connection, *args, **kwargs)
-            result = query_func(cursor, connection, *args, **kwargs)
-            connection.commit()
-            return result
-        except Error as e:
-            return jsonify({"error": str(e)}), 500
-        finally:
-            if connection and connection.is_connected():
-                cursor.close()
-                connection.close()
-    return wrapper
 
 # # Route: Gửi một tin nhắn mới
 @app.route('/api/conversations/<int:conversation_id>/messages', methods=['POST'])
@@ -2833,83 +3627,6 @@ def upload_attachment(cursor, connection, conversation_id, message_id):
     attachment_id = cursor.lastrowid
 
     return jsonify({"attachment_id": attachment_id, "file_url": file_url}), 201
-# lấy tên nhóm của user
-@app.route('/api/user_group', methods=['GET'])
-def get_user_group():
-    user_id = request.args.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'User ID is required'}), 400
-
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    # 1) Kiểm tra xem có group active hay không
-    query = """
-    SELECT g.group_name
-      FROM groups g
-      JOIN members m ON m.group_id = g.id
-     WHERE m.user_id = %s
-       AND m.status = 'Active'
-     LIMIT 1
-    """
-    cursor.execute(query, (user_id,))
-    group = cursor.fetchone()
-    if group:
-        cursor.close()
-        conn.close()
-        return jsonify({'group': group['group_name']}), 200
-
-    # 2) Kiểm tra xem có membership pending hay không
-    query2 = """
-    SELECT 1
-      FROM members
-     WHERE user_id = %s
-       AND status = 'Pending'
-     LIMIT 1
-    """
-    cursor.execute(query2, (user_id,))
-    pending = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    if pending:
-        return jsonify({'message': 'chua_tham_gia'}), 200
-    else:
-        return jsonify({'message': 'chua_co_nhom'}), 404
-# lấy 2 chức cái tên user
-@app.route('/api/user_initials', methods=['GET'])
-def get_user_initials():
-    # Lấy user_id từ session
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Chưa đăng nhập'}), 401
-
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    try:
-        # Lấy full_name của user
-        cursor.execute("SELECT full_name FROM users WHERE id = %s", (user_id,))
-        row = cursor.fetchone()
-        if not row:
-            return jsonify({'error': 'User không tồn tại'}), 404
-
-        full_name = row['full_name'].strip()
-        # Tách theo khoảng trắng
-        parts = full_name.split()
-        if len(parts) >= 2:
-            # Lấy chữ cái đầu của hai từ đầu tiên
-            initials = parts[0][0] + parts[1][0]
-        else:
-            # Nếu chỉ có một từ, lấy hai ký tự đầu của từ đó (hoặc đủ trong phạm vi)
-            initials = full_name[:2]
-
-        initials = initials.upper()
-
-        return jsonify({'initials': initials}), 200
-
-    finally:
-        cursor.close()
-        conn.close()
 @app.route('/api/unassigned-tasks', methods=['GET'])
 def get_unassigned_tasks():
     try:
@@ -3503,43 +4220,48 @@ def get_group_members(group_id):
         logging.error(f"Error in get_group_members: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
-# API: Lấy full_name của người dùng theo user_id 
-@app.route('/api/user/full_name', methods=['GET'])
-def get_user_full_name():
-    # Lấy user_id từ session
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Chưa đăng nhập hoặc phiên hết hạn'}), 401
-
+@app.route('/api/menus/preparing/count', methods=['GET'])
+def get_preparing_menu_count():
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        # Lấy user_id từ session
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'Bạn cần đăng nhập để thực hiện thao tác này'
+            }), 401
 
+        # Lấy kết nối database
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        # Query để đếm số lượng món ăn trạng thái 'Preparing' trong các nhóm mà user tham gia
         query = """
-            SELECT full_name
-            FROM users
-            WHERE id = %s
-              AND is_active = 1
+            SELECT COUNT(m.id) as preparing_count
+            FROM menus m
+            INNER JOIN groups g ON m.group_id = g.id
+            INNER JOIN members mem ON g.id = mem.group_id
+            WHERE mem.user_id = %s
+            AND m.status = 'Preparing'
         """
-        cursor.execute(query, (user_id, ))
-        user = cursor.fetchone()
+        cursor.execute(query, (user_id,))
+        result = cursor.fetchone()
 
+        # Đóng kết nối
         cursor.close()
-        conn.close()
+        connection.close()
 
-        if not user:
-            return jsonify({'error': 'Không tìm thấy người dùng hoặc tài khoản không hoạt động'}), 404
+        # Trả về kết quả
+        return jsonify({
+            'status': 'success',
+            'preparing_count': result['preparing_count']
+        }), 200
 
-        return jsonify({'full_name': user['full_name']}), 200
-
-    except Error as e:
-        # Đóng kết nối nếu lỗi
-        if cursor: cursor.close()
-        if conn: conn.close()
-        return jsonify({'error': f'Lỗi cơ sở dữ liệu: {e}'}), 500
     except Exception as e:
-        if cursor: cursor.close()
-        if conn: conn.close()
-        return jsonify({'error': f'Đã xảy ra lỗi: {e}'}), 500
+        # Xử lý lỗi
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 if __name__ == '__main__':
     app.run(debug=True)
