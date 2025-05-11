@@ -379,3 +379,116 @@
         justify-content: center;
     }
 }
+/* Shopping List Table */
+.shopping-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.shopping-list-table th,
+.shopping-list-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.shopping-list-table th {
+    font-weight: 600;
+    color: var(--text-light);
+    background-color: rgba(255, 109, 40, 0.05);
+}
+
+.shopping-list-table td {
+    color: var(--text);
+    vertical-align: middle;
+}
+
+.shopping-list-table tbody tr:hover {
+    background-color: rgba(255, 109, 40, 0.05);
+}
+
+/* Priority status */
+.priority-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.priority-status.normal {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.priority-status.high {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.priority-status.urgent {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+}
+
+/* Item status */
+.item-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.item-status .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.item-status.pending .status-dot {
+    background-color: var(--warning);
+}
+
+.item-status.completed .status-dot {
+    background-color: var(--success);
+}
+
+/* Action buttons */
+.table-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.table-actions .btn-icon {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background-color: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+.table-actions .btn-icon:hover {
+    background-color: var(--border);
+    color: var(--text);
+}
+
+.table-actions .complete-btn:hover {
+    color: var(--success);
+    border-color: var(--success);
+}
+
+.table-actions .delete-btn:hover {
+    color: var(--error);
+    border-color: var(--error);
+}
+
+/* Responsive table */
+.table-responsive {
+    overflow-x: auto;
+}

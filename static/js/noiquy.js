@@ -130,17 +130,19 @@ alert('Có lỗi xảy ra khi tải nội quy. Vui lòng thử lại.');
     }
 
     // === Delegated events ===
-    document.getElementById('rules-list').addEventListener('click', async (e) => {
-        // Like/Unlike rule
-        if (e.target.closest('.like-btn')) {
-            const btn = e.target.closest('.like-btn');
-            const ruleId = btn.dataset.ruleId;
-            
-            try {
-                const res = await fetch(`/api/rules/${ruleId}/like`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'}
-                });
+        document.getElementById('rules-list').addEventListener('click', async (e) => {
+            // Like/Unlike rule
+            if (e.target.closest('.like-btn')) {
+                const btn = e.target.closest('.like-btn');
+                const ruleId = btn.dataset.ruleId;
+                
+                try {
+                    const res = await fetch(`/api/rules/${ruleId}/like`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ member_id: memberId })
+    });
+
                 
                 if (!res.ok) {
                     if (res.status === 401) {

@@ -174,23 +174,29 @@
                 </div>
 
                 <!-- Bình chọn hoạt động -->
-                <div class="card voting-card">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-vote-yea"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title">Bình chọn hoạt động</h3>
-                            <p class="card-subtitle">Đang mở: 2 cuộc bình chọn</p>
-                        </div>
-                    </div>
-                    <div class="card-content">
-                        <p>1. Chọn món ăn cuối tuần<br>2. Địa điểm đi chơi tháng 7</p>
-                    </div>
-                    <div class="card-actions">
-                        <a href="/binh-chon" class="card-link">Tham gia bình chọn <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
+<!-- CARD BÌNH CHỌN -->
+<div class="card voting-card" id="voting-card">
+  <div class="card-header">
+    <div class="card-icon">
+      <i class="fas fa-vote-yea"></i>
+    </div>
+    <div>
+      <h3 class="card-title">Bình chọn hoạt động</h3>
+      <!-- ID để JS update số cuộc bình chọn -->
+      <p class="card-subtitle" id="open-votes-count">Đang mở: 0 cuộc bình chọn</p>
+    </div>
+  </div>
+  <div class="card-content">
+    <!-- ID để JS insert danh sách vote -->
+    <p id="open-votes-list">Đang tải danh sách…</p>
+  </div>
+  <div class="card-actions">
+    <a href="/binh-chon" class="card-link">
+      Tham gia bình chọn <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+</div>
+
 
                 <!-- Nội quy nhóm -->
                 <div class="card rules-card">
@@ -360,6 +366,137 @@
         obs.observe(target, { childList: true });
       }
     });
-</script></body>
+    // hiển thị hoạt động
+    document.addEventListener('DOMContentLoaded', () => {
+  async function loadOpenVotes() {
+    try {
+      const res = await fetch('/api/open-votes');
+      if (!res.ok) {
+        console.error('Lỗi khi gọi API:', res.statusText);
+        return;
+      }
+      const data = await res.json();
+
+      // Lấy thẻ card đã có sẵn
+      const card = document.getElementById('voting-card');
+      if (!card) {
+        console.warn('Không tìm thấy #voting-card');
+        return;
+      }
+
+      // Lấy 2 thành phần con để update
+      const countEl = card.querySelector('#open-votes-count');
+      const listEl  = card.querySelector('#open-votes-list');
+
+      // Cập nhật số lượng
+      if (countEl) {
+        countEl.textContent = data.message;
+      }
+
+      // Cập nhật danh sách vote
+      if (listEl) {
+        if (data.votes && data.votes.length > 0) {
+          const listHtml = data.votes
+            .map((title, idx) => `${idx + 1}. ${title}`)
+            .join('<br>');
+          listEl.innerHTML = listHtml;
+        } else {
+          listEl.textContent = 'Không có cuộc bình chọn nào đang mở.';
+        }
+      }
+    } catch (err) {
+      console.error('Lỗi khi load open votes:', err);
+    }
+  }
+
+  loadOpenVotes();
+});
+// Hàm gọi API và cập nhật % số dư quỹ
+function updateFundPercentageChange() {
+  fetch('/api/funds/percentage_change', {
+    method: 'GET',
+    credentials: 'include', // Gửi session cookie để Flask nhận diện người dùng
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Lỗi khi gọi API: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      const subtitleElement = document.querySelector('.fund-card .card-subtitle');
+      if (subtitleElement) {
+        if (data.percentage_change !== undefined) {
+          const percentage = data.percentage_change.toFixed(2);
+          subtitleElement.textContent = `Số dư: ${percentage}% so với tháng trước`;
+        } else {
+          subtitleElement.textContent = 'Lỗi: ' + data.message;
+          console.error('API error:', data.message);
+        }
+      } else {
+        console.warn('Không tìm thấy phần tử .fund-card .card-subtitle');
+      }
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+      const subtitleElement = document.querySelector('.fund-card .card-subtitle');
+      if (subtitleElement) {
+        subtitleElement.textContent = 'Lỗi khi tải dữ liệu';
+      }
+    });
+}
+
+// Hàm gọi API và cập nhật số thành viên chưa đóng góp
+function updatePendingContributionsCount() {
+  fetch('/api/contributions/pending/count', {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Lỗi khi gọi API: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      const contentElement = document.querySelector('.fund-card .card-content p');
+      if (contentElement) {
+        if (data.pending_contributions !== undefined) {
+          contentElement.textContent = `${data.pending_contributions} thành viên chưa đóng quỹ tháng này. Chi tiết các khoản thu chi trong tháng.`;
+        } else {
+          contentElement.textContent = 'Lỗi: ' + data.message;
+          console.error('API error:', data.message);
+        }
+      } else {
+        console.warn('Không tìm thấy phần tử .fund-card .card-content p');
+      }
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+      const contentElement = document.querySelector('.fund-card .card-content p');
+      if (contentElement) {
+        contentElement.textContent = 'Lỗi khi tải dữ liệu';
+      }
+    });
+}
+
+// Chạy khi trang tải
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    updateFundPercentageChange();
+    updatePendingContributionsCount();
+  }, 0);
+});
+</script>
+<script>
+    
+</script>
+</body>
 
 </html>

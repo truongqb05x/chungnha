@@ -40,7 +40,12 @@ async function renderMemberCount() {
 // Fetch vote items
 async function fetchVoteItems(date) {
   try {
-    const res = await fetch(`/api/group/${GROUP_ID}/vote_items?date=${date}`);
+    // Nếu có date, lấy vote_items theo ngày (cho voteList)
+    // Nếu không có date, lấy tất cả vote_items (cho resultsList)
+    const url = date 
+      ? `/api/group/${GROUP_ID}/vote_items?date=${date}`
+      : `/api/group/${GROUP_ID}/vote_items`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch vote items');
     return await res.json();
   } catch (error) {
@@ -49,7 +54,7 @@ async function fetchVoteItems(date) {
   }
 }
 
-// Render vote list
+// Render vote list (giữ nguyên: chỉ hiển thị theo ngày được chọn)
 function renderVoteList(items) {
   voteList.innerHTML = '';
   const total = parseInt(totalMembersEl.textContent, 10) || 1;
@@ -76,11 +81,11 @@ function renderVoteList(items) {
 
   // Attach event listeners to vote buttons
   voteList.querySelectorAll('.vote-btn').forEach(btn => {
-    btn.addEventListener('click', () => castVote(btn.dataset.id));
+    btn.addEventListener('click', () => castVote(btn.dataset.id, btn));
   });
 }
 
-// Render results
+// Render results (hiển thị tất cả các ngày)
 function renderResults(items) {
   resultsList.innerHTML = '';
   const total = parseInt(totalMembersEl.textContent, 10) || 1;
@@ -97,7 +102,7 @@ function renderResults(items) {
 
     const groupDiv = document.createElement('div');
     groupDiv.className = 'result-group';
-    const sumVotes = arr.reduce((s, i) => s + i.votes, 0); // Fixed typo: removed 'viscous'
+    const sumVotes = arr.reduce((s, i) => s + i.votes, 0);
     groupDiv.innerHTML = `
       <h3>${type === 'food' ? '🍲 Món ăn' : '🎉 Hoạt động'} • ${new Date(date).toLocaleDateString('vi-VN')}
         <span class="total-votes">${sumVotes}/${total} phiếu</span>
@@ -121,12 +126,17 @@ function renderResults(items) {
     resultsList.appendChild(groupDiv);
   });
 }
+
 // Render all
 async function renderAll() {
+  // Lấy vote_items theo ngày cho voteList
   const date = voteDateInput.value || new Date().toISOString().slice(0, 10);
-  const items = await fetchVoteItems(date);
-  renderVoteList(items);
-  renderResults(items);
+  const voteItems = await fetchVoteItems(date);
+  renderVoteList(voteItems);
+
+  // Lấy tất cả vote_items cho resultsList
+  const allItems = await fetchVoteItems();
+  renderResults(allItems);
 }
 
 // Add vote item
@@ -171,8 +181,12 @@ async function addVoteItem() {
 }
 
 // Cast vote
-async function castVote(id) {
+async function castVote(id, button) {
   try {
+    // Optimistically update the button to show "Đã bình chọn"
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-check-circle"></i> Đã bình chọn';
+
     const res = await fetch('/api/vote', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -184,6 +198,9 @@ async function castVote(id) {
     }
     await renderAll();
   } catch (error) {
+    // Revert button state on error
+    button.disabled = false;
+    button.innerHTML = '<i class="fas fa-vote-yea"></i> Bình chọn';
     console.error(error);
     alert(error.message);
   }

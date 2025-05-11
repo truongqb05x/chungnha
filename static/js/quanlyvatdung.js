@@ -191,3 +191,105 @@ async function clearShoppingList() {
 function exportInventory() {
     // optional: re-fetch items and export
 }
+// Mở modal thêm mới
+function openAddShoppingItemModal() {
+    document.getElementById('add-shopping-item-modal').style.display = 'flex';
+}
+
+// Thêm item vào danh sách
+function addShoppingItem() {
+    const name = document.getElementById('shopping-item-name').value.trim();
+    const quantity = document.getElementById('shopping-item-quantity').value;
+    const priority = document.getElementById('shopping-item-priority').value;
+    
+    if (!name) return;
+    
+    const tbody = document.getElementById('shopping-list');
+    const row = document.createElement('tr');
+    const rowCount = tbody.children.length + 1;
+    
+    row.innerHTML = `
+        <td>${rowCount}</td>
+        <td>${name}</td>
+        <td>${quantity}</td>
+        <td><span class="priority-status ${priority}">${getPriorityText(priority)}</span></td>
+        <td><span class="item-status pending"><span class="status-dot"></span> Chưa mua</span></td>
+        <td>
+            <div class="table-actions">
+                <button class="btn-icon complete-btn" onclick="toggleComplete(this)" title="Đánh dấu đã mua">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button class="btn-icon delete-btn" onclick="removeItem(this)" title="Xóa">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    closeModal('add-shopping-item-modal');
+    resetAddForm();
+    checkEmptyState();
+}
+
+function getPriorityText(priority) {
+    const priorities = {
+        'normal': 'Bình thường',
+        'high': 'Ưu tiên',
+        'urgent': 'Khẩn cấp'
+    };
+    return priorities[priority] || 'Bình thường';
+}
+
+// Đánh dấu hoàn thành
+function toggleComplete(button) {
+    const row = button.closest('tr');
+    const statusCell = row.querySelector('.item-status');
+    
+    if (statusCell.classList.contains('pending')) {
+        statusCell.classList.remove('pending');
+        statusCell.classList.add('completed');
+        statusCell.innerHTML = '<span class="status-dot"></span> Đã mua';
+    } else {
+        statusCell.classList.remove('completed');
+        statusCell.classList.add('pending');
+        statusCell.innerHTML = '<span class="status-dot"></span> Chưa mua';
+    }
+}
+
+// Xóa item
+function removeItem(button) {
+    button.closest('tr').remove();
+    updateRowNumbers();
+    checkEmptyState();
+}
+
+// Cập nhật số thứ tự
+function updateRowNumbers() {
+    const rows = document.querySelectorAll('#shopping-list tr');
+    rows.forEach((row, index) => {
+        row.cells[0].textContent = index + 1;
+    });
+}
+
+// Reset form thêm mới
+function resetAddForm() {
+    document.getElementById('shopping-item-name').value = '';
+    document.getElementById('shopping-item-quantity').value = '1';
+    document.getElementById('shopping-item-priority').value = 'normal';
+}
+
+// Kiểm tra trạng thái trống
+function checkEmptyState() {
+    const isEmpty = document.getElementById('shopping-list').children.length === 0;
+    document.getElementById('empty-shopping-list').style.display = isEmpty ? 'flex' : 'none';
+    document.getElementById('clear-list-btn').disabled = isEmpty;
+}
+
+// Xóa toàn bộ danh sách
+function clearShoppingList() {
+    if (confirm('Bạn có chắc chắn muốn xóa toàn bộ danh sách?')) {
+        document.getElementById('shopping-list').innerHTML = '';
+        checkEmptyState();
+    }
+}

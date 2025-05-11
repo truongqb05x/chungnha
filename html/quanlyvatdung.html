@@ -174,19 +174,75 @@
             </div>
 
             <div class="shopping-list-section">
-                <div class="section-header">
-                    <h2 class="section-title">Danh Sách Cần Mua</h2>
-                    <div class="section-actions">
-                        <button class="btn btn-danger" onclick="clearShoppingList()" id="clear-list-btn" disabled><i
-                                class="fas fa-trash"></i> Xóa hết</button>
-                    </div>
+    <div class="section-header">
+        <h2 class="section-title">Danh Sách Cần Mua</h2>
+        <div class="section-actions">
+            <button class="btn btn-primary" onclick="openAddShoppingItemModal()">
+                <i class="fas fa-plus"></i> Thêm mới
+            </button>
+            <button class="btn btn-danger" onclick="clearShoppingList()" id="clear-list-btn" disabled>
+                <i class="fas fa-trash"></i> Xóa hết
+            </button>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="shopping-list-table">
+            <thead>
+                <tr>
+                    <th width="5%">STT</th>
+                    <th>Tên vật dụng</th>
+                    <th width="15%">Số lượng</th>
+                    <th width="15%">Ưu tiên</th>
+                    <th width="15%">Trạng thái</th>
+                    <th width="15%">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="shopping-list">
+                <!-- Dữ liệu sẽ được thêm bằng JavaScript -->
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="empty-state" id="empty-shopping-list" style="display: none;">
+        <i class="fas fa-shopping-basket"></i>
+        <p>Danh sách mua sắm trống</p>
+    </div>
+</div>
+
+<!-- Modal thêm mới vật dụng cần mua -->
+<div class="modal" id="add-shopping-item-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Thêm vật dụng cần mua</h3>
+            <button class="modal-close" onclick="closeModal('add-shopping-item-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="shopping-item-name" class="form-label">Tên vật dụng</label>
+                <input type="text" id="shopping-item-name" class="form-control" placeholder="Nhập tên vật dụng">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="shopping-item-quantity" class="form-label">Số lượng</label>
+                    <input type="number" id="shopping-item-quantity" class="form-control" value="1" min="1">
                 </div>
-                <ul class="shopping-list" id="shopping-list"></ul>
-                <div class="empty-state" id="empty-shopping-list" style="display: none;"><i
-                        class="fas fa-shopping-basket"></i>
-                    <p>Danh sách mua sắm trống</p>
+                <div class="form-group">
+                    <label for="shopping-item-priority" class="form-label">Mức độ ưu tiên</label>
+                    <select id="shopping-item-priority" class="form-control">
+                        <option value="normal">Bình thường</option>
+                        <option value="high">Ưu tiên</option>
+                        <option value="urgent">Khẩn cấp</option>
+                    </select>
                 </div>
             </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal('add-shopping-item-modal')">Hủy</button>
+            <button class="btn btn-primary" onclick="addShoppingItem()">Thêm vào danh sách</button>
+        </div>
+    </div>
+</div>
         </main>
     </div>
 
