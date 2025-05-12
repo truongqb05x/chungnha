@@ -3153,13 +3153,13 @@ def get_tasks():
 
         # Câu truy vấn SQL cơ bản để lấy tasks thuộc group_id, join với members và users để lấy tên người phụ trách.
         sql = """
-            SELECT
-                t.*,
-                u.full_name AS assignee_name
-            FROM tasks t
-            LEFT JOIN members m ON t.assignee_id = m.id
-            LEFT JOIN users     ON m.user_id = u.id
-            WHERE t.group_id = %s
+    SELECT
+        t.*,
+        u.full_name AS assignee_name
+    FROM tasks t
+    LEFT JOIN members m ON t.assignee_id = m.id
+    LEFT JOIN users u ON m.user_id = u.id
+    WHERE t.group_id = %s
         """
         # Danh sách các tham số sẽ được truyền vào câu truy vấn SQL.
         params = [group_id]
@@ -4261,7 +4261,82 @@ def get_menus():
 # ============================= #
 
 
+# lấy list danh sach chat
+@app.route('/api/chat-groups', methods=['GET'])
+def get_user_chat_groups():
+    # Lấy user_id từ session
+    user_id = session.get('user_id')
+    print(f"Session user_id: {user_id}")
 
+    if not user_id:
+        print("No user_id in session")
+        return jsonify({'error': 'User not logged in or session expired'}), 401
+
+    # Lấy tham số phân trang
+    limit = request.args.get('limit', 25, type=int)
+    offset = request.args.get('offset', 0, type=int)
+    print(f"Pagination: limit={limit}, offset={offset}")
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Query lấy danh sách nhóm mà user tham gia
+        query = """
+        SELECT 
+            g.id AS group_id,
+            g.group_name
+        FROM groups g
+        INNER JOIN members m ON m.group_id = g.id
+        WHERE m.user_id = %s AND m.status = 'Active'
+        LIMIT %s OFFSET %s
+        """
+        cursor.execute(query, (user_id, limit, offset))
+        groups = cursor.fetchall()
+        print(f"Groups found: {groups}")
+
+        if not groups:
+            print("No groups found for user")
+            cursor.close()
+            conn.close()
+            return jsonify([]), 200
+
+        result = []
+        for group in groups:
+            group_id = group['group_id']
+            print(f"Processing group: {group_id} - {group['group_name']}")
+
+            # Query lấy danh sách thành viên trong nhóm, loại bỏ user_id hiện tại
+            members_query = """
+            SELECT 
+                u.id AS user_id,
+                u.full_name,
+                m.avatar
+            FROM users u
+            INNER JOIN members m ON m.user_id = u.id
+            WHERE m.group_id = %s AND m.status = 'Active' AND m.user_id != %s
+            """
+            cursor.execute(members_query, (group_id, user_id))
+            members = cursor.fetchall()
+            print(f"Members for group {group_id}: {members}")
+
+            result.append({
+                'group_id': group_id,
+                'group_name': group['group_name'],
+                'members': members
+            })
+
+        cursor.close()
+        conn.close()
+        print(f"Final result: {result}")
+        return jsonify(result), 200
+
+    except Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    except Exception as e:
+        print(f"Server error: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 # # Route: Gửi một tin nhắn mới
 @app.route('/api/conversations/<int:conversation_id>/messages', methods=['POST'])
 @handle_db_operation
@@ -4304,7 +4379,57 @@ def send_message(cursor, connection, conversation_id):
     )
 
     return jsonify({"message_id": message_id, "content": content}), 201
+@app.route('/api/conversations', methods=['POST'])
+def create_conversation():
+    data = request.get_json()
+    print(f"[create_conversation] Request data: {data}")
 
+    if not data or 'is_group' not in data or ('is_group' in data and data['is_group'] and 'group_id' not in data):
+        print("[create_conversation] Missing required fields")
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    is_group = data.get('is_group', False)
+    group_id = data.get('group_id') if is_group else None
+    participants = data.get('participants', [])
+
+    if not participants:
+        print("[create_conversation] No participants provided")
+        return jsonify({'error': 'At least one participant is required'}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Tạo cuộc trò chuyện
+        cursor.execute(
+            "INSERT INTO conversations_chat (is_group, group_id) VALUES (%s, %s)",
+            (is_group, group_id)
+        )
+        conversation_id = cursor.lastrowid
+        print(f"[create_conversation] Created conversation_id: {conversation_id}")
+
+        # Thêm participants
+        for user_id in participants:
+            cursor.execute(
+                "INSERT INTO conversation_participants_chat (conversation_id, user_id, joined_at) VALUES (%s, %s, NOW())",
+                (conversation_id, user_id)
+            )
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+        print(f"[create_conversation] Conversation created successfully")
+        return jsonify({
+            'conversation_id': conversation_id,
+            'message': 'Conversation created successfully'
+        }), 201
+
+    except Error as e:
+        print(f"[create_conversation] Database error: {str(e)}")
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    except Exception as e:
+        print(f"[create_conversation] Server error: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 # Route: Lấy danh sách tin nhắn trong một cuộc trò chuyện
 @app.route('/api/conversations/<int:conversation_id>/messages', methods=['GET'])
 @handle_db_operation

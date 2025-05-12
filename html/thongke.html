@@ -169,6 +169,33 @@
                         <option value="Lê Anh">Lê Anh</option>
                     </select>
                 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch('/api/members_exp')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Không thể tải danh sách thành viên');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const select = document.getElementById('memberFilter');
+
+            // Xóa tất cả các option (trừ option đầu tiên là "Tất cả thành viên")
+            select.innerHTML = '<option value="">Tất cả thành viên</option>';
+
+            data.forEach(member => {
+                const option = document.createElement('option');
+                option.value = member.full_name;
+                option.textContent = member.full_name;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Lỗi:', error);
+        });
+});
+</script>
                 
                 <div class="filter-group">
                     <label for="expenseType" class="filter-label">Loại chi phí</label>
