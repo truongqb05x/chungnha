@@ -109,13 +109,21 @@ async function openEditModal(id) {
     document.getElementById('modal-save-btn').onclick = saveEditedItem;
     document.getElementById('add-item-modal').style.display = 'flex';
 }
-function closeModal() {
-    document.getElementById('add-item-modal').style.display = 'none';
+// Đóng modal
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
 }
 function resetModal() {
     ['modal-item-name','modal-item-quantity','modal-item-threshold','modal-item-category','modal-item-note']
     .forEach(id=>document.getElementById(id).value='');
 }
+    window.onclick = function(event) {
+        const modal = document.getElementById('add-item-modal');
+        if (event.target === modal) {
+            closeModal('add-item-modal');
+        }
+    }
+
 async function saveNewItem() {
     const data = collectModalData();
     await fetch(`${API_BASE}/items`, {
@@ -141,13 +149,56 @@ function collectModalData() {
 }
 
 // Shopping list
+// Load danh sách mua sắm
 async function loadShoppingList() {
-    const ul = document.getElementById('shopping-list'); ul.innerHTML = '';
-    const { length } = await drawShoppingItems(await fetchItems());
-    document.getElementById('clear-list-btn').disabled = length===0;
+    const tbody = document.getElementById('shopping-list');
+    const emptyState = document.getElementById('empty-shopping-list');
+    const clearBtn = document.getElementById('clear-list-btn');
+    
+    try {
+        const items = await fetchItems();
+        tbody.innerHTML = '';
+        
+        if (items.length === 0) {
+            emptyState.style.display = 'flex';
+            clearBtn.disabled = true;
+            return;
+        }
+        
+        emptyState.style.display = 'none';
+        clearBtn.disabled = false;
+        
+        items.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${item.item_name}</td>
+                <td>${item.quantity} ${item.unit || ''}</td>
+                <td><span class="priority-status ${item.priority}">${getPriorityText(item.priority)}</span></td>
+                <td><span class="item-status ${item.is_completed ? 'completed' : 'pending'}"><span class="status-dot"></span> ${item.is_completed ? 'Đã mua' : 'Chưa mua'}</span></td>
+                <td>
+                    <div class="table-actions">
+                        <button class="btn-icon complete-btn" onclick="toggleComplete(${item.id}, ${item.is_completed})" title="${item.is_completed ? 'Đánh dấu chưa mua' : 'Đánh dấu đã mua'}">
+                            <i class="fas ${item.is_completed ? 'fa-undo' : 'fa-check'}"></i>
+                        </button>
+                        <button class="btn-icon delete-btn" onclick="removeFromList(${item.id})" title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (err) {
+        console.error('Lỗi khi tải danh sách mua sắm:', err);
+        emptyState.style.display = 'flex';
+        clearBtn.disabled = true;
+    }
 }
+// Fetch danh sách mua sắm từ API
 async function fetchItems() {
     const res = await fetch(`${API_BASE}/shopping-list`);
+    if (!res.ok) throw new Error('Lỗi khi lấy danh sách mua sắm');
     return res.json();
 }
 async function drawShoppingItems(items) {
@@ -176,15 +227,34 @@ async function addToShopping(itemId, name) {
     });
     loadShoppingList();
 }
+// Xóa item khỏi danh sách
 async function removeFromList(id) {
-    await fetch(`${API_BASE}/shopping-list/${id}`,{ method:'DELETE' }); loadShoppingList();
+    if (!confirm('Bạn có chắc chắn muốn xóa vật dụng này khỏi danh sách?')) return;
+    try {
+        await fetch(`${API_BASE}/shopping-list/${id}`, {
+            method: 'DELETE'
+        });
+        loadShoppingList();
+    } catch (err) {
+        console.error('Lỗi khi xóa vật dụng:', err);
+        alert('Đã xảy ra lỗi!');
+    }
 }
 async function toggleComplete(id) {
     await fetch(`${API_BASE}/shopping-list/${id}/complete`,{ method:'PATCH' }); loadShoppingList();
 }
+// Xóa toàn bộ danh sách
 async function clearShoppingList() {
     if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ danh sách mua sắm?')) return;
-    await fetch(`${API_BASE}/shopping-list/clear`,{ method:'DELETE' }); loadShoppingList();
+    try {
+        await fetch(`${API_BASE}/shopping-list/clear`, {
+            method: 'DELETE'
+        });
+        loadShoppingList();
+    } catch (err) {
+        console.error('Lỗi khi xóa danh sách:', err);
+        alert('Đã xảy ra lỗi!');
+    }
 }
 
 // Export inventory (still client-side JSON)
@@ -196,42 +266,41 @@ function openAddShoppingItemModal() {
     document.getElementById('add-shopping-item-modal').style.display = 'flex';
 }
 
-// Thêm item vào danh sách
-function addShoppingItem() {
-    const name = document.getElementById('shopping-item-name').value.trim();
-    const quantity = document.getElementById('shopping-item-quantity').value;
-    const priority = document.getElementById('shopping-item-priority').value;
-    
-    if (!name) return;
-    
-    const tbody = document.getElementById('shopping-list');
-    const row = document.createElement('tr');
-    const rowCount = tbody.children.length + 1;
-    
-    row.innerHTML = `
-        <td>${rowCount}</td>
-        <td>${name}</td>
-        <td>${quantity}</td>
-        <td><span class="priority-status ${priority}">${getPriorityText(priority)}</span></td>
-        <td><span class="item-status pending"><span class="status-dot"></span> Chưa mua</span></td>
-        <td>
-            <div class="table-actions">
-                <button class="btn-icon complete-btn" onclick="toggleComplete(this)" title="Đánh dấu đã mua">
-                    <i class="fas fa-check"></i>
-                </button>
-                <button class="btn-icon delete-btn" onclick="removeItem(this)" title="Xóa">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </td>
-    `;
-    
-    tbody.appendChild(row);
-    closeModal('add-shopping-item-modal');
-    resetAddForm();
-    checkEmptyState();
-}
 
+// Thêm item vào danh sách
+async function addShoppingItem() {
+    const name = document.getElementById('shopping-item-name').value.trim();
+    const quantity = parseInt(document.getElementById('shopping-item-quantity').value) || 1;
+    const unit = document.getElementById('shopping-item-unit').value.trim();
+    const priority = document.getElementById('shopping-item-priority').value;
+    const notes = document.getElementById('shopping-item-notes').value.trim();
+    
+    if (!name) {
+        alert('Vui lòng nhập tên vật dụng!');
+        return;
+    }
+    
+    try {
+        await fetch(`${API_BASE}/shopping-list`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                item_name: name,
+                quantity,
+                unit: unit || null,
+                priority,
+                notes: notes || null
+            })
+        });
+        closeModal('add-shopping-item-modal');
+        resetAddForm();
+        loadShoppingList();
+    } catch (err) {
+        console.error('Lỗi khi thêm vật dụng:', err);
+        alert('Đã xảy ra lỗi khi thêm vật dụng!');
+    }
+}
+// Lấy văn bản ưu tiên
 function getPriorityText(priority) {
     const priorities = {
         'normal': 'Bình thường',
@@ -240,30 +309,33 @@ function getPriorityText(priority) {
     };
     return priorities[priority] || 'Bình thường';
 }
-
-// Đánh dấu hoàn thành
-function toggleComplete(button) {
-    const row = button.closest('tr');
-    const statusCell = row.querySelector('.item-status');
-    
-    if (statusCell.classList.contains('pending')) {
-        statusCell.classList.remove('pending');
-        statusCell.classList.add('completed');
-        statusCell.innerHTML = '<span class="status-dot"></span> Đã mua';
-    } else {
-        statusCell.classList.remove('completed');
-        statusCell.classList.add('pending');
-        statusCell.innerHTML = '<span class="status-dot"></span> Chưa mua';
+// Đánh dấu hoàn thành hoặc chưa hoàn thành
+async function toggleComplete(id, isCompleted) {
+    try {
+        await fetch(`${API_BASE}/shopping-list/${id}/complete`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_completed: !isCompleted })
+        });
+        loadShoppingList();
+    } catch (err) {
+        console.error('Lỗi khi cập nhật trạng thái:', err);
+        alert('Đã xảy ra lỗi!');
     }
 }
-
-// Xóa item
-function removeItem(button) {
-    button.closest('tr').remove();
-    updateRowNumbers();
-    checkEmptyState();
+// Xóa item khỏi danh sách
+async function removeFromList(id) {
+    if (!confirm('Bạn có chắc chắn muốn xóa vật dụng này khỏi danh sách?')) return;
+    try {
+        await fetch(`${API_BASE}/shopping-list/${id}`, {
+            method: 'DELETE'
+        });
+        loadShoppingList();
+    } catch (err) {
+        console.error('Lỗi khi xóa vật dụng:', err);
+        alert('Đã xảy ra lỗi!');
+    }
 }
-
 // Cập nhật số thứ tự
 function updateRowNumbers() {
     const rows = document.querySelectorAll('#shopping-list tr');
@@ -276,7 +348,9 @@ function updateRowNumbers() {
 function resetAddForm() {
     document.getElementById('shopping-item-name').value = '';
     document.getElementById('shopping-item-quantity').value = '1';
+    document.getElementById('shopping-item-unit').value = '';
     document.getElementById('shopping-item-priority').value = 'normal';
+    document.getElementById('shopping-item-notes').value = '';
 }
 
 // Kiểm tra trạng thái trống
@@ -287,9 +361,15 @@ function checkEmptyState() {
 }
 
 // Xóa toàn bộ danh sách
-function clearShoppingList() {
-    if (confirm('Bạn có chắc chắn muốn xóa toàn bộ danh sách?')) {
-        document.getElementById('shopping-list').innerHTML = '';
-        checkEmptyState();
+async function clearShoppingList() {
+    if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ danh sách mua sắm?')) return;
+    try {
+        await fetch(`${API_BASE}/shopping-list/clear`, {
+            method: 'DELETE'
+        });
+        loadShoppingList();
+    } catch (err) {
+        console.error('Lỗi khi xóa danh sách:', err);
+        alert('Đã xảy ra lỗi!');
     }
 }

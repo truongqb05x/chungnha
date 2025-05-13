@@ -215,7 +215,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title">Thêm vật dụng cần mua</h3>
-            <button class="modal-close" onclick="closeModal('add-shopping-item-modal')">&times;</button>
+            <button class="modal-close" onclick="closeModal('add-shopping-item-modal')">×</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
@@ -228,13 +228,21 @@
                     <input type="number" id="shopping-item-quantity" class="form-control" value="1" min="1">
                 </div>
                 <div class="form-group">
-                    <label for="shopping-item-priority" class="form-label">Mức độ ưu tiên</label>
-                    <select id="shopping-item-priority" class="form-control">
-                        <option value="normal">Bình thường</option>
-                        <option value="high">Ưu tiên</option>
-                        <option value="urgent">Khẩn cấp</option>
-                    </select>
+                    <label for="shopping-item-unit" class="form-label">Đơn vị</label>
+                    <input type="text" id="shopping-item-unit" class="form-control" placeholder="Gói, chai, lọ...">
                 </div>
+            </div>
+            <div class="form-group">
+                <label for="shopping-item-priority" class="form-label">Mức độ ưu tiên</label>
+                <select id="shopping-item-priority" class="form-control">
+                    <option value="normal">Bình thường</option>
+                    <option value="high">Ưu tiên</option>
+                    <option value="urgent">Khẩn cấp</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="shopping-item-notes" class="form-label">Ghi chú (tùy chọn)</label>
+                <textarea id="shopping-item-notes" class="form-control" rows="3" placeholder="Thông tin bổ sung..."></textarea>
             </div>
         </div>
         <div class="modal-footer">
@@ -250,8 +258,8 @@
     <div class="modal" id="add-item-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Thêm vật dụng mới</h3><button class="modal-close"
-                    onclick="closeModal()">&times;</button>
+<h3 class="modal-title">Thêm vật dụng mới</h3>
+<button class="modal-close" onclick="closeModal('add-item-modal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group"><label for="modal-item-name" class="form-label">Tên vật dụng</label><input
@@ -274,9 +282,10 @@
                         chọn)</label><textarea id="modal-item-note" class="form-control" rows="3"
                         placeholder="Thông tin bổ sung..."></textarea></div>
             </div>
-            <div class="modal-footer"><button class="btn" onclick="closeModal()">Hủy</button><button
-                    class="btn btn-primary" id="modal-save-btn">Lưu</button></div>
-        </div>
+<div class="modal-footer">
+    <button class="btn" onclick="closeModal('add-item-modal')">Hủy</button>
+    <button class="btn btn-primary" id="modal-save-btn">Lưu</button>
+</div>
     </div>
     <!-- js chung -->
     <script src="../static/js/app.js"></script>

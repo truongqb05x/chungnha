@@ -2840,49 +2840,35 @@ def update_item_quantity(id):
 
 @app.route('/api/shopping-list', methods=['GET'])
 def get_shopping_list():
-    # Lấy danh sách các vật phẩm cần mua sắm (chưa hoàn thành) cho một nhóm cụ thể.
-    # Lưu ý: group_id đang được fix cứng là 1, cần thay thế bằng group_id của người dùng.
-
-    # Kết nối DB.
-    conn = get_db_connection()
-    # Tạo con trỏ với dictionary=True.
-    cursor = conn.cursor(dictionary=True)
-
-    # Lấy group_id của người dùng hiện tại. (Cần thêm logic lấy group_id tương tự hàm get_items)
+    # Lấy danh sách tất cả các vật phẩm cần mua sắm trong nhóm.
     user_id = session.get('user_id')
     if not user_id:
-        cursor.close()
-        conn.close()
         return jsonify([]), 401
 
-    member_cursor = conn.cursor()
-    member_cursor.execute("SELECT group_id FROM members WHERE user_id = %s LIMIT 1", (user_id,))
-    member_info = member_cursor.fetchone()
-    member_cursor.close()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
+    cursor.execute("SELECT group_id FROM members WHERE user_id = %s LIMIT 1", (user_id,))
+    member_info = cursor.fetchone()
     if not member_info:
         cursor.close()
         conn.close()
-        return jsonify([]), 404 # Trả về 404 nếu người dùng không thuộc nhóm
+        return jsonify([]), 404
 
-    group_id = member_info[0] # Lấy group_id
+    group_id = member_info['group_id']
 
-    # Truy vấn các vật phẩm từ bảng shopping_lists thuộc group_id này và chưa hoàn thành (is_completed = 0).
-    # JOIN với shared_items để lấy tên vật phẩm nếu có item_id liên kết.
+    # Truy vấn tất cả các vật phẩm từ shopping_lists, không giới hạn is_completed
     cursor.execute('''
         SELECT sl.*, si.name as item_name
         FROM shopping_lists sl
         LEFT JOIN shared_items si ON sl.item_id = si.id
-        WHERE sl.group_id = %s AND sl.is_completed = 0
-    ''', (group_id,)) # Sử dụng group_id đã lấy được
-    # Lấy tất cả các vật phẩm trong danh sách mua sắm.
+        WHERE sl.group_id = %s
+    ''', (group_id,))
     items = cursor.fetchall()
-    # Đóng con trỏ và kết nối DB.
+
     cursor.close()
     conn.close()
-    # Trả về danh sách dưới dạng JSON.
     return jsonify(items)
-
 @app.route('/api/shopping-list', methods=['POST'])
 def add_to_shopping_list():
     # Thêm một vật phẩm vào danh sách mua sắm của nhóm.

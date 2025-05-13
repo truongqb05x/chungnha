@@ -264,6 +264,12 @@ CREATE TABLE `shopping_lists` (
   CONSTRAINT `fk_shopping_completed_by` FOREIGN KEY (`completed_by`) REFERENCES `members`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT 'Quản lý danh sách mua sắm';
+-- Thêm cột priority vào bảng shopping_lists
+ALTER TABLE `shopping_lists`
+  ADD COLUMN `priority` ENUM('normal', 'high', 'urgent')
+    NOT NULL DEFAULT 'normal'
+    COMMENT 'Mức độ ưu tiên: normal = bình thường, high = ưu tiên, urgent = khẩn cấp'
+    AFTER `quantity`;
 
 -- Bảng: item_notifications
 -- Mô tả: Lưu thông báo liên quan đến vật dụng (hết hàng, nhắc mua...).

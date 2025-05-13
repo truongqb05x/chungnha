@@ -298,204 +298,154 @@
     <script src="../static/js/app.js"></script>
   <!-- Cuối body, hoặc trong file JS riêng -->
 <script>
-    // Hàm cập nhật tên từ API (giữ nguyên code của bạn)
-    function updateUserName() {
-      fetch('/api/user/full_name')
-        .then(res => {
-          if (!res.ok) throw new Error('Chưa đăng nhập hoặc session hết hạn');
-          return res.json();
-        })
-        .then(data => {
-          const el = document.querySelector('.welcome-title .highlight');
-          if (el && data.full_name) {
-            el.textContent = data.full_name;
-          }
-        })
-        .catch(console.warn);
-    }
+  // Cờ để tránh gọi lặp khi nội dung không thay đổi
+  let lastFullName = '';
 
-    // Hàm cập nhật số lượng thực đơn
-    function updatePreparingMenuCount() {
-      fetch('/api/menus/preparing/count', {
-        method: 'GET',
-        credentials: 'include', // Gửi session cookie để Flask nhận diện người dùng
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Lỗi khi gọi API: ' + response.status);
-        }
-        return response.json();
+  // Hàm cập nhật tên từ API
+  function updateUserName() {
+    fetch('/api/user/full_name', {
+      credentials: 'include'
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Chưa đăng nhập hoặc session hết hạn');
+        return res.json();
       })
       .then(data => {
-        // Chỉ chọn card-subtitle trong menu-card
-        const subtitleElement = document.querySelector('.menu-card .card-subtitle');
-        if (subtitleElement) {
-          if (data.status === 'success') {
-            subtitleElement.textContent = `${data.preparing_count} món đã lên kế hoạch`;
-          } else {
-            subtitleElement.textContent = 'Lỗi: ' + data.message;
-            console.error('API error:', data.message);
-          }
-        } else {
-          console.warn('Không tìm thấy phần tử .menu-card .card-subtitle');
+        const el = document.querySelector('.welcome-title .highlight');
+        if (el && data.full_name && data.full_name !== lastFullName) {
+          el.textContent = data.full_name;
+          lastFullName = data.full_name;
         }
       })
-      .catch(error => {
-        console.error('Fetch error:', error);
-        const subtitleElement = document.querySelector('.menu-card .card-subtitle');
-        if (subtitleElement) {
-          subtitleElement.textContent = 'Lỗi khi tải dữ liệu';
-        }
+      .catch(err => {
+        console.warn('Lỗi khi lấy full_name:', err);
       });
-    }
+  }
 
-    // Chạy khi trang tải
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        updateUserName();
-        updatePreparingMenuCount();
-      }, 0);
+  // Hàm cập nhật số lượng thực đơn
+  function updatePreparingMenuCount() {
+    fetch('/api/menus/preparing/count', {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Lỗi khi gọi API: ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        const subtitle = document.querySelector('.menu-card .card-subtitle');
+        if (subtitle) {
+          if (data.status === 'success') {
+            subtitle.textContent = `${data.preparing_count} món đã lên kế hoạch`;
+          } else {
+            subtitle.textContent = 'Lỗi: ' + data.message;
+            console.error('API error:', data.message);
+          }
+        }
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
+        const subtitle = document.querySelector('.menu-card .card-subtitle');
+        if (subtitle) subtitle.textContent = 'Lỗi khi tải dữ liệu';
+      });
+  }
 
-      // Theo dõi thay đổi span.highlight (giữ nguyên)
-      const target = document.querySelector('.welcome-title .highlight');
-      if (target) {
-        const obs = new MutationObserver(() => updateUserName());
-        obs.observe(target, { childList: true });
-      }
-    });
-    // hiển thị hoạt động
-    document.addEventListener('DOMContentLoaded', () => {
+  // Hàm hiển thị hoạt động vote đang mở
   async function loadOpenVotes() {
     try {
-      const res = await fetch('/api/open-votes');
-      if (!res.ok) {
-        console.error('Lỗi khi gọi API:', res.statusText);
-        return;
-      }
+      const res = await fetch('/api/open-votes', { credentials: 'include' });
+      if (!res.ok) throw new Error(res.statusText);
       const data = await res.json();
 
-      // Lấy thẻ card đã có sẵn
       const card = document.getElementById('voting-card');
-      if (!card) {
-        console.warn('Không tìm thấy #voting-card');
-        return;
-      }
+      if (!card) return console.warn('Không tìm thấy #voting-card');
 
-      // Lấy 2 thành phần con để update
       const countEl = card.querySelector('#open-votes-count');
       const listEl  = card.querySelector('#open-votes-list');
 
-      // Cập nhật số lượng
-      if (countEl) {
-        countEl.textContent = data.message;
-      }
-
-      // Cập nhật danh sách vote
+      if (countEl) countEl.textContent = data.message;
       if (listEl) {
-        if (data.votes && data.votes.length > 0) {
-          const listHtml = data.votes
-            .map((title, idx) => `${idx + 1}. ${title}`)
-            .join('<br>');
-          listEl.innerHTML = listHtml;
-        } else {
-          listEl.textContent = 'Không có cuộc bình chọn nào đang mở.';
-        }
+        listEl.innerHTML = (data.votes && data.votes.length)
+          ? data.votes.map((t, i) => `${i+1}. ${t}`).join('<br>')
+          : 'Không có cuộc bình chọn nào đang mở.';
       }
     } catch (err) {
       console.error('Lỗi khi load open votes:', err);
     }
   }
 
-  loadOpenVotes();
-});
-// Hàm gọi API và cập nhật % số dư quỹ
-function updateFundPercentageChange() {
-  fetch('/api/funds/percentage_change', {
-    method: 'GET',
-    credentials: 'include', // Gửi session cookie để Flask nhận diện người dùng
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Lỗi khi gọi API: ' + response.status);
-      }
-      return response.json();
+  // Hàm cập nhật % số dư quỹ
+  function updateFundPercentageChange() {
+    fetch('/api/funds/percentage_change', {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
     })
-    .then(data => {
-      const subtitleElement = document.querySelector('.fund-card .card-subtitle');
-      if (subtitleElement) {
-        if (data.percentage_change !== undefined) {
-          const percentage = data.percentage_change.toFixed(2);
-          subtitleElement.textContent = `Số dư: ${percentage}% so với tháng trước`;
-        } else {
-          subtitleElement.textContent = 'Lỗi: ' + data.message;
-          console.error('API error:', data.message);
+      .then(res => {
+        if (!res.ok) throw new Error('Lỗi khi gọi API: ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        const sub = document.querySelector('.fund-card .card-subtitle');
+        if (sub) {
+          if (data.percentage_change !== undefined) {
+            sub.textContent = `Số dư: ${data.percentage_change.toFixed(2)}% so với tháng trước`;
+          } else {
+            sub.textContent = 'Lỗi: ' + data.message;
+            console.error('API error:', data.message);
+          }
         }
-      } else {
-        console.warn('Không tìm thấy phần tử .fund-card .card-subtitle');
-      }
-    })
-    .catch(error => {
-      console.error('Fetch error:', error);
-      const subtitleElement = document.querySelector('.fund-card .card-subtitle');
-      if (subtitleElement) {
-        subtitleElement.textContent = 'Lỗi khi tải dữ liệu';
-      }
-    });
-}
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
+        const sub = document.querySelector('.fund-card .card-subtitle');
+        if (sub) sub.textContent = 'Lỗi khi tải dữ liệu';
+      });
+  }
 
-// Hàm gọi API và cập nhật số thành viên chưa đóng góp
-function updatePendingContributionsCount() {
-  fetch('/api/contributions/pending/count', {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Lỗi khi gọi API: ' + response.status);
-      }
-      return response.json();
+  // Hàm cập nhật số thành viên chưa đóng góp
+  function updatePendingContributionsCount() {
+    fetch('/api/contributions/pending/count', {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
     })
-    .then(data => {
-      const contentElement = document.querySelector('.fund-card .card-content p');
-      if (contentElement) {
-        if (data.pending_contributions !== undefined) {
-          contentElement.textContent = `${data.pending_contributions} thành viên chưa đóng quỹ tháng này. Chi tiết các khoản thu chi trong tháng.`;
-        } else {
-          contentElement.textContent = 'Lỗi: ' + data.message;
-          console.error('API error:', data.message);
+      .then(res => {
+        if (!res.ok) throw new Error('Lỗi khi gọi API: ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        const p = document.querySelector('.fund-card .card-content p');
+        if (p) {
+          if (data.pending_contributions !== undefined) {
+            p.textContent = `${data.pending_contributions} thành viên chưa đóng quỹ tháng này. Chi tiết các khoản thu chi trong tháng.`;
+          } else {
+            p.textContent = 'Lỗi: ' + data.message;
+            console.error('API error:', data.message);
+          }
         }
-      } else {
-        console.warn('Không tìm thấy phần tử .fund-card .card-content p');
-      }
-    })
-    .catch(error => {
-      console.error('Fetch error:', error);
-      const contentElement = document.querySelector('.fund-card .card-content p');
-      if (contentElement) {
-        contentElement.textContent = 'Lỗi khi tải dữ liệu';
-      }
-    });
-}
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
+        const p = document.querySelector('.fund-card .card-content p');
+        if (p) p.textContent = 'Lỗi khi tải dữ liệu';
+      });
+  }
 
-// Chạy khi trang tải
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    updateFundPercentageChange();
-    updatePendingContributionsCount();
-  }, 0);
-});
-</script>
-<script>
-    
+  // Chạy khi trang load
+  window.addEventListener('load', () => {
+    // Delay 0 để chắc chắn DOM đã sẵn sàng
+    setTimeout(() => {
+      updateUserName();
+      updatePreparingMenuCount();
+      updateFundPercentageChange();
+      updatePendingContributionsCount();
+    }, 0);
+
+    // Load open votes khi DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', loadOpenVotes);
+  });
 </script>
 </body>
 
